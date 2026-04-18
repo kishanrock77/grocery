@@ -1,0 +1,1054 @@
+const express = require("express");
+const router = express.Router();
+const mongoose = require("mongoose");
+const Item = require("../models/Item");
+const upload = require("../middleware/uploaditem");
+
+// ✅ Safe JSON Parser
+const parseJSON = (data) => {
+  if (!data) return [];
+  if (typeof data === "object") return data;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+};
+
+
+// ===============================
+// ✅ Add Item
+// ===============================
+router.post("/add", upload.array("images", 5), async (req, res) => {
+  try {
+    const body = req.body;
+    let storeObjectId = null;
+
+    if (
+      body.storeId &&
+      body.storeId !== "-1" &&
+      mongoose.Types.ObjectId.isValid(body.storeId)
+    ) {
+      storeObjectId = new mongoose.Types.ObjectId(body.storeId);
+    }
+    const item = new Item({
+      itemType: body.itemType,
+      variant_or_addon: body.variant_or_addon,
+      itemName: body.itemName,
+      itemSubName: body.itemSubName || "",
+      description: body.description || "",
+      storePrice: Number(body.storePrice) || 0,
+      appPrice: Number(body.appPrice) || 0,
+      categories: parseJSON(body.categories),
+      filterKeys: parseJSON(body.filterKeys),
+      useThisItemAsChild: body.useThisItemAsChild === "true",
+      addedBy: new mongoose.Types.ObjectId(body.addedBy),
+      addedByString: body.addedByString,
+      storeId: storeObjectId,
+      variantItems: body.variantItems ? parseJSON(body.variantItems) : [],
+      addons: body.addons ? parseJSON(body.addons) : [],
+      showOnFront: body.showOnFront === "true",
+      images: req.files ? req.files.map((f) => "uploads/items/" + f.filename) : [],
+      parentId: [],
+    });
+
+    const savedItem = await item.save();
+
+    // ✅ Variant Logic
+    if (body.itemType === "variant" && body.variantItems) {
+      const variantIds = parseJSON(body.variantItems);
+      await Item.updateMany(
+        { _id: { $in: variantIds } },
+        { $addToSet: { parentId: savedItem._id } }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Item Added Successfully",
+      data: savedItem,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+
+// ===============================
+// ✅ Get Item Detail
+// ===============================
+router.get("/detail/:id", async (req, res) => {
+  try {
+
+    // add tstus condition here
+    const item = await Item.findById(req.params.id).where('status').equals(true);
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+
+// ===============================
+// ✅ Update Item
+// ===============================
+router.put("/update/:id", upload.array("images", 5), async (req, res) => {
+  try {
+
+    const body = req.body;
+
+    const existingItem = await Item.findById(req.params.id).where('status').equals(true);
+    if (!existingItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found",
+      });
+    }
+
+    let updateData = {
+      itemType: body.itemType,
+      variant_or_addon: body.variant_or_addon,
+      itemName: body.itemName,
+      itemSubName: body.itemSubName || "",
+      description: body.description || "",
+      storePrice: Number(body.storePrice) || 0,
+      appPrice: Number(body.appPrice) || 0,
+      categories: parseJSON(body.categories),
+      filterKeys: parseJSON(body.filterKeys),
+      useThisItemAsChild: body.useThisItemAsChild === "true",
+      variantItems: body.variantItems ? parseJSON(body.variantItems) : [],
+      addons: body.addons ? parseJSON(body.addons) : [],
+
+    };
+
+    // ✅ Replace Images if New Ones Uploaded
+    if (req.files && req.files.length > 0) {
+      updateData.images = req.files.map((f) => {
+
+        f.filename.replace('uploads/items/', "");
+        return "uploads/items/" + f.filename
+
+      });
+    }
+
+    if (body.oldimages.length > 0) {
+      updateData.images = updateData.images ? updateData.images.concat(parseJSON(body.oldimages)) : parseJSON(body.oldimages);
+    }
+    if (body.storeId !== undefined) {
+      if (
+        body.storeId &&
+        body.storeId !== "-1" &&
+        mongoose.Types.ObjectId.isValid(body.storeId)
+      ) {
+        updateData.storeId = new mongoose.Types.ObjectId(body.storeId);
+      } else {
+        updateData.storeId = null;
+      }
+    }
+    const updatedItem = await Item.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    // ✅ Remove Old Parent References
+    await Item.updateMany(
+      { parentId: req.params.id },
+      { $pull: { parentId: req.params.id } }
+    );
+
+    // ✅ Add New Variant References
+    if (body.itemType === "variant" && body.variantItems) {
+      const variantIds = parseJSON(body.variantItems);
+      await Item.updateMany(
+        { _id: { $in: variantIds } },
+        { $addToSet: { parentId: req.params.id } }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Item Updated Successfully",
+      data: updatedItem,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+
+// ===============================
+// ✅ Get Child Items for Variants
+// ===============================
+router.post("/child-items", async (req, res) => {
+  try {
+    let { selectedCategories, userType,
+      adminId,
+      storeId } = req.body;
+    let filter;
+    if (userType === 'admin') {
+      filter = {
+        useThisItemAsChild: true,
+        variant_or_addon: "variant",
+        status: true,
+        addedBy: new mongoose.Types.ObjectId(adminId),
+        addedByString: "admin",
+        storeId: null
+      };
+    } else {
+      filter = {
+        useThisItemAsChild: true,        variant_or_addon: "variant",
+
+        status: true,
+        storeId: new mongoose.Types.ObjectId(storeId)
+      };
+    }
+    // 🎯 Base Filter
+
+
+    // 📦 Category Filter
+    if (selectedCategories && selectedCategories.length > 0) {
+      // Agar objects aaye hain to unse level3 nikaalein
+      if (typeof selectedCategories[0] === "object") {
+        selectedCategories = selectedCategories.map(
+          (cat) => cat.level3
+        );
+      }
+
+      filter["categories.level3"] = { $in: selectedCategories };
+    }
+
+    const items = await Item.find(filter)
+      .select("_id itemName itemSubName images categories storePrice appPrice itemType storeId")
+      .populate({
+        path: "storeId",
+        select: "storeName",
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: items,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+// ===============================
+// ✅ Get Addon Items for Variants
+// ===============================
+router.post("/addon-items", async (req, res) => {
+  try {
+    let { selectedCategories, userType,
+      adminId,
+      storeId } = req.body;
+    let filter;
+    if (userType === 'admin') {
+      filter = {
+        useThisItemAsChild: true,        variant_or_addon: "addon",
+
+        status: true,
+        addedBy: new mongoose.Types.ObjectId(adminId),
+        addedByString: "admin",
+        storeId: null
+      };
+    } else {
+      filter = {
+        useThisItemAsChild: true,        variant_or_addon: "addon",
+        status: true,
+        storeId: new mongoose.Types.ObjectId(storeId)
+      };
+    }
+    // 🎯 Base Filter
+
+
+    // 📦 Category Filter
+    if (selectedCategories && selectedCategories.length > 0) {
+      // Agar objects aaye hain to unse level3 nikaalein
+      if (typeof selectedCategories[0] === "object") {
+        selectedCategories = selectedCategories.map(
+          (cat) => cat.level1
+        );
+      }
+
+      filter["categories.level1"] = { $in: selectedCategories };
+    }
+
+    const items = await Item.find(filter)
+      .select("_id itemName itemSubName images categories storePrice appPrice itemType storeId")
+      .populate({
+        path: "storeId",
+        select: "storeName",
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: items,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+
+// ===============================
+// ✅ Item List (Role-Based)
+// ===============================
+// ✅ Item List with Pagination & Filters
+
+
+router.post("/list", async (req, res) => {
+
+  try {
+    //await Item.deleteMany({ status: false });
+    let {
+      page = 1,
+      limit = 10,
+      loginId,
+      storeId,
+      categoryId,
+      itemName
+    } = req.body;
+
+    // 🔢 Pagination
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // 🎯 Base Filter
+    let filter = { status: true };
+
+    // =====================================================
+    // 🔐 Store Filtering Logic
+    // =====================================================
+    if (storeId !== undefined && storeId !== null && storeId !== "") {
+      if (storeId === "Onlystore") {
+        filter.storeId = { $exists: true, $ne: null };
+      } else if (storeId === "-1") {
+        filter.$or = [
+          { storeId: null },
+          { storeId: { $exists: false } }
+        ];
+        filter.addedBy = new mongoose.Types.ObjectId(loginId);
+
+      } else if (mongoose.Types.ObjectId.isValid(storeId)) {
+        filter.storeId = new mongoose.Types.ObjectId(storeId);
+      }
+    } else if (loginId && mongoose.Types.ObjectId.isValid(loginId)) {
+
+      console.log("ffffffffff")
+      filter.addedBy = new mongoose.Types.ObjectId(loginId);
+    }
+
+    // =====================================================
+    // 📦 Category Filter (Level 3)
+    // =====================================================
+    if (categoryId && categoryId.trim() !== "") {
+      filter["categories.level3"] = categoryId;
+    }
+
+    // =====================================================
+    // 🔍 Item Name Search
+    // =====================================================
+    if (itemName && itemName.trim() !== "") {
+      filter.itemName = {
+        $regex: itemName.trim(),
+        $options: "i"
+      };
+    }
+
+    // =====================================================
+    // 📊 Debug Logs (Remove in Production)
+    // =====================================================
+    console.log("Request Payload:", req.body);
+    console.log("Generated Filter:", JSON.stringify(filter, null, 2));
+
+    // =====================================================
+    // 📊 Total Count
+    // =====================================================
+    const total = await Item.countDocuments(filter);
+
+    // =====================================================
+    // 📦 Fetch Items with Store Name
+    // =====================================================
+    const items = await Item.find(filter)
+      .populate({
+        path: "storeId",
+        select: "storeName",
+        match: { _id: { $exists: true } }
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // =====================================================
+    // 🏪 Format Store Name
+    // =====================================================
+    const formattedItems = items.map(item => ({
+      ...item,
+      storeId: item.storeId?._id || null,
+      storeName: item.storeId?.storeName || "General Item"
+    }));
+
+    // =====================================================
+    // ✅ Final Response
+    // =====================================================
+    res.json({
+      success: true,
+      data: formattedItems,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (err) {
+    console.error("Error in /list API:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+
+// ===============================
+// ✅ Soft Delete Item
+// ===============================
+
+
+router.delete("/deleteAll", async (req, res) => {
+  try {
+    const result = await Item.deleteMany({});
+
+    res.json({
+      success: true,
+      message: "All items deleted permanently.",
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    await Item.findByIdAndUpdate(id, { status: false });
+
+    // Remove parent references from child items
+    await Item.updateMany(
+      { parentId: id },
+      { $pull: { parentId: id } }
+    );
+    await Item.updateMany(
+      { variantItems: id },
+      { $pull: { variantItems: id } }
+    );
+
+    res.json({
+      success: true,
+      message: "Item Deleted Successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+router.get("/general-items/:categoryId/:adminId", async (req, res) => {
+  try {
+    const { categoryId, adminId } = req.params;
+
+    const items = await Item.find({
+      status: true,
+      storeId: null,
+      addedBy: adminId,
+      addedByString: "admin",
+      useThisItemAsChild: false, // Parent Items Only
+      parentId: { $size: 0 },
+      "categories.level1": categoryId
+    })
+
+      .populate({
+  path: "variantItems",
+  match: { status: true },
+  select: "itemName storePrice appPrice itemType variant_or_addon original_item_id",
+  options: { sort: { itemName: 1 } }
+})
+.populate({
+  path: "addons",
+  match: { status: true },
+  select: "itemName storePrice appPrice itemType variant_or_addon original_item_id",
+  options: { sort: { itemName: 1 } }
+})
+      .sort({ itemName: 1 });
+
+    res.json({
+      success: true,
+      count: items.length,
+      data: items,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+router.get("/store-items/:storeId", async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    const items = await Item.find({
+      storeId: storeId,
+      status: true,
+      parentId: { $size: 0 }
+    })
+      //.select("itemName storePrice appPrice original_item_id variantItems")
+      .populate({
+        path: "variantItems",
+      //  select: "itemName storePrice appPrice original_item_id",
+      })
+      .populate({
+        path: "addons",
+      //  select: "itemName storePrice appPrice original_item_id",
+      });
+
+    res.json({
+      success: true,
+      data: items,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+router.put("/update-show-on-front", async (req, res) => {
+  try {
+    const { itemId, showOnFront } = req.body;
+
+    if (!itemId) {
+      return res.status(400).json({
+        success: false,
+        message: "Item ID is required"
+      });
+    }
+
+    const updatedItem = await Item.findByIdAndUpdate(
+      itemId,
+      { showOnFront },
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      message: "Item updated successfully",
+      data: updatedItem
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+});
+// router.post("/map-items", async (req, res) => {
+//   try {
+//     const { storeId, adminId, selectedItems, categoryId } = req.body;
+
+//     if (!storeId || !adminId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Store ID and Admin ID are required",
+//       });
+//     }
+
+//     if (!categoryId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Category ID is required",
+//       });
+//     }
+
+//     const selectedIds = selectedItems.map(item => item.itemId);
+
+//     // 🔴 Unselect Items → Status False (Only Selected Category)
+//     await Item.updateMany(
+//       {
+//         storeId: storeId,
+//         addedBy: adminId,
+//         addedByString: "admin",
+//         parentId: { $size: 0 }, // Only parent items
+//         "categories.level1": categoryId,
+//         original_item_id: { $nin: selectedIds }
+//       },
+//       { $set: { status: false } }
+//     );
+
+//     // 🔴 Deactivate Variants of Unselected Parents
+//     const unselectedParents = await Item.find({
+//       storeId: storeId,
+//       parentId: { $size: 0 },
+//       "categories.level1": categoryId,
+//       original_item_id: { $nin: selectedIds }
+//     }).select("_id");
+
+//     const parentIds = unselectedParents.map(p => p._id);
+
+//     if (parentIds.length > 0) {
+//       await Item.updateMany(
+//         {
+//           parentId: { $in: parentIds }
+//         },
+//         { $set: { status: false } }
+//       );
+//     }
+
+//     // 🟢 Process Selected Items
+//     for (let item of selectedItems) {
+//       const generalItem = await Item.findOne({
+//         _id: item.itemId,
+//         addedBy: adminId,
+//         addedByString: "admin"
+//       }).populate("variantItems");
+
+//       if (!generalItem) continue;
+
+//       // 🔍 Check Existing Store Parent Item
+//       let existingItem = await Item.findOne({
+//         storeId: storeId,
+//         original_item_id: item.itemId,
+//         parentId: { $size: 0 }
+//       }).populate("variantItems");
+
+//       if (existingItem) {
+//         // ✅ Update Parent Prices
+//         existingItem.status = true;
+//         existingItem.storePrice = item.storePrice;
+//         existingItem.appPrice = item.appPrice;
+//         await existingItem.save();
+
+//         // ✅ Update or Create Variants
+//         if (generalItem.variantItems.length > 0) {
+//           for (let variant of generalItem.variantItems) {
+//             const selectedVariant = item.variants?.find(
+//               v => v.variantId.toString() === variant._id.toString()
+//             );
+
+//             if (!selectedVariant) continue;
+
+//             let existingVariant = await Item.findOne({
+//               storeId: storeId,
+//               original_item_id: variant._id,
+//               parentId: existingItem._id
+//             });
+
+//             if (existingVariant) {
+//               existingVariant.status = true;
+//               existingVariant.storePrice = selectedVariant.storePrice;
+//               existingVariant.appPrice = selectedVariant.appPrice;
+//               await existingVariant.save();
+//             } else {
+//               const variantData = variant.toObject();
+//               delete variantData._id;
+//               delete variantData.createdAt;
+//               delete variantData.updatedAt;
+
+//               variantData.storeId = storeId;
+//               variantData.original_item_id = variant._id;
+//               variantData.addedBy = adminId;
+//               variantData.addedByString = "admin";
+//               variantData.parentId = [existingItem._id];
+//               variantData.storePrice = selectedVariant.storePrice;
+//               variantData.appPrice = selectedVariant.appPrice;
+
+//               const newVariant = await Item.create(variantData);
+//               existingItem.variantItems.push(newVariant._id);
+//             }
+//           }
+
+//           await existingItem.save();
+//         }
+
+//         continue;
+//       }
+
+//       // 🟢 Clone Parent Item
+//       const parentData = generalItem.toObject();
+//       delete parentData._id;
+//       delete parentData.createdAt;
+//       delete parentData.updatedAt;
+
+//       parentData.storeId = storeId;
+//       parentData.original_item_id = generalItem._id;
+//       parentData.addedBy = adminId;
+//       parentData.addedByString = "admin";
+//       parentData.parentId = [];
+//       parentData.variantItems = [];
+//       parentData.storePrice = item.storePrice;
+//       parentData.appPrice = item.appPrice;
+
+//       const newParent = await Item.create(parentData);
+
+//       // 🟢 Clone Variants
+//       if (generalItem.variantItems.length > 0) {
+//         for (let variant of generalItem.variantItems) {
+//           const selectedVariant = item.variants?.find(
+//             v => v.variantId.toString() === variant._id.toString()
+//           );
+
+//           const variantData = variant.toObject();
+//           delete variantData._id;
+//           delete variantData.createdAt;
+//           delete variantData.updatedAt;
+
+//           variantData.storeId = storeId;
+//           variantData.original_item_id = variant._id;
+//           variantData.addedBy = adminId;
+//           variantData.addedByString = "admin";
+//           variantData.parentId = [newParent._id];
+
+//           if (selectedVariant) {
+//             variantData.storePrice = selectedVariant.storePrice;
+//             variantData.appPrice = selectedVariant.appPrice;
+//           }
+
+//           const newVariant = await Item.create(variantData);
+//           newParent.variantItems.push(newVariant._id);
+//         }
+
+//         await newParent.save();
+//       }
+//     }
+
+//     res.json({
+//       success: true,
+//       message: "Items mapped and prices saved successfully.",
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// });
+
+router.post("/map-items", async (req, res) => {
+  try {
+    const { storeId, adminId, selectedItems, categoryId } = req.body;
+
+    if (!storeId || !adminId) {
+      return res.status(400).json({
+        success: false,
+        message: "Store ID and Admin ID are required",
+      });
+    }
+
+    if (!categoryId) {
+      return res.status(400).json({
+        success: false,
+        message: "Category ID is required",
+      });
+    }
+
+    const selectedIds = selectedItems.map(item => item.itemId);
+
+    // =========================================================
+    // 🔴 STEP 1: Unselect Parent Items
+    // =========================================================
+    await Item.updateMany(
+      {
+        storeId,
+        addedBy: adminId,
+        addedByString: "admin",
+        parentId: { $size: 0 },
+        "categories.level1": categoryId,
+        original_item_id: { $nin: selectedIds }
+      },
+      { $set: { status: false } }
+    );
+
+    // =========================================================
+    // 🔴 STEP 2: Unselect ALL CHILDREN (variant + addon)
+    // =========================================================
+    const unselectedParents = await Item.find({
+      storeId,
+      parentId: { $size: 0 },
+      "categories.level1": categoryId,
+      original_item_id: { $nin: selectedIds }
+    }).select("_id");
+
+    const parentIds = unselectedParents.map(p => p._id);
+
+    if (parentIds.length > 0) {
+      await Item.updateMany(
+        {
+          parentId: { $in: parentIds },
+          variant_or_addon: { $in: ["variant", "addon"] }
+        },
+        { $set: { status: false } }
+      );
+    }
+
+    // =========================================================
+    // 🟢 STEP 3: Process Selected Items
+    // =========================================================
+    for (let item of selectedItems) {
+
+      const generalItem = await Item.findOne({
+        _id: item.itemId,
+        addedBy: adminId,
+        addedByString: "admin"
+      })
+        .populate("variantItems")
+        .populate("addons");
+
+      if (!generalItem) continue;
+
+      let existingItem = await Item.findOne({
+        storeId,
+        original_item_id: item.itemId,
+        parentId: { $size: 0 }
+      })
+        .populate("variantItems")
+        .populate("addons");
+
+      // =====================================================
+      // 🟢 CASE 1: EXISTING ITEM
+      // =====================================================
+      if (existingItem) {
+
+        existingItem.status = true;
+        existingItem.storePrice = item.storePrice;
+        existingItem.appPrice = item.appPrice;
+        await existingItem.save();
+
+        // =========================
+        // ✅ VARIANTS
+        // =========================
+        for (let variant of generalItem.variantItems || []) {
+
+          const selectedVariant = item.variants?.find(
+            v => v.variantId.toString() === variant._id.toString()
+          );
+
+          if (!selectedVariant) {
+            await Item.updateMany(
+              {
+                storeId,
+                original_item_id: variant._id,
+                parentId: existingItem._id
+              },
+              { $set: { status: false } }
+            );
+            continue;
+          }
+
+          let existingVariant = await Item.findOne({
+            storeId,
+            original_item_id: variant._id,
+            parentId: existingItem._id
+          });
+
+          if (existingVariant) {
+            existingVariant.status = true;
+            existingVariant.storePrice = selectedVariant.storePrice;
+            existingVariant.appPrice = selectedVariant.appPrice;
+            await existingVariant.save();
+          } else {
+            const data = variant.toObject();
+            delete data._id;
+
+            data.storeId = storeId;
+            data.original_item_id = variant._id;
+            data.addedBy = adminId;
+            data.addedByString = "admin";
+            data.parentId = [existingItem._id];
+            data.storePrice = selectedVariant.storePrice;
+            data.appPrice = selectedVariant.appPrice;
+
+            const newVar = await Item.create(data);
+            existingItem.variantItems.push(newVar._id);
+          }
+        }
+
+        // =========================
+        // ✅ ADDONS (SAME LOGIC)
+        // =========================
+        for (let addon of generalItem.addons || []) {
+
+          const selectedAddon = item.addons?.find(
+            a => a.addonId.toString() === addon._id.toString()
+          );
+
+          if (!selectedAddon) {
+            await Item.updateMany(
+              {
+                storeId,
+                original_item_id: addon._id,
+                parentId: existingItem._id
+              },
+              { $set: { status: false } }
+            );
+            continue;
+          }
+
+          let existingAddon = await Item.findOne({
+            storeId,
+            original_item_id: addon._id,
+            parentId: existingItem._id
+          });
+
+          if (existingAddon) {
+            existingAddon.status = true;
+            existingAddon.storePrice = selectedAddon.storePrice;
+            existingAddon.appPrice = selectedAddon.appPrice;
+            await existingAddon.save();
+          } else {
+            const data = addon.toObject();
+            delete data._id;
+
+            data.storeId = storeId;
+            data.original_item_id = addon._id;
+            data.addedBy = adminId;
+            data.addedByString = "admin";
+            data.parentId = [existingItem._id];
+            data.storePrice = selectedAddon.storePrice;
+            data.appPrice = selectedAddon.appPrice;
+
+            const newAddon = await Item.create(data);
+            existingItem.addons.push(newAddon._id);
+          }
+        }
+
+        await existingItem.save();
+        continue;
+      }
+
+      // =====================================================
+      // 🟢 CASE 2: NEW ITEM (CLONE)
+      // =====================================================
+      const parentData = generalItem.toObject();
+      delete parentData._id;
+
+      parentData.storeId = storeId;
+      parentData.original_item_id = generalItem._id;
+      parentData.addedBy = adminId;
+      parentData.addedByString = "admin";
+      parentData.parentId = [];
+      parentData.variantItems = [];
+      parentData.addons = [];
+      parentData.storePrice = item.storePrice;
+      parentData.appPrice = item.appPrice;
+
+      const newParent = await Item.create(parentData);
+
+      // =========================
+      // 🟢 CLONE VARIANTS
+      // =========================
+      for (let variant of generalItem.variantItems || []) {
+
+        const selectedVariant = item.variants?.find(
+          v => v.variantId.toString() === variant._id.toString()
+        );
+
+        if (!selectedVariant) continue;
+
+        const data = variant.toObject();
+        delete data._id;
+
+        data.storeId = storeId;
+        data.original_item_id = variant._id;
+        data.addedBy = adminId;
+        data.addedByString = "admin";
+        data.parentId = [newParent._id];
+        data.storePrice = selectedVariant.storePrice;
+        data.appPrice = selectedVariant.appPrice;
+
+        const newVar = await Item.create(data);
+        newParent.variantItems.push(newVar._id);
+      }
+
+      // =========================
+      // 🟢 CLONE ADDONS
+      // =========================
+      for (let addon of generalItem.addons || []) {
+
+        const selectedAddon = item.addons?.find(
+          a => a.addonId.toString() === addon._id.toString()
+        );
+
+        if (!selectedAddon) continue;
+
+        const data = addon.toObject();
+        delete data._id;
+
+        data.storeId = storeId;
+        data.original_item_id = addon._id;
+        data.addedBy = adminId;
+        data.addedByString = "admin";
+        data.parentId = [newParent._id];
+        data.storePrice = selectedAddon.storePrice;
+        data.appPrice = selectedAddon.appPrice;
+
+        const newAddon = await Item.create(data);
+        newParent.addons.push(newAddon._id);
+      }
+
+      await newParent.save();
+    }
+
+    res.json({
+      success: true,
+      message: "Items mapped successfully with variants & addons",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+module.exports = router;
