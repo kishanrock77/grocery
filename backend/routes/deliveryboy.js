@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const DeliveryBoy = require("../models/DeliveryBoy");
-const upload = require("../middleware/upload"); // same middleware use kar sakte ho
+const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
 
 
 /*
@@ -10,7 +10,7 @@ ADD DELIVERY BOY
 --------------------------------
 */
 
-router.post("/add", upload.single("profilePic"), async (req, res) => {
+router.post("/add", uploadSingleImage('image'), async (req, res) => {
   try {
     console.log("lllllll")
     const existing = await DeliveryBoy.findOne({
@@ -25,7 +25,8 @@ router.post("/add", upload.single("profilePic"), async (req, res) => {
     let profilePic = "";
 
     if (req.file) {
-      profilePic = "uploads/deliveryboy/" + req.file.filename;
+      profilePic =   req.file.filename;
+      // profilePic = "uploads/deliveryboy/" + req.file.filename;
     }
     let deliveryAreas = [];
 
@@ -120,7 +121,7 @@ UPDATE
 --------------------------------
 */
 
-router.put("/update/:id", upload.single("profilePic"), async (req, res) => {
+router.put("/update/:id", uploadSingleImage('image'), async (req, res) => {
   try {
 
     let updateData = req.body;
@@ -136,7 +137,8 @@ router.put("/update/:id", upload.single("profilePic"), async (req, res) => {
     }
 
     if (req.file) {
-      updateData.profilePic = "uploads/deliveryboy/" + req.file.filename;
+      updateData.profilePic =   req.file.filename;
+      // updateData.profilePic = "uploads/deliveryboy/" + req.file.filename;
     }
     updateData.deliveryAreas = JSON.parse(req.body.deliveryAreas || "[]");
         updateData.pickupAreas = JSON.parse(req.body.pickupAreas || "[]");

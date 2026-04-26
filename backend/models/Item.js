@@ -29,9 +29,9 @@ const ItemSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-variant_or_addon: {
+    variant_or_addon: {
       type: String,
-      enum: ["variant", "addon",''],
+      enum: ["variant", "addon", ''],
       default: "variant",
     },
     appPrice: {
@@ -47,7 +47,26 @@ variant_or_addon: {
         level3: { type: String },
       },
     ],
+    // ✅ NEW: Item Questions
+    itemQuestions: [
+      {
+        title: { type: String },
+       options: [
+  {
+    label: { type: String, required: true },
+    storePrice: { type: Number, required: true },
+    appPrice: { type: Number, default: 0 }
+  }
+]
+      }
+    ],
 
+    // ✅ NEW: Unit
+    unit: {
+      type: String,
+      enum: ["kg", "litre", "piece", "pound", ""],
+      default: ""
+    },
     // ✅ Dynamic Filter Keys
     filterKeys: [
       {

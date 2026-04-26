@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
-const upload = require("../middleware/uploadcategory"); // same middleware use kar sakte ho
+const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 
-router.post("/add", upload.single("image"), async (req, res) => {
+
+router.post("/add", uploadSingleImage('image'), async (req, res) => {
   try {
     const data = req.body;
 
@@ -35,7 +36,8 @@ router.post("/add", upload.single("image"), async (req, res) => {
       level_no: data.level_no,
       parent_id: data.parent_id || null,
       grandparent_id: data.grandparent_id || null,
-      imagepath: req.file ? "uploads/category/" + req.file.filename : ""
+      //imagepath: req.file ? "uploads/category/" + req.file.filename : ""
+      imagepath: req.file ? req.file.filename : ""
     });
 
     await category.save();
@@ -48,7 +50,7 @@ router.post("/add", upload.single("image"), async (req, res) => {
 });
 
 
-router.put("/update/:id", upload.single("image"), async (req, res) => {
+router.put("/update/:id", uploadSingleImage('image'), async (req, res) => {
   try {
     const data = req.body;
 
@@ -70,7 +72,7 @@ router.put("/update/:id", upload.single("image"), async (req, res) => {
         message: "Category already exists"
       });
     }
-let filterarr = [];
+    let filterarr = [];
     if (data.filtersforlevel3category != '') {
       filterarr = data.filtersforlevel3category.split(",")
     }
@@ -85,7 +87,8 @@ let filterarr = [];
     };
 
     if (req.file) {
-      updateObj.imagepath = "uploads/category/" + req.file.filename;
+      // updateObj.imagepath = "uploads/category/" + req.file.filename;
+      updateObj.imagepath = req.file.filename;
     }
 
     await Category.findByIdAndUpdate(req.params.id, updateObj);

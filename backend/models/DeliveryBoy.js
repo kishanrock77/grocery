@@ -61,12 +61,12 @@ const DeliveryBoySchema = new mongoose.Schema({
     default: "salary"
   },
   commission: {
-    type: Number,
-    default: 0
+    type: String,
+    default: "0"
   },
   comissionType: {
     type: String,
-    enum: ["percent", "fixed"],
+    enum: ["percent", "fixed",''],
     default: "percent"
   },
   status: {

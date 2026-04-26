@@ -2,27 +2,39 @@ const mongoose = require("mongoose");
 
 const DeliveryAreaSchema = new mongoose.Schema({
 
-areaName:{
-type:String,
-required:true
-},
+    areaName: {
+        type: String,
+        required: true,
+        trim: true
+    },
 
-areaType:{
-type:String,
-enum:["city","village"],
-required:true
-},
+    cityName: {
+        type: String,
+        required: true,
+        trim: true
+    },
 
-adminId:{
-type:mongoose.Schema.Types.ObjectId,
-ref:"AdminUser"
-},
+    stateName: {
+        type: String,
+        default: "Uttar Pradesh"
+    },
 
-status:{
-type:Boolean,
-default:true
-}
+    adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "AdminUser"
+    },
 
-},{timestamps:true});
+    status: {
+        type: Boolean,
+        default: true
+    }
 
-module.exports = mongoose.model("DeliveryArea",DeliveryAreaSchema);
+}, { timestamps: true });
+
+// ✅ UNIQUE COMBINATION
+DeliveryAreaSchema.index(
+    { cityName: 1, areaName: 1 },
+    { unique: true }
+);
+
+module.exports = mongoose.model("DeliveryArea", DeliveryAreaSchema);

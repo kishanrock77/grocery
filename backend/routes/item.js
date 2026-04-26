@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Item = require("../models/Item");
-const upload = require("../middleware/uploaditem");
+const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
 
 // ✅ Safe JSON Parser
 const parseJSON = (data) => {
@@ -19,7 +19,7 @@ const parseJSON = (data) => {
 // ===============================
 // ✅ Add Item
 // ===============================
-router.post("/add", upload.array("images", 5), async (req, res) => {
+router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
   try {
     const body = req.body;
     let storeObjectId = null;
@@ -48,7 +48,11 @@ router.post("/add", upload.array("images", 5), async (req, res) => {
       variantItems: body.variantItems ? parseJSON(body.variantItems) : [],
       addons: body.addons ? parseJSON(body.addons) : [],
       showOnFront: body.showOnFront === "true",
-      images: req.files ? req.files.map((f) => "uploads/items/" + f.filename) : [],
+      //images: req.files ? req.files.map((f) => "uploads/items/" + f.filename) : [],
+      images: req.files ? req.files.map((f) =>  f.filename) : [],
+      itemQuestions: body.itemQuestions ? parseJSON(body.itemQuestions) : [],
+
+      unit: body.unit || "",
       parentId: [],
     });
 
@@ -106,92 +110,109 @@ router.get("/detail/:id", async (req, res) => {
 // ===============================
 // ✅ Update Item
 // ===============================
-router.put("/update/:id", upload.array("images", 5), async (req, res) => {
-  try {
+router.put(
+  "/update/:id",
+  uploadMultipleImages("images", 5),
+  async (req, res) => {
+    try {
+      const body = req.body;
 
-    const body = req.body;
-
-    const existingItem = await Item.findById(req.params.id).where('status').equals(true);
-    if (!existingItem) {
-      return res.status(404).json({
-        success: false,
-        message: "Item not found",
-      });
-    }
-
-    let updateData = {
-      itemType: body.itemType,
-      variant_or_addon: body.variant_or_addon,
-      itemName: body.itemName,
-      itemSubName: body.itemSubName || "",
-      description: body.description || "",
-      storePrice: Number(body.storePrice) || 0,
-      appPrice: Number(body.appPrice) || 0,
-      categories: parseJSON(body.categories),
-      filterKeys: parseJSON(body.filterKeys),
-      useThisItemAsChild: body.useThisItemAsChild === "true",
-      variantItems: body.variantItems ? parseJSON(body.variantItems) : [],
-      addons: body.addons ? parseJSON(body.addons) : [],
-
-    };
-
-    // ✅ Replace Images if New Ones Uploaded
-    if (req.files && req.files.length > 0) {
-      updateData.images = req.files.map((f) => {
-
-        f.filename.replace('uploads/items/', "");
-        return "uploads/items/" + f.filename
-
-      });
-    }
-
-    if (body.oldimages.length > 0) {
-      updateData.images = updateData.images ? updateData.images.concat(parseJSON(body.oldimages)) : parseJSON(body.oldimages);
-    }
-    if (body.storeId !== undefined) {
-      if (
-        body.storeId &&
-        body.storeId !== "-1" &&
-        mongoose.Types.ObjectId.isValid(body.storeId)
-      ) {
-        updateData.storeId = new mongoose.Types.ObjectId(body.storeId);
-      } else {
-        updateData.storeId = null;
+      // 🔍 Find existing item
+      const existingItem = await Item.findById(req.params.id).where('status').equals(true);
+      if (!existingItem) {
+        return res.status(404).json({
+          success: false,
+          message: "Item not found",
+        });
       }
-    }
-    const updatedItem = await Item.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    );
 
-    // ✅ Remove Old Parent References
-    await Item.updateMany(
-      { parentId: req.params.id },
-      { $pull: { parentId: req.params.id } }
-    );
+      // 🔧 Safe JSON parser
+      const safeParse = (val, fallback = []) => {
+        try {
+          return val ? JSON.parse(val) : fallback;
+        } catch {
+          return fallback;
+        }
+      };
 
-    // ✅ Add New Variant References
-    if (body.itemType === "variant" && body.variantItems) {
-      const variantIds = parseJSON(body.variantItems);
-      await Item.updateMany(
-        { _id: { $in: variantIds } },
-        { $addToSet: { parentId: req.params.id } }
+      // 🧱 Base update data
+      let updateData = {
+        itemType: body.itemType,
+        variant_or_addon: body.variant_or_addon,
+        itemName: body.itemName,
+        itemSubName: body.itemSubName || "",
+        description: body.description || "",
+        storePrice: Number(body.storePrice) || 0,
+        appPrice: Number(body.appPrice) || 0,
+        categories: safeParse(body.categories),
+        filterKeys: safeParse(body.filterKeys),
+        useThisItemAsChild: body.useThisItemAsChild === "true",
+        variantItems: safeParse(body.variantItems),
+        addons: safeParse(body.addons),
+        itemQuestions: safeParse(body.itemQuestions),
+        unit: body.unit || "",
+      };
+
+      // 🖼️ IMAGE HANDLING (S3 READY)
+      let oldImages = safeParse(body.oldimages);
+      let newImages = req.body.images || []; // middleware se aa raha hai
+
+      if (newImages.length > 0) {
+        updateData.images = [...newImages, ...oldImages];
+      } else if (oldImages.length > 0) {
+        updateData.images = oldImages;
+      }
+
+      // 🏬 Store handling
+      if (body.storeId !== undefined) {
+        if (
+          body.storeId &&
+          body.storeId !== "-1" &&
+          mongoose.Types.ObjectId.isValid(body.storeId)
+        ) {
+          updateData.storeId = new mongoose.Types.ObjectId(body.storeId);
+        } else {
+          updateData.storeId = null;
+        }
+      }
+
+      // 🔄 Update item
+      const updatedItem = await Item.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true }
       );
-    }
 
-    res.json({
-      success: true,
-      message: "Item Updated Successfully",
-      data: updatedItem,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+      // 🧹 Remove old parent refs
+      await Item.updateMany(
+        { parentId: req.params.id },
+        { $pull: { parentId: req.params.id } }
+      );
+
+      // 🔗 Add new variant refs
+      if (body.itemType === "variant" && body.variantItems) {
+        const variantIds = safeParse(body.variantItems);
+        await Item.updateMany(
+          { _id: { $in: variantIds } },
+          { $addToSet: { parentId: req.params.id } }
+        );
+      }
+
+      return res.json({
+        success: true,
+        message: "Item Updated Successfully",
+        data: updatedItem,
+      });
+
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        success: false,
+        message: err.message || "Something went wrong",
+      });
+    }
   }
-});
+);
 
 
 // ===============================
@@ -214,7 +235,7 @@ router.post("/child-items", async (req, res) => {
       };
     } else {
       filter = {
-        useThisItemAsChild: true,        variant_or_addon: "variant",
+        useThisItemAsChild: true, variant_or_addon: "variant",
 
         status: true,
         storeId: new mongoose.Types.ObjectId(storeId)
@@ -266,7 +287,7 @@ router.post("/addon-items", async (req, res) => {
     let filter;
     if (userType === 'admin') {
       filter = {
-        useThisItemAsChild: true,        variant_or_addon: "addon",
+        useThisItemAsChild: true, variant_or_addon: "addon",
 
         status: true,
         addedBy: new mongoose.Types.ObjectId(adminId),
@@ -275,7 +296,7 @@ router.post("/addon-items", async (req, res) => {
       };
     } else {
       filter = {
-        useThisItemAsChild: true,        variant_or_addon: "addon",
+        useThisItemAsChild: true, variant_or_addon: "addon",
         status: true,
         storeId: new mongoose.Types.ObjectId(storeId)
       };
@@ -506,17 +527,15 @@ router.get("/general-items/:categoryId/:adminId", async (req, res) => {
     })
 
       .populate({
-  path: "variantItems",
-  match: { status: true },
-  select: "itemName storePrice appPrice itemType variant_or_addon original_item_id",
-  options: { sort: { itemName: 1 } }
-})
-.populate({
-  path: "addons",
-  match: { status: true },
-  select: "itemName storePrice appPrice itemType variant_or_addon original_item_id",
-  options: { sort: { itemName: 1 } }
-})
+        path: "variantItems",
+        match: { status: true }, 
+        options: { sort: { itemName: 1 } }
+      })
+      .populate({
+        path: "addons",
+        match: { status: true }, 
+        options: { sort: { itemName: 1 } }
+      })
       .sort({ itemName: 1 });
 
     res.json({
@@ -543,11 +562,11 @@ router.get("/store-items/:storeId", async (req, res) => {
       //.select("itemName storePrice appPrice original_item_id variantItems")
       .populate({
         path: "variantItems",
-      //  select: "itemName storePrice appPrice original_item_id",
+        //  select: "itemName storePrice appPrice original_item_id",
       })
       .populate({
         path: "addons",
-      //  select: "itemName storePrice appPrice original_item_id",
+        //  select: "itemName storePrice appPrice original_item_id",
       });
 
     res.json({
@@ -862,6 +881,7 @@ router.post("/map-items", async (req, res) => {
         existingItem.status = true;
         existingItem.storePrice = item.storePrice;
         existingItem.appPrice = item.appPrice;
+        existingItem.itemQuestions = item.itemQuestions || [];
         await existingItem.save();
 
         // =========================
@@ -895,6 +915,8 @@ router.post("/map-items", async (req, res) => {
             existingVariant.status = true;
             existingVariant.storePrice = selectedVariant.storePrice;
             existingVariant.appPrice = selectedVariant.appPrice;
+              existingVariant.itemQuestions = selectedVariant.itemQuestions || [];
+
             await existingVariant.save();
           } else {
             const data = variant.toObject();
@@ -971,7 +993,7 @@ router.post("/map-items", async (req, res) => {
       // =====================================================
       const parentData = generalItem.toObject();
       delete parentData._id;
-
+parentData.itemQuestions = item.itemQuestions || [];
       parentData.storeId = storeId;
       parentData.original_item_id = generalItem._id;
       parentData.addedBy = adminId;
@@ -997,7 +1019,7 @@ router.post("/map-items", async (req, res) => {
 
         const data = variant.toObject();
         delete data._id;
-
+data.itemQuestions = selectedVariant.itemQuestions || [];
         data.storeId = storeId;
         data.original_item_id = variant._id;
         data.addedBy = adminId;

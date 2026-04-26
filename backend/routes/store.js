@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Store = require("../models/Store");
-const upload = require("../middleware/storeUpload");
+const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
 
 
 
@@ -75,7 +75,7 @@ ADD STORE
 --------------------------------
 */
 
-router.post("/add", upload.array("images", 5), async (req, res) => {
+router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
 
   try {
 
@@ -92,7 +92,7 @@ router.post("/add", upload.array("images", 5), async (req, res) => {
 
     if (req.files) {
       req.files.forEach(file => {
-        imageArr.push("uploads/store/" + file.filename)
+        imageArr.push(  file.filename)
       });
     }
 
@@ -312,72 +312,72 @@ UPDATE STORE
 --------------------------------
 */
 
-router.put("/update/:id", upload.array("images", 5), async (req, res) => {
+router.put(
+  "/update/:id",
+  uploadMultipleImages("images", 5),
+  async (req, res) => {
+    try {
+      let body = req.body;
+      let updateData = { ...body };
 
-  try {
-
-    let updateData = req.body;
-    const existing = await Store.findOne({
-      storeName: req.body.storeName,
-      status: true,
-      _id: { $ne: req.params.id }
-    });
-
-    if (existing) {
-      return res.json({ msg: "Store Name already exists", status: false });
-    }
-    if (req.body.longitude && req.body.latitude) {
-
-      updateData.location = {
-        type: "Point",
-        coordinates: [
-          parseFloat(req.body.longitude),
-          parseFloat(req.body.latitude)
-        ]
-      };
-
-    }
-    let imageArr = [];
-
-    if (req.body.existingImages) {
-
-      if (typeof req.body.existingImages === "string") {
-        imageArr = JSON.parse(req.body.existingImages);
-      } else {
-        imageArr = req.body.existingImages;
-      }
-
-    }
-
-    /* NEW UPLOADED IMAGES */
-
-    if (req.files && req.files.length > 0) {
-
-      req.files.forEach(file => {
-        imageArr.push("uploads/store/" + file.filename)
+      // 🔍 Duplicate store check
+      const existing = await Store.findOne({
+        storeName: body.storeName,
+        status: true,
+        _id: { $ne: req.params.id }
       });
 
+      if (existing) {
+        return res.json({ msg: "Store Name already exists", status: false });
+      }
+
+      // 📍 Location handling
+      if (body.longitude && body.latitude) {
+        updateData.location = {
+          type: "Point",
+          coordinates: [
+            parseFloat(body.longitude),
+            parseFloat(body.latitude)
+          ]
+        };
+      }
+
+      // 🔧 Safe JSON parse
+      const safeParse = (val, fallback = []) => {
+        try {
+          return val ? JSON.parse(val) : fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      // 🖼️ IMAGE HANDLING (S3 READY)
+      let oldImages = safeParse(body.existingImages);
+      let newImages = req.body.images || []; // middleware से
+
+      if (newImages.length > 0) {
+        updateData.images = [...newImages, ...oldImages];
+      } else if (oldImages.length > 0) {
+        updateData.images = oldImages;
+      }
+
+      // 🔄 Update
+      await Store.findByIdAndUpdate(req.params.id, updateData);
+
+      return res.json({
+        msg: "Store updated successfully",
+        status: true
+      });
+
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        msg: err.message || "Something went wrong",
+        status: false
+      });
     }
-
-    updateData.images = imageArr;
-
-
-    await Store.findByIdAndUpdate(
-      req.params.id,
-      updateData
-    );
-
-    res.json({
-      msg: "Store updated successfully", status: true
-    });
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
   }
-
-});
+);
 
 
 
