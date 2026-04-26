@@ -1,16 +1,37 @@
 const express = require("express");
 const router = express.Router();
 const DeliveryBoy = require("../models/DeliveryBoy");
-const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
+const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
+const { S3Client } = require("@aws-sdk/client-s3");
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
+  }
+});
+const deleteFromS3 = async (url) => {
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key
+    }));
+  } catch (err) {
+    console.error("S3 delete error:", err);
+  }
+};
 /*
 --------------------------------
 ADD DELIVERY BOY
 --------------------------------
 */
 
- router.post("/add", uploadSingleImage("image"), async (req, res) => {
+ router.post("/add", uploadSingleImage("profilePic"), async (req, res) => {
   try {
     const body = req.body;
 
@@ -34,7 +55,7 @@ ADD DELIVERY BOY
 
     if (req.file) {
       // 🔥 IMPORTANT: use S3 URL
-      profilePic = req.file.location;
+      profilePic =body.imagepath;
     }
 
     // =========================
@@ -133,7 +154,7 @@ UPDATE
 
  router.put(
   "/update/:id",
-  uploadSingleImage("image"),
+  uploadSingleImage("profilePic"),
   async (req, res) => {
     try {
       const body = req.body;
@@ -179,7 +200,7 @@ UPDATE
 
       if (req.file) {
         // 🔥 S3 URL
-        profilePic = req.file.location;
+        profilePic =body.imagepath;
       }
 
       // =========================

@@ -2,99 +2,74 @@ const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
+const { S3Client } = require("@aws-sdk/client-s3");
 
-router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
-  try {
-    const body = req.body;
-
-    // 🔧 Safe JSON parser
-    const safeParse = (val, fallback = []) => {
-      try {
-        return val ? JSON.parse(val) : fallback;
-      } catch {
-        return fallback;
-      }
-    };
-
-    // 🏬 Store handling
-    let storeObjectId = null;
-    if (
-      body.storeId &&
-      body.storeId !== "-1" &&
-      mongoose.Types.ObjectId.isValid(body.storeId)
-    ) {
-      storeObjectId = new mongoose.Types.ObjectId(body.storeId);
-    }
-
-    // 🖼️ Images from S3 middleware
-    let images = req.body.images || [];
-    if (!Array.isArray(images)) images = [];
-
-    // 🧱 Create item
-    const item = new Item({
-      itemType: body.itemType,
-      variant_or_addon: body.variant_or_addon,
-
-      itemName: body.itemName,
-      itemSubName: body.itemSubName || "",
-      description: body.description || "",
-
-      storePrice: Number(body.storePrice) || 0,
-      appPrice: Number(body.appPrice) || 0,
-
-      categories: safeParse(body.categories),
-      filterKeys: safeParse(body.filterKeys),
-
-      useThisItemAsChild: body.useThisItemAsChild === "true",
-
-      addedBy: new mongoose.Types.ObjectId(body.addedBy),
-      addedByString: body.addedByString,
-
-      storeId: storeObjectId,
-
-      variantItems: safeParse(body.variantItems),
-      addons: safeParse(body.addons),
-
-      itemQuestions: safeParse(body.itemQuestions),
-
-      showOnFront: body.showOnFront === "true",
-
-      // ✅ FINAL IMAGE FIELD
-      images: images,
-
-      unit: body.unit || "",
-      parentId: []
-    });
-
-    const savedItem = await item.save();
-
-    // 🔗 Variant Linking
-    if (body.itemType === "variant" && body.variantItems) {
-      const variantIds = safeParse(body.variantItems);
-
-      await Item.updateMany(
-        { _id: { $in: variantIds } },
-        { $addToSet: { parentId: savedItem._id } }
-      );
-    }
-
-    res.json({
-      success: true,
-      message: "Item Added Successfully",
-      data: savedItem,
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
   }
 });
 
- router.put(
+const deleteFromS3 = async (url) => {
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key
+    }));
+  } catch (err) {
+    console.error("S3 delete error:", err);
+  }
+};
+router.post("/add", uploadSingleImage('image'), async (req, res) => {
+  try {
+    const data = req.body;
+    const existing = await Category.findOne({
+      categoryName: new RegExp(`^${data.categoryName.trim()}$`, "i"),
+      addedBy: data.addedBy,
+      level_no: data.level_no,
+      parent_id: data.parent_id || null,
+      grandparent_id: data.grandparent_id || null,
+      status: true
+    });
+    if (existing) {
+      return res.json({
+        success: false,
+        message: "Category already exists"
+      });
+    }
+
+    let filterarr = [];
+    if (data.filtersforlevel3category) {
+      filterarr = data.filtersforlevel3category.split(",");
+    }
+
+    const category = new Category({
+      categoryName: data.categoryName,
+      addedBy: data.addedBy,
+      filtersforlevel3category: filterarr,
+      level_no: data.level_no,
+      parent_id: data.parent_id || null,
+      grandparent_id: data.grandparent_id || null,
+
+      // ✅ FINAL FIX
+      imagepath: data.imagepath || ""   // 👈 middleware se aa raha hai
+    });
+
+    await category.save();
+
+    res.json({ success: true, message: "Category saved" });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router.put(
   "/update/:id",
   uploadSingleImage("image"),
   async (req, res) => {
@@ -102,8 +77,9 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
       const data = req.body;
 
       // 🔍 Duplicate Check (exclude current)
+
       const existing = await Category.findOne({
-        categoryName: data.categoryName,
+        categoryName: new RegExp(`^${data.categoryName.trim()}$`, "i"),
         addedBy: data.addedBy,
         level_no: data.level_no,
         parent_id: data.parent_id || null,
@@ -111,7 +87,6 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
         status: true,
         _id: { $ne: req.params.id }
       });
-
       if (existing) {
         return res.json({
           success: false,
@@ -135,7 +110,7 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
 
       if (req.file) {
         // 🔥 S3 URL (IMPORTANT FIX)
-        imagepath = req.file.location;
+        imagepath = data.imagepath;
       }
 
       // =========================

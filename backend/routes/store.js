@@ -1,9 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const Store = require("../models/Store");
-const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
+const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
+const { S3Client } = require("@aws-sdk/client-s3");
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
+  }
+});
 
 /*
 --------------------------------
@@ -75,6 +84,18 @@ ADD STORE
 --------------------------------
 */
 
+const deleteFromS3 = async (url) => {
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key
+    }));
+  } catch (err) {
+    console.error("S3 delete error:", err);
+  }
+};
  router.post(
   "/add",
   uploadMultipleImages("images", 5),
@@ -82,9 +103,6 @@ ADD STORE
     try {
       const body = req.body;
 
-      // =========================
-      // 🔍 DUPLICATE CHECK
-      // =========================
       const existing = await Store.findOne({
         storeName: body.storeName,
         status: true
@@ -97,21 +115,10 @@ ADD STORE
         });
       }
 
-      // =========================
-      // 🖼️ IMAGE HANDLING (S3 FIX)
-      // =========================
-      let imageArr = [];
+      // ✅ USE FROM BODY (NOT req.files)
+      const imageArr = body.images || [];
 
-      if (req.files && req.files.length > 0) {
-        // 🔥 IMPORTANT: use location (URL)
-        imageArr = req.files.map(file => file.location);
-      }
-
-      // =========================
-      // 📍 LOCATION SAFE
-      // =========================
       let location = null;
-
       if (body.longitude && body.latitude) {
         location = {
           type: "Point",
@@ -122,9 +129,6 @@ ADD STORE
         };
       }
 
-      // =========================
-      // 🧱 CREATE STORE
-      // =========================
       const store = new Store({
         addedBy: body.addedBy,
         storeName: body.storeName,
@@ -151,9 +155,11 @@ ADD STORE
 
         openCloseStatus: body.openCloseStatus,
         ifCloseStatusReason: body.ifCloseStatusReason,
-        weekOff: body.weekOff,
 
-        images: imageArr
+        // ⚠️ IMPORTANT
+        weekOff: body.weekOff ? JSON.parse(body.weekOff) : [],
+
+        images: imageArr // ✅ FINAL
       });
 
       await store.save();
