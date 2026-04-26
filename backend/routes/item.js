@@ -2,8 +2,18 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Item = require("../models/Item");
-const {uploadSingleImage, uploadMultipleImages} = require("../middleware/uploadAWSS3");
+const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
+const { S3Client } = require("@aws-sdk/client-s3");
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
+  }
+});
 // ✅ Safe JSON Parser
 const parseJSON = (data) => {
   if (!data) return [];
@@ -15,7 +25,18 @@ const parseJSON = (data) => {
   }
 };
 
+const deleteFromS3 = async (url) => {
+  try {
+    const key = url.split(".amazonaws.com/")[1];
 
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key
+    }));
+  } catch (err) {
+    console.error("S3 delete error:", err);
+  }
+};
 // ===============================
 // ✅ Add Item
 // ===============================
@@ -49,7 +70,8 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
       addons: body.addons ? parseJSON(body.addons) : [],
       showOnFront: body.showOnFront === "true",
       //images: req.files ? req.files.map((f) => "uploads/items/" + f.filename) : [],
-      images: req.files ? req.files.map((f) =>  f.filename) : [],
+
+      images: body.images || [],
       itemQuestions: body.itemQuestions ? parseJSON(body.itemQuestions) : [],
 
       unit: body.unit || "",
@@ -110,6 +132,8 @@ router.get("/detail/:id", async (req, res) => {
 // ===============================
 // ✅ Update Item
 // ===============================
+
+
 router.put(
   "/update/:id",
   uploadMultipleImages("images", 5),
@@ -117,7 +141,7 @@ router.put(
     try {
       const body = req.body;
 
-      // 🔍 Find existing item
+      // 🔍 Existing item
       const existingItem = await Item.findById(req.params.id).where('status').equals(true);
       if (!existingItem) {
         return res.status(404).json({
@@ -135,33 +159,56 @@ router.put(
         }
       };
 
-      // 🧱 Base update data
+      // =========================
+      // 🖼️ IMAGE HANDLING (FINAL)
+      // =========================
+
+      let oldImages = safeParse(body.oldimages, []);
+      let newImages = req.body.images || [];
+
+      if (!Array.isArray(oldImages)) oldImages = [];
+      if (!Array.isArray(newImages)) newImages = [];
+
+      // 🔴 Find removed images (for delete)
+      const removedImages = (existingItem.images || []).filter(
+        (img) => !oldImages.includes(img)
+      );
+
+      // 🔥 Delete from S3
+      for (let img of removedImages) {
+        await deleteFromS3(img);
+      }
+
+      // ✅ Final images
+      const finalImages = [...oldImages, ...newImages];
+
+      // =========================
+      // 🧱 MAIN UPDATE DATA
+      // =========================
+
       let updateData = {
         itemType: body.itemType,
         variant_or_addon: body.variant_or_addon,
         itemName: body.itemName,
         itemSubName: body.itemSubName || "",
         description: body.description || "",
+
         storePrice: Number(body.storePrice) || 0,
         appPrice: Number(body.appPrice) || 0,
+
         categories: safeParse(body.categories),
         filterKeys: safeParse(body.filterKeys),
+
         useThisItemAsChild: body.useThisItemAsChild === "true",
+
         variantItems: safeParse(body.variantItems),
         addons: safeParse(body.addons),
         itemQuestions: safeParse(body.itemQuestions),
+
         unit: body.unit || "",
+
+        images: finalImages
       };
-
-      // 🖼️ IMAGE HANDLING (S3 READY)
-      let oldImages = safeParse(body.oldimages);
-      let newImages = req.body.images || []; // middleware se aa raha hai
-
-      if (newImages.length > 0) {
-        updateData.images = [...newImages, ...oldImages];
-      } else if (oldImages.length > 0) {
-        updateData.images = oldImages;
-      }
 
       // 🏬 Store handling
       if (body.storeId !== undefined) {
@@ -176,22 +223,30 @@ router.put(
         }
       }
 
-      // 🔄 Update item
+      // =========================
+      // 🔄 UPDATE ITEM
+      // =========================
+
       const updatedItem = await Item.findByIdAndUpdate(
         req.params.id,
         updateData,
         { new: true }
       );
 
-      // 🧹 Remove old parent refs
+      // =========================
+      // 🔗 VARIANT LINKING
+      // =========================
+
+      // 🧹 remove old parent
       await Item.updateMany(
         { parentId: req.params.id },
         { $pull: { parentId: req.params.id } }
       );
 
-      // 🔗 Add new variant refs
+      // 🔗 add new
       if (body.itemType === "variant" && body.variantItems) {
         const variantIds = safeParse(body.variantItems);
+
         await Item.updateMany(
           { _id: { $in: variantIds } },
           { $addToSet: { parentId: req.params.id } }
@@ -213,7 +268,6 @@ router.put(
     }
   }
 );
-
 
 // ===============================
 // ✅ Get Child Items for Variants
@@ -528,12 +582,12 @@ router.get("/general-items/:categoryId/:adminId", async (req, res) => {
 
       .populate({
         path: "variantItems",
-        match: { status: true }, 
+        match: { status: true },
         options: { sort: { itemName: 1 } }
       })
       .populate({
         path: "addons",
-        match: { status: true }, 
+        match: { status: true },
         options: { sort: { itemName: 1 } }
       })
       .sort({ itemName: 1 });
@@ -915,7 +969,7 @@ router.post("/map-items", async (req, res) => {
             existingVariant.status = true;
             existingVariant.storePrice = selectedVariant.storePrice;
             existingVariant.appPrice = selectedVariant.appPrice;
-              existingVariant.itemQuestions = selectedVariant.itemQuestions || [];
+            existingVariant.itemQuestions = selectedVariant.itemQuestions || [];
 
             await existingVariant.save();
           } else {
@@ -993,7 +1047,7 @@ router.post("/map-items", async (req, res) => {
       // =====================================================
       const parentData = generalItem.toObject();
       delete parentData._id;
-parentData.itemQuestions = item.itemQuestions || [];
+      parentData.itemQuestions = item.itemQuestions || [];
       parentData.storeId = storeId;
       parentData.original_item_id = generalItem._id;
       parentData.addedBy = adminId;
@@ -1019,7 +1073,7 @@ parentData.itemQuestions = item.itemQuestions || [];
 
         const data = variant.toObject();
         delete data._id;
-data.itemQuestions = selectedVariant.itemQuestions || [];
+        data.itemQuestions = selectedVariant.itemQuestions || [];
         data.storeId = storeId;
         data.original_item_id = variant._id;
         data.addedBy = adminId;

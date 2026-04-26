@@ -10,69 +10,79 @@ ADD DELIVERY BOY
 --------------------------------
 */
 
-router.post("/add", uploadSingleImage('image'), async (req, res) => {
+ router.post("/add", uploadSingleImage("image"), async (req, res) => {
   try {
-    console.log("lllllll")
+    const body = req.body;
+
+    // 🔍 Duplicate Email Check
     const existing = await DeliveryBoy.findOne({
-      email: req.body.email,
+      email: body.email,
       status: true
     });
-    console.log(req.body)
+
     if (existing) {
-      return res.json({ msg: "Email already exists", status: false });
+      return res.json({
+        status: false,
+        msg: "Email already exists"
+      });
     }
-    console.log("req.body")
+
+    // =========================
+    // 🖼️ IMAGE HANDLING (S3 FIX)
+    // =========================
     let profilePic = "";
 
     if (req.file) {
-      profilePic =   req.file.filename;
-      // profilePic = "uploads/deliveryboy/" + req.file.filename;
-    }
-    let deliveryAreas = [];
-
-    try {
-      deliveryAreas = req.body.deliveryAreas
-        ? JSON.parse(req.body.deliveryAreas)
-        : [];
-    } catch (e) {
-      console.log("JSON error:", e);
+      // 🔥 IMPORTANT: use S3 URL
+      profilePic = req.file.location;
     }
 
+    // =========================
+    // 🔧 SAFE JSON PARSER
+    // =========================
+    const safeParse = (val, fallback = []) => {
+      try {
+        return val ? JSON.parse(val) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
 
-    let pickupAreas = [];
+    const deliveryAreas = safeParse(body.deliveryAreas);
+    const pickupAreas = safeParse(body.pickupAreas);
 
-    try {
-      pickupAreas = req.body.pickupAreas
-        ? JSON.parse(req.body.pickupAreas)
-        : [];
-    } catch (e) {
-      console.log("JSON error:", e);
-    }
+    // =========================
+    // 🧱 CREATE OBJECT
+    // =========================
     const deliveryBoy = new DeliveryBoy({
-      name: req.body.name,
-      addedBy: req.body.addedBy,
-
-      email: req.body.email,
-      password: req.body.password,
-      mobile: req.body.mobile,
-      address: req.body.address,
+      name: body.name,
+      addedBy: body.addedBy,
+      email: body.email,
+      password: body.password,
+      mobile: body.mobile,
+      address: body.address,
       profilePic: profilePic,
-      onsalaryorcommission: req.body.onsalaryorcommission,
-      commission: req.body.commission,
-      comissionType: req.body.comissionType,
-      deliveryAreas: deliveryAreas,
-      pickupAreas:pickupAreas
+      onsalaryorcommission: body.onsalaryorcommission,
+      commission: body.commission,
+      comissionType: body.comissionType,
+      deliveryAreas,
+      pickupAreas
     });
-    console.log("req.ddddd")
+
     await deliveryBoy.save();
 
-    res.json({
+    return res.json({
+      status: true,
       msg: "Delivery Boy added successfully",
-      status: true
+      data: deliveryBoy
     });
 
   } catch (err) {
-    res.status(500).send(err);
+    console.error("DELIVERY BOY ADD ERROR:", err);
+    return res.status(500).json({
+      status: false,
+      msg: err.message || "Something went wrong"
+    });
   }
 });
 
@@ -121,42 +131,99 @@ UPDATE
 --------------------------------
 */
 
-router.put("/update/:id", uploadSingleImage('image'), async (req, res) => {
-  try {
+ router.put(
+  "/update/:id",
+  uploadSingleImage("image"),
+  async (req, res) => {
+    try {
+      const body = req.body;
 
-    let updateData = req.body;
+      // 🔍 Existing record
+      const existingDeliveryBoy = await DeliveryBoy.findById(req.params.id);
+      if (!existingDeliveryBoy) {
+        return res.status(404).json({
+          status: false,
+          msg: "Delivery Boy not found"
+        });
+      }
 
-    const existing = await DeliveryBoy.findOne({
-      email: req.body.email,
-      status: true,
-      _id: { $ne: req.params.id }
-    });
+      // 🔍 Duplicate email check
+      const existing = await DeliveryBoy.findOne({
+        email: body.email,
+        status: true,
+        _id: { $ne: req.params.id }
+      });
 
-    if (existing) {
-      return res.json({ msg: "Email already exists", status: false });
+      if (existing) {
+        return res.json({
+          status: false,
+          msg: "Email already exists"
+        });
+      }
+
+      // =========================
+      // 🔧 SAFE JSON PARSER
+      // =========================
+      const safeParse = (val, fallback = []) => {
+        try {
+          return val ? JSON.parse(val) : fallback;
+        } catch {
+          return fallback;
+        }
+      };
+
+      // =========================
+      // 🖼️ IMAGE HANDLING (S3 FIX)
+      // =========================
+      let profilePic = existingDeliveryBoy.profilePic || "";
+
+      if (req.file) {
+        // 🔥 S3 URL
+        profilePic = req.file.location;
+      }
+
+      // =========================
+      // 🧱 UPDATE OBJECT
+      // =========================
+      const updateData = {
+        name: body.name,
+        addedBy: body.addedBy,
+        email: body.email,
+        password: body.password,
+        mobile: body.mobile,
+        address: body.address,
+        profilePic: profilePic,
+        onsalaryorcommission: body.onsalaryorcommission,
+        commission: body.commission,
+        comissionType: body.comissionType,
+        deliveryAreas: safeParse(body.deliveryAreas),
+        pickupAreas: safeParse(body.pickupAreas)
+      };
+
+      // =========================
+      // 🔄 UPDATE
+      // =========================
+      const updated = await DeliveryBoy.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true }
+      );
+
+      return res.json({
+        status: true,
+        msg: "Updated successfully",
+        data: updated
+      });
+
+    } catch (err) {
+      console.error("DELIVERY BOY UPDATE ERROR:", err);
+      return res.status(500).json({
+        status: false,
+        msg: err.message || "Something went wrong"
+      });
     }
-
-    if (req.file) {
-      updateData.profilePic =   req.file.filename;
-      // updateData.profilePic = "uploads/deliveryboy/" + req.file.filename;
-    }
-    updateData.deliveryAreas = JSON.parse(req.body.deliveryAreas || "[]");
-        updateData.pickupAreas = JSON.parse(req.body.pickupAreas || "[]");
-
-    
-
-    await DeliveryBoy.findByIdAndUpdate(req.params.id, updateData);
-
-    res.json({
-      msg: "Updated successfully",
-      status: true
-    });
-
-  } catch (err) {
-    res.status(500).send(err);
   }
-});
-
+);
 
 /*
 --------------------------------
