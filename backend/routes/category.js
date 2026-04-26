@@ -2,9 +2,16 @@ const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
-const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-
-const { S3Client } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  ListObjectsV2Command,
+  DeleteObjectsCommand
+} = require("@aws-sdk/client-s3");
+ 
+const DeliveryArea = require("../models/DeliveryArea");
+const DeliveryBoy = require("../models/DeliveryBoy");
+const storeOwner = require("../models/storeOwner");
+const BUCKET = process.env.AWS_BUCKET;
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -13,7 +20,52 @@ const s3 = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_KEY
   }
 });
+async function deleteAllFilesFromFolder(prefix = "") {
+  try {
+    let isTruncated = true;
+    let continuationToken = null;
 
+    while (isTruncated) {
+
+      // 1️⃣ LIST FILES
+      const listCommand = new ListObjectsV2Command({
+        Bucket: BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken
+      });
+
+      const data = await s3.send(listCommand);
+
+      const objects = data.Contents || [];
+
+      if (objects.length === 0) {
+        console.log("No files found");
+        return;
+      }
+
+      // 2️⃣ PREPARE DELETE ARRAY
+      const deleteParams = {
+        Bucket: BUCKET,
+        Delete: {
+          Objects: objects.map(obj => ({ Key: obj.Key }))
+        }
+      };
+
+      // 3️⃣ DELETE FILES
+      await s3.send(new DeleteObjectsCommand(deleteParams));
+
+      console.log(`Deleted ${objects.length} files`);
+
+      isTruncated = data.IsTruncated;
+      continuationToken = data.NextContinuationToken;
+    }
+
+    console.log("All files deleted successfully");
+
+  } catch (err) {
+    console.error("S3 DELETE ERROR:", err);
+  }
+}
 const deleteFromS3 = async (url) => {
   try {
     const key = url.split(".amazonaws.com/")[1];
@@ -186,6 +238,65 @@ router.get("/list/:userId", async (req, res) => {
     res.json(list);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// <br /><br /><br /><button (click)="emptydb('DelieveryBoy')">Empty Order</button>
+
+
+
+router.delete('/emptydb/:table', async (req, res, next) => {
+  let modelsArray = [];
+  if (req.params.table == 'All') {
+    modelsArray = [AdminUser, Category,
+      Customer, DeliveryArea, DeliveryBoy, Item,
+      Notification, Order, OrderLog, Otp, Store, storeOwner];
+
+  } else if (req.params.table == 'DelieveryBoy') {
+    modelsArray = [DelieveryBoy];
+
+  } else if (req.params.table == 'Category') {
+    modelsArray = [Category, Item, Order, OrderLog];
+
+  } else if (req.params.table == 'Notification') {
+    modelsArray = [Notification];
+
+  } else if (req.params.table == 'Customer') {
+    modelsArray = [Customer, Order, OrderLog];
+
+  } else if (req.params.table == 'Otp') {
+    modelsArray = [Otp];
+
+  } else if (req.params.table == 'Order') {
+    modelsArray = [Order, OrderLog];
+
+  }
+  else if (req.params.table == 'StoreOwner') {
+    modelsArray = [Store, storeOwner, Order, OrderLog];
+
+  }
+  else if (req.params.table == 'Store') {
+    modelsArray = [Store, Order, OrderLog];
+
+  } else if (req.params.table == 'Item') {
+    modelsArray = [Item, Order, OrderLog];
+
+  }
+  try {
+    for (let model of modelsArray) {
+      await model.deleteMany({});
+      console.log(`${model.modelName} cleared successfully`);
+
+    }
+    console.log("All specified models cleared.");
+    await deleteAllFilesFromFolder("uploads/");
+
+
+
+
+    res.json({ status: 'success', message: 'Database emptied successfully' });
+  } catch (error) {
+    return res.json({ message: 'Error clearing database', status: 'error', error: error.message });
   }
 });
 module.exports = router;
