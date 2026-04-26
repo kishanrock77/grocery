@@ -11,7 +11,18 @@ require("./cron/orderTimeoutCheck");
 
 const { initSocket } = require("./socket");
 
-app.use(cors());
+const corsOptions = {
+  origin: [
+    "https://app.fastbite.food",
+    "http://localhost:4200", "http://localhost:4100"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
 
