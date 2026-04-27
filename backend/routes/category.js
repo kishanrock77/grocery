@@ -2,14 +2,28 @@ const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+
+const Store = require("../models/Store");
+const Otp = require("../models/Otp");
+const Order = require("../models/Order");
+const OrderLog = require("../models/OrderLog");
+const Item = require("../models/Item");
+const DeliveryBoy = require("../models/DeliveryBoy");
+const DeliveryArea = require("../models/DeliveryArea");
+const Customer = require("../models/Customer");
+const Notification = require("../models/Notification");
+const AdminUser = require("../models/AdminUser");
+
+
+  
+
+
 const {
   S3Client,
   ListObjectsV2Command,
   DeleteObjectsCommand
 } = require("@aws-sdk/client-s3");
  
-const DeliveryArea = require("../models/DeliveryArea");
-const DeliveryBoy = require("../models/DeliveryBoy");
 const storeOwner = require("../models/storeOwner");
 const BUCKET = process.env.AWS_BUCKET;
 
@@ -272,7 +286,7 @@ router.delete('/emptydb/:table', async (req, res, next) => {
 
   }
   else if (req.params.table == 'StoreOwner') {
-    modelsArray = [Store, storeOwner, Order, OrderLog];
+    modelsArray = [ storeOwner  ];
 
   }
   else if (req.params.table == 'Store') {

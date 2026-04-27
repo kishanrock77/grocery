@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const Store = require("../models/Store");
+const Store = require("../models/Store"); const Item = require("../models/Item");
+
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 
@@ -96,7 +97,7 @@ const deleteFromS3 = async (url) => {
     console.error("S3 delete error:", err);
   }
 };
- router.post(
+router.post(
   "/add",
   uploadMultipleImages("images", 5),
   async (req, res) => {
@@ -341,7 +342,7 @@ UPDATE STORE
 --------------------------------
 */
 
- router.put(
+router.put(
   "/update/:id",
   uploadMultipleImages("images", 5),
   async (req, res) => {
@@ -469,6 +470,13 @@ router.delete("/delete/:id", async (req, res) => {
       { status: false }
     );
 
+    // 2️⃣ Soft delete all items of this store
+    await Item.updateMany(
+      { storeId: storeId },
+      { status: false }
+    );
+
+
     res.json({
       msg: "Store deleted"
     });
@@ -484,6 +492,7 @@ router.delete("/delete/:id", async (req, res) => {
 router.get("/deleteAll", async (req, res) => {
 
   await Store.deleteMany();
+  await Items.deleteMany();
 
 });
 
