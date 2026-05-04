@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const Store = require("../models/Store"); const Item = require("../models/Item");
+const Store = require("../models/Store");
+const Category = require("../models/Category");
+
+const Item = require("../models/Item");
+const moment = require("moment"); // install if not
 
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
@@ -236,6 +240,78 @@ router.post("/list", async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+router.post("/listforcustomer", async (req, res) => {
+  try {
+
+    const stores = await Store.find({
+      status: true,
+      activeStatus: true,
+
+      addedBy: req.body.adminId
+    })
+      .populate({
+        path: "ownerid",
+        match: { status: true }, // 🔥 only active owner
+
+      })
+      .sort({ createdAt: -1 });
+
+    // 🔥 remove stores jinka owner null ho gaya (status false)
+    const filtered = stores.filter(s => s.ownerid);
+
+    // 🔥 map response
+
+
+    const finalData = filtered.map(s => {
+      let finalopenstatus = "Closed";
+
+      // 🔥 1. Force नियम (highest priority)
+      if (s.openCloseStatus === "ForceOpen") {
+        finalopenstatus = "Open";
+      } else if (s.openCloseStatus === "ForceClose") {
+        finalopenstatus = "Closed";
+      } else {
+
+        // 🔥 2. Week off check
+        const today = moment().format("dddd"); // e.g. Monday
+
+        if (s.weekOff && s.weekOff.includes(today)) {
+          finalopenstatus = "Closed";
+        } else {
+
+          // 🔥 3. Time check
+          if (s.openingTime && s.closingTime) {
+            const now = moment();
+
+            const openTime = moment(s.openingTime, "HH:mm");
+            const closeTime = moment(s.closingTime, "HH:mm");
+
+            if (now.isBetween(openTime, closeTime)) {
+              finalopenstatus = "Open";
+            } else {
+              finalopenstatus = "Closed";
+            }
+          } else {
+            finalopenstatus = "Closed";
+          }
+        }
+      }
+
+      return {
+        ...s._doc,
+        ownerName: s.ownerid.name,
+        ownerMobile: s.ownerid.mobile,
+        ownerEmail: s.ownerid.email,
+        finalopenstatus // 🔥 new key
+      };
+    });
+    res.json({ success: true, data: finalData });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post("/list-for-storeowner", async (req, res) => {
   try {
 
@@ -303,10 +379,12 @@ STORE DETAIL
 --------------------------------
 */
 
-router.get("/detail/:id", async (req, res) => {
+ router.get("/detail/:id", async (req, res) => {
   try {
+    const storeId = req.params.id;
 
-    const store = await Store.findById(req.params.id)
+    // ✅ STORE
+    const store = await Store.findById(storeId)
       .populate({
         path: "ownerid",
         match: { status: true },
@@ -316,25 +394,167 @@ router.get("/detail/:id", async (req, res) => {
     if (!store || !store.ownerid) {
       return res.json({
         success: false,
-        message: "Store or Owner not found / inactive ❌"
+        message: "Store or Owner not found ❌"
       });
     }
 
+    // ✅ ITEMS WITH VARIANTS + ADDONS
+    const items = await Item.find({
+      storeId,
+      status: true,
+      showOnFront: true,
+      useThisItemAsChild: false
+    })
+      .populate({
+        path: "variantItems",
+        match: { status: true },
+        select: "itemName storePrice appPrice addons images"
+      })
+      .populate({
+        path: "addons",
+        match: { status: true },
+        select: "itemName storePrice appPrice images"
+      })
+      .populate({
+        path: "variantItems",
+        populate: {
+          path: "addons",
+          match: { status: true },
+          select: "itemName storePrice appPrice images"
+        }
+      })
+      .lean();
+
+    // ✅ CATEGORY MAP
+    const categories = await Category.find({ status: true }).lean();
+
+    const catMap = {};
+    categories.forEach(c => {
+      catMap[c._id.toString()] = c.categoryName;
+    });
+
+    // ===============================
+    // 🔥 MAIN LOGIC (PRICE RANGE FIX)
+    // ===============================
+    const formattedItems = items.map(item => {
+      const cat = item.categories?.[0] || {};
+
+      let minPrice = 0;
+      let maxPrice = 0;
+
+      // 🔥 CASE 1: HAS VARIANTS
+      if (item.variantItems && item.variantItems.length > 0) {
+
+        const prices = item.variantItems.map(v =>
+          v.appPrice || v.storePrice || 0
+        );
+
+        minPrice = Math.min(...prices);
+        maxPrice = Math.max(...prices);
+      }
+
+      // 🔥 CASE 2: SINGLE ITEM
+      else {
+        const price = item.appPrice || item.storePrice || 0;
+        minPrice = price;
+        maxPrice = price;
+      }
+
+      const priceRange =
+        minPrice === maxPrice
+          ? `₹${minPrice}`
+          : `₹${minPrice} - ₹${maxPrice}`;
+
+      return {
+        ...item,
+        minPrice,
+        maxPrice,
+        priceRange,
+
+        level1Name: catMap[cat.level1] || "Others",
+        level2Name: catMap[cat.level2] || "Others",
+        level3Name: catMap[cat.level3] || "Others",
+        level3Id: cat.level3 || "no-cat"
+      };
+    });
+
+    // ===============================
+    // GROUPING
+    // ===============================
+    const grouped = {};
+
+    formattedItems.forEach(item => {
+      const l2 = item.level2Name;
+      const l3 = item.level3Id;
+
+      if (!grouped[l2]) grouped[l2] = {};
+
+      if (!grouped[l2][l3]) {
+        grouped[l2][l3] = {
+          level3Id: l3,
+          categoryName: item.level3Name,
+          items: []
+        };
+      }
+
+      grouped[l2][l3].items.push(item);
+    });
+
+    const groupedArray = Object.keys(grouped).map(level2Name => ({
+      level2Name,
+      level3: Object.values(grouped[level2Name])
+    }));
+
+    // ===============================
+    // STORE OPEN STATUS
+    // ===============================
+    let finalopenstatus = "Closed";
+
+    if (store.openCloseStatus === "ForceOpen") {
+      finalopenstatus = "Open";
+    } else if (store.openCloseStatus === "ForceClose") {
+      finalopenstatus = "Closed";
+    } else {
+      const today = moment().format("dddd");
+
+      if (!store.weekOff?.includes(today)) {
+        if (store.openingTime && store.closingTime) {
+          const now = moment();
+          const openTime = moment(store.openingTime, "HH:mm");
+          const closeTime = moment(store.closingTime, "HH:mm");
+
+          if (now.isBetween(openTime, closeTime)) {
+            finalopenstatus = "Open";
+          }
+        }
+      }
+    }
+
+    // ===============================
+    // FINAL RESPONSE
+    // ===============================
     const finalData = {
       ...store._doc,
+      finalopenstatus,
       ownerName: store.ownerid.name,
       ownerMobile: store.ownerid.mobile,
-      ownerEmail: store.ownerid.email
+      ownerEmail: store.ownerid.email,
+      groupedItems: groupedArray
     };
 
-    res.json({ success: true, data: finalData });
+    res.json({
+      success: true,
+      data: finalData
+    });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 });
-
-
 
 /*
 --------------------------------
@@ -426,6 +646,9 @@ router.put(
         address: body.address,
         description: body.description || "",
         images: finalImages,
+
+        openingTime: body.openingTime,
+        closingTime: body.closingTime,
         location
       };
 

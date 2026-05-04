@@ -7,7 +7,11 @@ const ItemSchema = new mongoose.Schema(
       enum: ["single", "variant"],
       default: "single",
     },
-
+    vegtype: {
+      type: String,
+      enum: ["veg", "nonveg"],
+      default: "veg",
+    },
     itemName: {
       type: String,
       required: true,
@@ -51,13 +55,13 @@ const ItemSchema = new mongoose.Schema(
     itemQuestions: [
       {
         title: { type: String },
-       options: [
-  {
-    label: { type: String, required: true },
-    storePrice: { type: Number, required: true },
-    appPrice: { type: Number, default: 0 }
-  }
-]
+        options: [
+          {
+            label: { type: String, required: true },
+            storePrice: { type: Number, required: true },
+            appPrice: { type: Number, default: 0 }
+          }
+        ]
       }
     ],
 
@@ -65,6 +69,11 @@ const ItemSchema = new mongoose.Schema(
     unit: {
       type: String,
       enum: ["kg", "litre", "piece", "pound", ""],
+      default: ""
+    },
+     size: {
+      type: String,
+       
       default: ""
     },
     // ✅ Dynamic Filter Keys

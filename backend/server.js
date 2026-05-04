@@ -15,12 +15,12 @@ app.use(cors());
 app.use(express.json());
 
 
-/// for atlas
-//mongodb+srv://kishan:111111111@cluster0-t6mie.mongodb.net/edutech?retryWrites=true&w=majority
-//mongodb+srv://xcellinsprocare:111111111@cluster0.i0xczes.mongodb.net/edutech?retryWrites=true&w=majority
-mongoose.connect(process.env.MONGO_URL);
+/// MongoDB Connection - Local vs Production
+const mongoURL =process.env.NODE_ENV && process.env.NODE_ENV === 'local'
+  ? process.env.MONGO_URL_LOCAL
+  : process.env.MONGO_URL ;
 
-//mongoose.connect(process.env.MONGO_URL, { useUnifiedTopology: true, useNewUrlParser: true });
+mongoose.connect(mongoURL);
 mongoose.connection.on('connected', () => {
   //console.log('connected to db');
 });
@@ -43,10 +43,10 @@ app.use("/api/notification", require("./routes/notification"));
 app.use("/api/deliveryboy", require("./routes/deliveryboy"));
 app.use("/api/delivery-area", require("./routes/deliveryArea"));
 app.use("/api/store-owner", require("./routes/storeOwner"));
- app.use("/api/category", require("./routes/category"));
-  app.use("/api/item", require("./routes/item"));
- app.use("/api/customer", require("./routes/customer"));
-   
+app.use("/api/category", require("./routes/category"));
+app.use("/api/item", require("./routes/item"));
+app.use("/api/customer", require("./routes/customer"));
+
 app.use("/uploads", express.static("uploads"));
 
 

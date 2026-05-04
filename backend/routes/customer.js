@@ -234,10 +234,13 @@ router.get("/areas", async (req, res) => {
 // ===============================
 // 🏬 SELECT AREA
 // ===============================
-router.post("/getcategoryandstoreandadminid", async (req, res) => {
+ router.post("/getcategoryandstoreandadminid", async (req, res) => {
   try {
     const { areaId } = req.body;
 
+    // ===============================
+    // ✅ AREA
+    // ===============================
     const area = await DeliveryArea.findOne({
       _id: areaId,
       status: true
@@ -249,14 +252,18 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
     const adminId = area.adminId;
 
-    // 🔥 STORES → ONLY 10
+    // ===============================
+    // ✅ STORES (LIMIT 10)
+    // ===============================
     const stores = await Store.find({
       addedBy: adminId,
       activeStatus: true,
       status: true
     }).limit(10);
 
-    // 🔥 CATEGORIES
+    // ===============================
+    // ✅ CATEGORIES
+    // ===============================
     const categories = await Category.find({
       addedBy: adminId,
       status: true
@@ -266,33 +273,148 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
     const itemArr = [];
 
+    // ===============================
+    // 🔥 LOOP EACH CATEGORY
+    // ===============================
     for (let cat of level1Categories) {
 
       const items = await Item.aggregate([
+
+        // ===============================
+        // 🔥 MATCH
+        // ===============================
         {
           $match: {
             addedBy: adminId,
             status: true,
             showOnFront: true,
             "categories.level1": cat._id.toString(),
-             useThisItemAsChild: false // 🔥 best filter
+            useThisItemAsChild:false,
+            storeId: { $ne: null }
           }
         },
 
-        // 🔥 DISTINCT BY original_item_id (fallback _id)
+        { $sort: { createdAt: -1 } },
+
+        // ===============================
+        // 🔥 REMOVE DUPLICATE (ORIGINAL ITEM)
+        // ===============================
         {
           $group: {
             _id: { $ifNull: ["$original_item_id", "$_id"] },
             doc: { $first: "$$ROOT" }
           }
         },
-
         {
           $replaceRoot: { newRoot: "$doc" }
         },
 
-        { $sort: { createdAt: -1 } },
+        // ===============================
+        // 🔥 LOOKUP VARIANTS
+        // ===============================
+        {
+          $lookup: {
+            from: "items",
+            localField: "variantItems",
+            foreignField: "_id",
+            as: "variants"
+          }
+        },
+
+        // ===============================
+        // 🔥 FILTER ACTIVE VARIANTS
+        // ===============================
+        {
+          $addFields: {
+            variants: {
+              $filter: {
+                input: "$variants",
+                as: "v",
+                cond: { $eq: ["$$v.status", true] }
+              }
+            }
+          }
+        },
+
+        // ===============================
+        // 🔥 CREATE PRICE ARRAY
+        // ===============================
+        {
+          $addFields: {
+            priceArray: {
+              $cond: [
+                { $gt: [{ $size: "$variants" }, 0] },
+                {
+                  $map: {
+                    input: "$variants",
+                    as: "v",
+                    in: {
+                      $cond: [
+                        { $gt: ["$$v.appPrice", 0] },
+                        "$$v.appPrice",
+                        "$$v.storePrice"
+                      ]
+                    }
+                  }
+                },
+                [
+                  {
+                    $cond: [
+                      { $gt: ["$appPrice", 0] },
+                      "$appPrice",
+                      "$storePrice"
+                    ]
+                  }
+                ]
+              ]
+            }
+          }
+        },
+
+        // ===============================
+        // 🔥 MIN MAX PRICE
+        // ===============================
+        {
+          $addFields: {
+            minPrice: { $min: "$priceArray" },
+            maxPrice: { $max: "$priceArray" }
+          }
+        },
+
+        // ===============================
+        // 🔥 PRICE RANGE STRING
+        // ===============================
+        {
+          $addFields: {
+            priceRange: {
+              $cond: [
+                { $eq: ["$minPrice", "$maxPrice"] },
+                { $concat: ["₹", { $toString: "$minPrice" }] },
+                {
+                  $concat: [
+                    "₹",
+                    { $toString: "$minPrice" },
+                    " - ₹",
+                    { $toString: "$maxPrice" }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+
+        // ===============================
+        // 🔥 CLEAN EXTRA FIELDS
+        // ===============================
+        {
+          $project: {
+            variants: 0,
+            priceArray: 0
+          }
+        },
+
         { $limit: 10 }
+
       ]);
 
       itemArr.push({
@@ -302,6 +424,9 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
       });
     }
 
+    // ===============================
+    // ✅ FINAL RESPONSE
+    // ===============================
     res.json({
       success: true,
       stores,
@@ -311,6 +436,7 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
     });
 
   } catch (err) {
+    console.error("Error:", err);
     res.status(500).json({
       success: false,
       message: err.message

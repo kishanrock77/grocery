@@ -54,6 +54,7 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
     }
     const item = new Item({
       itemType: body.itemType,
+      vegtype: body.vegtype,
       variant_or_addon: body.variant_or_addon,
       itemName: body.itemName,
       itemSubName: body.itemSubName || "",
@@ -74,7 +75,8 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
       images: body.images || [],
       itemQuestions: body.itemQuestions ? parseJSON(body.itemQuestions) : [],
 
-      unit: body.unit || "",
+      unit: body.unit || "",      size: body.size || "",
+
       parentId: [],
     });
 
@@ -128,7 +130,37 @@ router.get("/detail/:id", async (req, res) => {
   }
 });
 
+router.post("/multi-details", async (req, res) => {
+  try {
+    const { ids } = req.body;
 
+    if (!ids || ids.length === 0) {
+      return res.json({ success: false, message: "No IDs provided" });
+    }
+
+    const items = await Item.find({
+      _id: { $in: ids },
+      status: true
+    })
+      .populate({
+        path: "addons",
+        match: { status: true },
+        select: "itemName storePrice appPrice description"
+      })
+      .lean();
+
+    res.json({
+      success: true,
+      data: items
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
 // ===============================
 // ✅ Update Item
 // ===============================
@@ -188,6 +220,7 @@ router.put(
 
       let updateData = {
         itemType: body.itemType,
+         vegtype: body.vegtype,
         variant_or_addon: body.variant_or_addon,
         itemName: body.itemName,
         itemSubName: body.itemSubName || "",
@@ -206,7 +239,7 @@ router.put(
         itemQuestions: safeParse(body.itemQuestions),
 
         unit: body.unit || "",
-
+ size: body.size || "",
         images: finalImages
       };
 
@@ -311,7 +344,7 @@ router.post("/child-items", async (req, res) => {
     }
 
     const items = await Item.find(filter)
-      .select("_id itemName itemSubName images categories storePrice appPrice itemType storeId")
+     
       .populate({
         path: "storeId",
         select: "storeName",
@@ -371,7 +404,7 @@ router.post("/addon-items", async (req, res) => {
     }
 
     const items = await Item.find(filter)
-      .select("_id itemName itemSubName images categories storePrice appPrice itemType storeId")
+       
       .populate({
         path: "storeId",
         select: "storeName",

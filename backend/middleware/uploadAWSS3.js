@@ -1,7 +1,12 @@
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
-// ✅ S3 Client (v3)
+// ✅ Detect environment
+const isLocal = process.env.NODE_ENV === 'local';
+
+// ✅ S3 Client
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -10,38 +15,66 @@ const s3 = new S3Client({
   }
 });
 
-// ✅ Multer Memory Storage
+// ✅ Ensure uploads folder exists (for local)
+if (isLocal) {
+  const uploadDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+  }
+}
+
+// ✅ Multer Storage (dynamic)
+const storage = isLocal
+  ? multer.diskStorage({
+      destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+      },
+      filename: function (req, file, cb) {
+        const uniqueName = `${Date.now()}-${Math.random()}-${file.originalname}`;
+        cb(null, uniqueName);
+      }
+    })
+  : multer.memoryStorage();
+
+// ✅ Multer config
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// 🔥 COMMON FUNCTION (Reusable)
-const uploadToS3 = async (file) => {
-  
-const fileName = `uploads/${Date.now()}-${Math.random()}-${file.originalname}`;
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET,
-    Key: fileName,
-    Body: file.buffer,
-    ContentType: file.mimetype
-  }));
+// 🔥 Upload function (smart)
+const uploadFile = async (file) => {
+  if (isLocal) {
+    // ✅ Local URL
+    return `http://localhost:${process.env.PORT}/uploads/${file.filename}`;
+  } else {
+    // ✅ S3 upload
+    const fileName = `uploads/${Date.now()}-${Math.random()}-${file.originalname}`;
 
-  return `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: fileName,
+      Body: file.buffer,
+      ContentType: file.mimetype
+    }));
+
+    return `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+  }
 };
- 
+
+// ✅ Single Image
 const uploadSingleImage = (fieldName) => [
   upload.single(fieldName),
 
   async (req, res, next) => {
     try {
       if (req.file) {
-        const url = await uploadToS3(req.file);
+        const url = await uploadFile(req.file);
         req.body.imagepath = url;
       }
       next();
     } catch (err) {
-      console.error("S3 Upload Error:", err);
+      console.error("Upload Error:", err);
       return res.status(500).json({
         success: false,
         message: "Image upload failed"
@@ -49,7 +82,8 @@ const uploadSingleImage = (fieldName) => [
     }
   }
 ];
- 
+
+// ✅ Multiple Images
 const uploadMultipleImages = (fieldName, maxCount = 5) => [
   upload.array(fieldName, maxCount),
 
@@ -59,7 +93,7 @@ const uploadMultipleImages = (fieldName, maxCount = 5) => [
         const urls = [];
 
         for (let file of req.files) {
-          const url = await uploadToS3(file);
+          const url = await uploadFile(file);
           urls.push(url);
         }
 
@@ -67,7 +101,7 @@ const uploadMultipleImages = (fieldName, maxCount = 5) => [
       }
       next();
     } catch (err) {
-      console.error("S3 Upload Error:", err);
+      console.error("Upload Error:", err);
       return res.status(500).json({
         success: false,
         message: "Images upload failed"
