@@ -129,6 +129,50 @@ router.get("/detail/:id", async (req, res) => {
     });
   }
 });
+router.get("/customeritemdetail/:id", async (req, res) => {
+  try {
+
+    const item = await Item.findOne({
+      _id: req.params.id,
+      status: true
+    })
+
+    .populate({
+      path: "variantItems",
+      match: { status: true }
+    })
+
+    .populate({
+      path: "addons",
+      match: { status: true }
+    })
+
+    .populate({
+      path: "storeId",
+      select: "storeName images"
+    });
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Item not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      data: item
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+
+  }
+});
 
 router.post("/multi-details", async (req, res) => {
   try {

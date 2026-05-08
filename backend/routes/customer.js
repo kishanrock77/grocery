@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Item = require("../models/Item");
-
+const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
 
@@ -234,213 +234,890 @@ router.get("/areas", async (req, res) => {
 // ===============================
 // 🏬 SELECT AREA
 // ===============================
- router.post("/getcategoryandstoreandadminid", async (req, res) => {
+router.post("/getcategoryandstoreandadminid", async (req, res) => {
+
   try {
+
     const { areaId } = req.body;
 
-    // ===============================
+    // =========================================
     // ✅ AREA
-    // ===============================
+    // =========================================
+
     const area = await DeliveryArea.findOne({
+
       _id: areaId,
+
       status: true
+
     });
 
     if (!area) {
-      return res.json({ success: false, message: "Area not found" });
+
+      return res.json({
+
+        success: false,
+
+        message: "Area not found"
+
+      });
+
     }
 
     const adminId = area.adminId;
 
-    // ===============================
-    // ✅ STORES (LIMIT 10)
-    // ===============================
+    // =========================================
+    // ✅ STORES
+    // =========================================
+
     const stores = await Store.find({
+
       addedBy: adminId,
+
       activeStatus: true,
+
       status: true
+
     }).limit(10);
 
-    // ===============================
+    // =========================================
     // ✅ CATEGORIES
-    // ===============================
+    // =========================================
+
     const categories = await Category.find({
+
       addedBy: adminId,
+
       status: true
+
     });
 
-    const level1Categories = categories.filter(c => c.level_no === 1);
+    const level1Categories =
+      categories.filter(c => c.level_no === 1);
 
     const itemArr = [];
 
-    // ===============================
-    // 🔥 LOOP EACH CATEGORY
-    // ===============================
+    // =========================================
+    // ✅ LOOP LEVEL 1
+    // =========================================
+
     for (let cat of level1Categories) {
 
       const items = await Item.aggregate([
 
-        // ===============================
-        // 🔥 MATCH
-        // ===============================
+        // =====================================
+        // ✅ MATCH
+        // =====================================
+
         {
           $match: {
+
             addedBy: adminId,
+
             status: true,
+
             showOnFront: true,
-            "categories.level1": cat._id.toString(),
-            useThisItemAsChild:false,
-            storeId: { $ne: null }
+
+            useThisItemAsChild: false,
+
+            storeId: {
+              $ne: null
+            },
+
+            "categories.level1":
+              cat._id.toString()
+
           }
         },
 
-        { $sort: { createdAt: -1 } },
+        // =====================================
+        // ✅ LATEST FIRST
+        // =====================================
 
-        // ===============================
-        // 🔥 REMOVE DUPLICATE (ORIGINAL ITEM)
-        // ===============================
+        {
+          $sort: {
+
+            createdAt: -1,
+
+            _id: -1
+
+          }
+        },
+
+        // =====================================
+        // ✅ REMOVE DUPLICATES
+        // =====================================
+
         {
           $group: {
-            _id: { $ifNull: ["$original_item_id", "$_id"] },
-            doc: { $first: "$$ROOT" }
+
+            _id: {
+
+              $ifNull: [
+
+                "$original_item_id",
+
+                "$_id"
+
+              ]
+
+            },
+
+            doc: {
+              $first: "$$ROOT"
+            }
+
           }
         },
+
         {
-          $replaceRoot: { newRoot: "$doc" }
+          $replaceRoot: {
+            newRoot: "$doc"
+          }
         },
 
-        // ===============================
-        // 🔥 LOOKUP VARIANTS
-        // ===============================
+        // =====================================
+        // ✅ STORE DETAILS
+        // =====================================
+
         {
           $lookup: {
-            from: "items",
-            localField: "variantItems",
+
+            from: "stores",
+
+            localField: "storeId",
+
             foreignField: "_id",
-            as: "variants"
+
+            as: "storedetails"
+
           }
         },
 
-        // ===============================
-        // 🔥 FILTER ACTIVE VARIANTS
-        // ===============================
+        // =====================================
+        // ✅ SINGLE STORE OBJECT
+        // =====================================
+
         {
           $addFields: {
-            variants: {
-              $filter: {
-                input: "$variants",
-                as: "v",
-                cond: { $eq: ["$$v.status", true] }
-              }
+
+            storedetails: {
+
+              $arrayElemAt: [
+
+                "$storedetails",
+
+                0
+
+              ]
+
             }
+
           }
         },
 
-        // ===============================
-        // 🔥 CREATE PRICE ARRAY
-        // ===============================
+        // =====================================
+        // ✅ REMOVE DELETED STORE ITEMS
+        // =====================================
+
+        {
+          $match: {
+
+            "storedetails.status": true,
+
+            "storedetails.activeStatus": true
+
+          }
+        },
+
+        // =====================================
+        // ✅ FINAL SORT AGAIN
+        // =====================================
+
+        {
+          $sort: {
+
+            createdAt: -1,
+
+            _id: -1
+
+          }
+        },
+
+        // =====================================
+        // ✅ LOOKUP VARIANTS
+        // =====================================
+
+        {
+          $lookup: {
+
+            from: "items",
+
+            localField: "variantItems",
+
+            foreignField: "_id",
+
+            as: "variants"
+
+          }
+        },
+
+        // =====================================
+        // ✅ FILTER ACTIVE VARIANTS
+        // =====================================
+
         {
           $addFields: {
+
+            variants: {
+
+              $filter: {
+
+                input: "$variants",
+
+                as: "v",
+
+                cond: {
+
+                  $eq: [
+
+                    "$$v.status",
+
+                    true
+
+                  ]
+
+                }
+
+              }
+
+            }
+
+          }
+        },
+
+        // =====================================
+        // ✅ PRICE ARRAY
+        // =====================================
+
+        {
+          $addFields: {
+
             priceArray: {
+
               $cond: [
-                { $gt: [{ $size: "$variants" }, 0] },
+
+                // ===========================
+                // ✅ VARIANTS EXIST
+                // ===========================
+
+                {
+                  $gt: [
+
+                    {
+                      $size: "$variants"
+                    },
+
+                    0
+
+                  ]
+                },
+
+                // ===========================
+                // ✅ VARIANT PRICES
+                // ===========================
+
                 {
                   $map: {
+
                     input: "$variants",
+
                     as: "v",
+
                     in: {
+
                       $cond: [
-                        { $gt: ["$$v.appPrice", 0] },
+
+                        {
+                          $gt: [
+
+                            "$$v.appPrice",
+
+                            0
+
+                          ]
+                        },
+
                         "$$v.appPrice",
+
                         "$$v.storePrice"
+
                       ]
+
                     }
+
                   }
                 },
+
+                // ===========================
+                // ✅ SINGLE PRICE
+                // ===========================
+
                 [
                   {
                     $cond: [
-                      { $gt: ["$appPrice", 0] },
+
+                      {
+                        $gt: [
+
+                          "$appPrice",
+
+                          0
+
+                        ]
+                      },
+
                       "$appPrice",
+
                       "$storePrice"
+
                     ]
                   }
                 ]
+
               ]
+
             }
+
           }
         },
 
-        // ===============================
-        // 🔥 MIN MAX PRICE
-        // ===============================
+        // =====================================
+        // ✅ MIN MAX PRICE
+        // =====================================
+
         {
           $addFields: {
-            minPrice: { $min: "$priceArray" },
-            maxPrice: { $max: "$priceArray" }
+
+            minPrice: {
+              $min: "$priceArray"
+            },
+
+            maxPrice: {
+              $max: "$priceArray"
+            }
+
           }
         },
 
-        // ===============================
-        // 🔥 PRICE RANGE STRING
-        // ===============================
+        // =====================================
+        // ✅ PRICE RANGE
+        // =====================================
+
         {
           $addFields: {
+
             priceRange: {
+
               $cond: [
-                { $eq: ["$minPrice", "$maxPrice"] },
-                { $concat: ["₹", { $toString: "$minPrice" }] },
+
+                {
+                  $eq: [
+
+                    "$minPrice",
+
+                    "$maxPrice"
+
+                  ]
+                },
+
                 {
                   $concat: [
+
                     "₹",
-                    { $toString: "$minPrice" },
+
+                    {
+                      $toString: "$minPrice"
+                    }
+
+                  ]
+                },
+
+                {
+                  $concat: [
+
+                    "₹",
+
+                    {
+                      $toString: "$minPrice"
+                    },
+
                     " - ₹",
-                    { $toString: "$maxPrice" }
+
+                    {
+                      $toString: "$maxPrice"
+                    }
+
                   ]
                 }
+
               ]
+
             }
+
           }
         },
 
-        // ===============================
-        // 🔥 CLEAN EXTRA FIELDS
-        // ===============================
+        // =====================================
+        // ✅ REMOVE EXTRA FIELDS
+        // =====================================
+
         {
           $project: {
+
             variants: 0,
+
             priceArray: 0
+
           }
         },
 
-        { $limit: 10 }
+        // =====================================
+        // ✅ ALWAYS FIRST 10
+        // =====================================
+
+        {
+          $limit: 10
+        }
 
       ]);
 
       itemArr.push({
+
         level1Id: cat._id,
+
         level1Name: cat.categoryName,
+
         items
+
       });
+
     }
 
-    // ===============================
-    // ✅ FINAL RESPONSE
-    // ===============================
+    // =========================================
+    // ✅ RESPONSE
+    // =========================================
+
     res.json({
+
       success: true,
+
       stores,
+
       categories,
+
       adminId,
+
       itemArr
+
     });
 
-  } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({
-      success: false,
-      message: err.message
-    });
   }
+
+  catch (err) {
+
+    console.error("Error:", err);
+
+    res.status(500).json({
+
+      success: false,
+
+      message: err.message
+
+    });
+
+  }
+
 });
+// ===============================================
+// ✅ BACKEND API
+// ===============================================
+router.post(
+  "/getLevel2CategoriesOnly",
+  async (req, res) => {
+
+    try {
+
+      const {
+        level2Id,
+        adminId
+      } = req.body;
+
+      const level2Cat =
+        await Category.findOne({
+
+          _id: level2Id,
+
+          addedBy: adminId,
+
+          status: true
+
+        });
+
+      const categories =
+        await Category.find({
+
+          parent_id: level2Id,
+
+          addedBy: adminId,
+
+          status: true
+
+        })
+
+          .select({
+
+            categoryName: 1,
+
+            imagepath: 1
+
+          })
+
+          .sort({
+
+            categoryName: 1
+
+          });
+
+      res.json({
+
+        success: true,
+
+        level2Category:
+          level2Cat,
+
+        categories
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false
+
+      });
+
+    }
+
+  }
+);
+router.post(
+  "/getLevel3CategoryItems",
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        level2Id,
+
+        level3Id,
+
+        adminId
+
+      } = req.body;
+
+      const items =
+        await Item.aggregate([
+
+          // MATCH
+          {
+
+            $match: {
+
+              addedBy:
+                new mongoose.Types
+                  .ObjectId(adminId),
+
+              status: true,
+
+              showOnFront: true,
+
+              useThisItemAsChild:
+                false,
+
+              storeId: {
+                $ne: null
+              },
+
+              categories: {
+
+                $elemMatch: {
+
+                  level2:
+                    String(level2Id),
+
+                  level3:
+                    String(level3Id)
+
+                }
+
+              }
+
+            }
+
+          },
+
+          // LATEST
+          {
+
+            $sort: {
+
+              createdAt: -1
+
+            }
+
+          },
+
+          // REMOVE DUPLICATE
+          {
+
+            $group: {
+
+              _id: {
+
+                $ifNull: [
+
+                  "$original_item_id",
+
+                  "$_id"
+
+                ]
+
+              },
+
+              doc: {
+
+                $first:
+                  "$$ROOT"
+
+              }
+
+            }
+
+          },
+
+          {
+
+            $replaceRoot: {
+
+              newRoot: "$doc"
+
+            }
+
+          },
+
+          // STORE
+          {
+
+            $lookup: {
+
+              from: "stores",
+
+              localField:
+                "storeId",
+
+              foreignField:
+                "_id",
+
+              as: "storedetails"
+
+            }
+
+          },
+
+          {
+
+            $addFields: {
+
+              storedetails: {
+
+                $arrayElemAt: [
+
+                  "$storedetails",
+
+                  0
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // ACTIVE STORE
+          {
+
+            $match: {
+
+              "storedetails.status":
+                true,
+
+              "storedetails.activeStatus":
+                true
+
+            }
+
+          },
+
+          // VARIANTS
+          {
+
+            $lookup: {
+
+              from: "items",
+
+              localField:
+                "variantItems",
+
+              foreignField:
+                "_id",
+
+              as: "variants"
+
+            }
+
+          },
+
+          // ACTIVE VARIANTS
+          {
+
+            $addFields: {
+
+              variants: {
+
+                $filter: {
+
+                  input:
+                    "$variants",
+
+                  as: "v",
+
+                  cond: {
+
+                    $eq: [
+
+                      "$$v.status",
+
+                      true
+
+                    ]
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+
+        ]);
+
+      res.json({
+
+        success: true,
+
+        items
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false
+
+      });
+
+    }
+
+  }
+);
+router.post(
+  "/getLevel2ByLevel1",
+  async (req, res) => {
+
+    try {
+
+      let {
+        level1Id,
+        adminId
+      } = req.body;
+
+      // STRING SAFETY
+      level1Id =
+        String(level1Id);
+
+      adminId =
+        String(adminId);
+
+      const categories =
+        await Category.find({
+
+          grandparent_id:
+            level1Id,
+
+          addedBy:
+            adminId,
+
+          status: true,
+
+          level_no: 2
+
+        })
+
+
+
+          .sort({
+
+            categoryName: 1
+
+          });
+
+      res.json({
+
+        success: true,
+
+        categories
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false
+
+      });
+
+    }
+
+  }
+);
 module.exports = router;
