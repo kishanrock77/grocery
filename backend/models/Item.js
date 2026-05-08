@@ -9,8 +9,8 @@ const ItemSchema = new mongoose.Schema(
     },
     vegtype: {
       type: String,
-      enum: ["veg", "nonveg"],
-      default: "veg",
+      enum: ["veg", "nonveg","na"],
+      default: "na",
     },
     itemName: {
       type: String,

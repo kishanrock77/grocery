@@ -129,7 +129,8 @@ router.get("/detail/:id", async (req, res) => {
     });
   }
 });
-router.get("/customeritemdetail/:id", async (req, res) => {
+ router.get("/customeritemdetail/:id", async (req, res) => {
+
   try {
 
     const item = await Item.findOne({
@@ -148,30 +149,109 @@ router.get("/customeritemdetail/:id", async (req, res) => {
     })
 
     .populate({
-      path: "storeId",
-      select: "storeName images"
-    });
+      path: "storeId"
+    })
+
+    .lean();
 
     if (!item) {
+
       return res.status(404).json({
         success: false,
         message: "Item not found"
       });
+
     }
 
+    // ===============================
+    // STORE OPEN STATUS
+    // ===============================
+
+    let finalopenstatus = "Closed";
+
+    const store = item.storeId;
+
+    if (store) {
+
+      if (store.openCloseStatus === "ForceOpen") {
+
+        finalopenstatus = "Open";
+
+      }
+
+      else if (store.openCloseStatus === "ForceClose") {
+
+        finalopenstatus = "Closed";
+
+      }
+
+      else {
+
+        const today = moment().format("dddd");
+
+        // ✅ not week off
+        if (!store.weekOff?.includes(today)) {
+
+          // ✅ timing exists
+          if (store.openingTime && store.closingTime) {
+
+            const now = moment();
+
+            const openTime =
+              moment(store.openingTime, "HH:mm");
+
+            const closeTime =
+              moment(store.closingTime, "HH:mm");
+
+            if (
+              now.isBetween(
+                openTime,
+                closeTime
+              )
+            ) {
+
+              finalopenstatus = "Open";
+
+            }
+
+          }
+
+        }
+
+      }
+
+      // ✅ inject in store object
+      item.storeId.finalopenstatus =
+        finalopenstatus;
+
+    }
+
+    // ===============================
+    // RESPONSE
+    // ===============================
+
     res.json({
+
       success: true,
       data: item
-    });
 
-  } catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: err.message
     });
 
   }
+
+  catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+
+      success: false,
+      message: err.message
+
+    });
+
+  }
+
 });
 
 router.post("/multi-details", async (req, res) => {

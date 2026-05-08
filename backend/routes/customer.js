@@ -816,7 +816,7 @@ router.post(
 
   }
 );
-router.post(
+ router.post(
   "/getLevel3CategoryItems",
   async (req, res) => {
 
@@ -825,14 +825,12 @@ router.post(
       const {
 
         level2Id,
-
         level3Id,
-
         adminId
 
       } = req.body;
 
-      const items =
+      let items =
         await Item.aggregate([
 
           // MATCH
@@ -1030,6 +1028,102 @@ router.post(
           }
 
         ]);
+
+      // ===============================
+      // FINAL OPEN STATUS
+      // ===============================
+
+      items = items.map(item => {
+
+        let finalopenstatus = "Closed";
+
+        const store =
+          item.storedetails;
+
+        if (store) {
+
+          // FORCE OPEN
+          if (
+            store.openCloseStatus ===
+            "ForceOpen"
+          ) {
+
+            finalopenstatus = "Open";
+
+          }
+
+          // FORCE CLOSE
+          else if (
+            store.openCloseStatus ===
+            "ForceClose"
+          ) {
+
+            finalopenstatus = "Closed";
+
+          }
+
+          // AUTO
+          else {
+
+            const today =
+              moment().format("dddd");
+
+            // NOT WEEK OFF
+            if (
+              !store.weekOff?.includes(today)
+            ) {
+
+              // TIME EXISTS
+              if (
+                store.openingTime &&
+                store.closingTime
+              ) {
+
+                const now =
+                  moment();
+
+                const openTime =
+                  moment(
+                    store.openingTime,
+                    "HH:mm"
+                  );
+
+                const closeTime =
+                  moment(
+                    store.closingTime,
+                    "HH:mm"
+                  );
+
+                if (
+                  now.isBetween(
+                    openTime,
+                    closeTime
+                  )
+                ) {
+
+                  finalopenstatus = "Open";
+
+                }
+
+              }
+
+            }
+
+          }
+
+          // inject
+          item.storedetails.finalopenstatus =
+            finalopenstatus;
+
+        }
+
+        return item;
+
+      });
+
+      // ===============================
+      // RESPONSE
+      // ===============================
 
       res.json({
 
