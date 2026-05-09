@@ -37,4 +37,5 @@ DeliveryAreaSchema.index(
     { unique: true }
 );
 
+
 module.exports = mongoose.model("DeliveryArea", DeliveryAreaSchema);

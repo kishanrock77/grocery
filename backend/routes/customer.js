@@ -739,6 +739,172 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
   }
 
 });
+router.post("/getcategoryyselectedara", async (req, res) => {
+
+  try {
+
+    const { areaId } = req.body;
+
+    // =========================================
+    // ✅ AREA
+    // =========================================
+
+    const area = await DeliveryArea.findOne({
+
+      _id: areaId,
+
+      status: true
+
+    });
+
+    if (!area) {
+
+      return res.json({
+
+        success: false,
+
+        message: "Area not found"
+
+      });
+
+    }
+
+    const adminId = area.adminId;
+
+    // =========================================
+    // ✅ STORES
+    // =========================================
+
+
+
+    // =========================================
+    // ✅ CATEGORIES
+    // =========================================
+
+    const categories = await Category.find({
+
+      addedBy: adminId,
+
+      status: true
+
+    }); 
+    // =========================================
+    // ✅ LOOP LEVEL 1
+    // =========================================
+
+
+
+    // =========================================
+    // ✅ RESPONSE
+    // =========================================
+
+    res.json({
+
+      success: true, 
+      categories  
+    });
+
+  }
+
+  catch (err) {
+
+    console.error("Error:", err);
+
+    res.status(500).json({
+
+      success: false,
+
+      message: err.message
+
+    });
+
+  }
+
+});
+
+router.post("/selectareasubmit", async (req, res) => {
+
+  try {
+
+    const { areaId } = req.body;
+
+    // =========================================
+    // ✅ AREA
+    // =========================================
+
+    const area = await DeliveryArea.findOne({
+
+      _id: areaId,
+
+      status: true
+
+    });
+
+    if (!area) {
+
+      return res.json({
+
+        success: false,
+
+        message: "Area not found"
+
+      });
+
+    }
+
+    const adminId = area.adminId;
+
+    // =========================================
+    // ✅ STORES
+    // =========================================
+
+
+
+    // =========================================
+    // ✅ CATEGORIES
+    // =========================================
+
+
+
+
+
+
+    // =========================================
+    // ✅ LOOP LEVEL 1
+    // =========================================
+
+
+
+    // =========================================
+    // ✅ RESPONSE
+    // =========================================
+
+    res.json({
+
+      success: true,
+
+
+      adminId
+
+    });
+
+  }
+
+  catch (err) {
+
+    console.error("Error:", err);
+
+    res.status(500).json({
+
+      success: false,
+
+      message: err.message
+
+    });
+
+  }
+
+});
 // ===============================================
 // ✅ BACKEND API
 // ===============================================

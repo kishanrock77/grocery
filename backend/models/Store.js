@@ -63,6 +63,6 @@ const StoreSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-StoreSchema.index({ location: "2dsphere" });
+StoreSchema.index({ location: "2dsphere", addedBy: 1, status: 1 });
 
 module.exports = mongoose.model("Store", StoreSchema);

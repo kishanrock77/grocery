@@ -254,7 +254,18 @@ router.get("/list/:userId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.get("/listapp/:userId", async (req, res) => {
+  try {
+    const list = await Category.find({
+      addedBy: req.params.userId,
+      status: true
+    }).sort({ createdAt: 1 });
 
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // <br /><br /><br /><button (click)="emptydb('DelieveryBoy')">Empty Order</button>
 
 
