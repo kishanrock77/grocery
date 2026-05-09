@@ -134,8 +134,10 @@ router.get("/detail/:id", async (req, res) => {
   try {
 
     const item = await Item.findOne({
+
       _id: req.params.id,
       status: true
+
     })
 
     .populate({
@@ -163,9 +165,57 @@ router.get("/detail/:id", async (req, res) => {
 
     }
 
-    // ===============================
-    // STORE OPEN STATUS
-    // ===============================
+    // =====================================
+    // ✅ PRICE RANGE
+    // =====================================
+
+    let priceArray = [];
+
+    // ✅ variant item prices
+    if (
+      item.variantItems &&
+      item.variantItems.length > 0
+    ) {
+
+      priceArray = item.variantItems.map(v => {
+
+        return v.appPrice > 0
+          ? v.appPrice
+          : v.storePrice;
+
+      });
+
+    }
+
+    // ✅ single item price
+    else {
+
+      priceArray = [
+
+        item.appPrice > 0
+          ? item.appPrice
+          : item.storePrice
+
+      ];
+
+    }
+
+    const minPrice = Math.min(...priceArray);
+
+    const maxPrice = Math.max(...priceArray);
+
+    item.minPrice = minPrice;
+
+    item.maxPrice = maxPrice;
+
+    item.priceRange =
+      minPrice === maxPrice
+        ? `₹${minPrice}`
+        : `₹${minPrice} - ₹${maxPrice}`;
+
+    // =====================================
+    // ✅ STORE OPEN STATUS
+    // =====================================
 
     let finalopenstatus = "Closed";
 
@@ -226,14 +276,14 @@ router.get("/detail/:id", async (req, res) => {
 
     }
 
-    // ===============================
-    // RESPONSE
-    // ===============================
+    // =====================================
+    // ✅ RESPONSE
+    // =====================================
 
     res.json({
 
       success: true,
-      data: item
+      data: item,
 
     });
 

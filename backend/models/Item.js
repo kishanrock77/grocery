@@ -68,7 +68,7 @@ const ItemSchema = new mongoose.Schema(
     // ✅ NEW: Unit
     unit: {
       type: String,
-      enum: ["kg", "litre", "piece", "pound", ""],
+       
       default: ""
     },
      size: {

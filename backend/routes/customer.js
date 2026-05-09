@@ -816,7 +816,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   "/getLevel3CategoryItems",
   async (req, res) => {
 
@@ -833,7 +833,10 @@ router.post(
       let items =
         await Item.aggregate([
 
-          // MATCH
+          // =====================================
+          // ✅ MATCH
+          // =====================================
+
           {
 
             $match: {
@@ -871,7 +874,10 @@ router.post(
 
           },
 
-          // LATEST
+          // =====================================
+          // ✅ LATEST
+          // =====================================
+
           {
 
             $sort: {
@@ -882,7 +888,10 @@ router.post(
 
           },
 
-          // REMOVE DUPLICATE
+          // =====================================
+          // ✅ REMOVE DUPLICATE
+          // =====================================
+
           {
 
             $group: {
@@ -920,7 +929,10 @@ router.post(
 
           },
 
-          // STORE
+          // =====================================
+          // ✅ STORE
+          // =====================================
+
           {
 
             $lookup: {
@@ -959,7 +971,10 @@ router.post(
 
           },
 
-          // ACTIVE STORE
+          // =====================================
+          // ✅ ACTIVE STORE
+          // =====================================
+
           {
 
             $match: {
@@ -974,7 +989,10 @@ router.post(
 
           },
 
-          // VARIANTS
+          // =====================================
+          // ✅ VARIANTS
+          // =====================================
+
           {
 
             $lookup: {
@@ -993,7 +1011,10 @@ router.post(
 
           },
 
-          // ACTIVE VARIANTS
+          // =====================================
+          // ✅ ACTIVE VARIANTS
+          // =====================================
+
           {
 
             $addFields: {
@@ -1025,12 +1046,227 @@ router.post(
 
             }
 
+          },
+
+          // =====================================
+          // ✅ PRICE ARRAY
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              priceArray: {
+
+                $cond: [
+
+                  // variants exist
+                  {
+
+                    $gt: [
+
+                      {
+                        $size: "$variants"
+                      },
+
+                      0
+
+                    ]
+
+                  },
+
+                  // variant prices
+                  {
+
+                    $map: {
+
+                      input: "$variants",
+
+                      as: "v",
+
+                      in: {
+
+                        $cond: [
+
+                          {
+
+                            $gt: [
+
+                              "$$v.appPrice",
+
+                              0
+
+                            ]
+
+                          },
+
+                          "$$v.appPrice",
+
+                          "$$v.storePrice"
+
+                        ]
+
+                      }
+
+                    }
+
+                  },
+
+                  // single item price
+                  [
+
+                    {
+
+                      $cond: [
+
+                        {
+
+                          $gt: [
+
+                            "$appPrice",
+
+                            0
+
+                          ]
+
+                        },
+
+                        "$appPrice",
+
+                        "$storePrice"
+
+                      ]
+
+                    }
+
+                  ]
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // ✅ MIN MAX PRICE
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              minPrice: {
+
+                $min: "$priceArray"
+
+              },
+
+              maxPrice: {
+
+                $max: "$priceArray"
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // ✅ PRICE RANGE
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              priceRange: {
+
+                $cond: [
+
+                  {
+
+                    $eq: [
+
+                      "$minPrice",
+
+                      "$maxPrice"
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      }
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      },
+
+                      " - ₹",
+
+                      {
+
+                        $toString:
+                          "$maxPrice"
+
+                      }
+
+                    ]
+
+                  }
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // ✅ REMOVE EXTRA FIELDS
+          // =====================================
+
+          {
+
+            $project: {
+
+              variants: 0,
+              priceArray: 0
+
+            }
+
           }
 
         ]);
 
       // ===============================
-      // FINAL OPEN STATUS
+      // ✅ FINAL OPEN STATUS
       // ===============================
 
       items = items.map(item => {
@@ -1122,7 +1358,7 @@ router.post(
       });
 
       // ===============================
-      // RESPONSE
+      // ✅ RESPONSE
       // ===============================
 
       res.json({
@@ -1141,7 +1377,8 @@ router.post(
 
       res.status(500).json({
 
-        success: false
+        success: false,
+        message: err.message
 
       });
 
