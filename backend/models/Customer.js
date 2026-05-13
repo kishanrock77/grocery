@@ -27,6 +27,39 @@ const customerSchema = new mongoose.Schema({
         type: String,
         default: ""
       },
+      mapAddress: {
+        type: String,
+        default: ""
+      },
+       latitude: {
+        type: Number,
+        default: 0
+      },
+      area: {
+        type: String,
+        default: ""
+      },
+       city: {
+        type: String,
+        default: ""
+      },
+       state: {
+        type: String,
+        default: ""
+      },
+        pincode: {  
+        type: String,
+        default: ""
+      },
+      longitude: {
+        type: Number,
+        default: 0
+      },
+       landmark: {
+        type: String,
+        default: ""
+      },
+        
       label: {
         type: String, // home, office
         default: "home"

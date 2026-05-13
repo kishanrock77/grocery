@@ -102,277 +102,636 @@ router.post("/stores", async (req, res) => {
 // ✅ 3. GET ITEMS OF LEVEL1
 // =====================================================
 
-router.post("/level1-items", async (req, res) => {
+ router.post(
+  "/level1-items",
+  async (req, res) => {
 
-  try {
+    try {
 
-    const {
-      adminId,
-      level1Id
-    } = req.body;
+      const {
 
-    const items = await Item.aggregate([
+        adminId,
+        level1Id
 
-      {
-        $match: {
+      } = req.body;
 
-        addedBy: new mongoose.Types.ObjectId(adminId),
+      // =====================================
+      // ITEMS
+      // =====================================
 
-          status: true,
+      let items =
+        await Item.aggregate([
 
-          showOnFront: true,
+          // =====================================
+          // MATCH
+          // =====================================
 
-          useThisItemAsChild: false,
+          {
 
-          storeId: { $ne: null },
+            $match: {
 
-          "categories.level1": level1Id
-        }
-      },
+              addedBy:
+                new mongoose.Types
+                  .ObjectId(adminId),
 
-      {
-        $sort: {
-          createdAt: -1,
-          _id: -1
-        }
-      },
+              status: true,
 
-      {
-        $group: {
+              showOnFront: true,
 
-          _id: {
-            $ifNull: [
-              "$original_item_id",
-              "$_id"
-            ]
-          },
+              useThisItemAsChild:
+                false,
 
-          doc: {
-            $first: "$$ROOT"
-          }
-        }
-      },
-
-      {
-        $replaceRoot: {
-          newRoot: "$doc"
-        }
-      },
-
-      {
-        $lookup: {
-
-          from: "stores",
-
-          localField: "storeId",
-
-          foreignField: "_id",
-
-          as: "storedetails"
-        }
-      },
-
-      {
-        $addFields: {
-
-          storedetails: {
-            $arrayElemAt: [
-              "$storedetails",
-              0
-            ]
-          }
-        }
-      },
-
-      {
-        $match: {
-
-          "storedetails.status": true,
-
-          "storedetails.activeStatus": true
-        }
-      },
-
-      {
-        $lookup: {
-
-          from: "items",
-
-          localField: "variantItems",
-
-          foreignField: "_id",
-
-          as: "variants"
-        }
-      },
-
-      {
-        $addFields: {
-
-          variants: {
-
-            $filter: {
-
-              input: "$variants",
-
-              as: "v",
-
-              cond: {
-                $eq: [
-                  "$$v.status",
-                  true
-                ]
-              }
-            }
-          }
-        }
-      },
-
-      {
-        $addFields: {
-
-          priceArray: {
-
-            $cond: [
-
-              {
-                $gt: [
-                  { $size: "$variants" },
-                  0
-                ]
+              storeId: {
+                $ne: null
               },
 
-              {
-                $map: {
+              categories: {
 
-                  input: "$variants",
+                $elemMatch: {
+
+                  level1:
+                    String(level1Id)
+
+                }
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // LATEST
+          // =====================================
+
+          {
+
+            $sort: {
+
+              createdAt: -1,
+
+              _id: -1
+
+            }
+
+          },
+
+          // =====================================
+          // REMOVE DUPLICATE
+          // =====================================
+
+          {
+
+            $group: {
+
+              _id: {
+
+                $ifNull: [
+
+                  "$original_item_id",
+
+                  "$_id"
+
+                ]
+
+              },
+
+              doc: {
+
+                $first:
+                  "$$ROOT"
+
+              }
+
+            }
+
+          },
+
+          {
+
+            $replaceRoot: {
+
+              newRoot: "$doc"
+
+            }
+
+          },
+
+          // =====================================
+          // STORE DETAILS
+          // =====================================
+
+          {
+
+            $lookup: {
+
+              from: "stores",
+
+              localField:
+                "storeId",
+
+              foreignField:
+                "_id",
+
+              as: "storedetails"
+
+            }
+
+          },
+
+          {
+
+            $addFields: {
+
+              storedetails: {
+
+                $arrayElemAt: [
+
+                  "$storedetails",
+
+                  0
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // ACTIVE STORE
+          // =====================================
+
+          {
+
+            $match: {
+
+              "storedetails.status":
+                true,
+
+              "storedetails.activeStatus":
+                true
+
+            }
+
+          },
+
+          // =====================================
+          // VARIANTS
+          // =====================================
+
+          {
+
+            $lookup: {
+
+              from: "items",
+
+              localField:
+                "variantItems",
+
+              foreignField:
+                "_id",
+
+              as: "variants"
+
+            }
+
+          },
+
+          // =====================================
+          // ACTIVE VARIANTS
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              variants: {
+
+                $filter: {
+
+                  input:
+                    "$variants",
 
                   as: "v",
 
-                  in: {
+                  cond: {
 
-                    $cond: [
+                    $eq: [
 
-                      {
-                        $gt: [
-                          "$$v.appPrice",
-                          0
-                        ]
-                      },
+                      "$$v.status",
 
-                      "$$v.appPrice",
+                      true
 
-                      "$$v.storePrice"
                     ]
+
                   }
+
                 }
-              },
 
-              [
-                {
-                  $cond: [
+              }
 
-                    {
-                      $gt: [
-                        "$appPrice",
-                        0
-                      ]
-                    },
+            }
 
-                    "$appPrice",
-
-                    "$storePrice"
-                  ]
-                }
-              ]
-            ]
-          }
-        }
-      },
-
-      {
-        $addFields: {
-
-          minPrice: {
-            $min: "$priceArray"
           },
 
-          maxPrice: {
-            $max: "$priceArray"
-          }
-        }
-      },
+          // =====================================
+          // PRICE ARRAY
+          // =====================================
 
-      {
-        $addFields: {
+          {
 
-          priceRange: {
+            $addFields: {
 
-            $cond: [
+              priceArray: {
 
-              {
-                $eq: [
-                  "$minPrice",
-                  "$maxPrice"
+                $cond: [
+
+                  // variants exist
+
+                  {
+
+                    $gt: [
+
+                      {
+                        $size: "$variants"
+                      },
+
+                      0
+
+                    ]
+
+                  },
+
+                  // variant prices
+
+                  {
+
+                    $map: {
+
+                      input:
+                        "$variants",
+
+                      as: "v",
+
+                      in: {
+
+                        $cond: [
+
+                          {
+
+                            $gt: [
+
+                              "$$v.appPrice",
+
+                              0
+
+                            ]
+
+                          },
+
+                          "$$v.appPrice",
+
+                          "$$v.storePrice"
+
+                        ]
+
+                      }
+
+                    }
+
+                  },
+
+                  // single item
+
+                  [
+
+                    {
+
+                      $cond: [
+
+                        {
+
+                          $gt: [
+
+                            "$appPrice",
+
+                            0
+
+                          ]
+
+                        },
+
+                        "$appPrice",
+
+                        "$storePrice"
+
+                      ]
+
+                    }
+
+                  ]
+
                 ]
-              },
 
-              {
-                $concat: [
-                  "₹",
-                  { $toString: "$minPrice" }
-                ]
-              },
-
-              {
-                $concat: [
-
-                  "₹",
-
-                  { $toString: "$minPrice" },
-
-                  " - ₹",
-
-                  { $toString: "$maxPrice" }
-                ]
               }
-            ]
+
+            }
+
+          },
+
+          // =====================================
+          // MIN MAX PRICE
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              minPrice: {
+
+                $min:
+                  "$priceArray"
+
+              },
+
+              maxPrice: {
+
+                $max:
+                  "$priceArray"
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // PRICE RANGE
+          // =====================================
+
+          {
+
+            $addFields: {
+
+              priceRange: {
+
+                $cond: [
+
+                  {
+
+                    $eq: [
+
+                      "$minPrice",
+
+                      "$maxPrice"
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      }
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      },
+
+                      " - ₹",
+
+                      {
+
+                        $toString:
+                          "$maxPrice"
+
+                      }
+
+                    ]
+
+                  }
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // REMOVE EXTRA
+          // =====================================
+
+          {
+
+            $project: {
+
+              variants: 0,
+
+              priceArray: 0
+
+            }
+
+          },
+
+          // =====================================
+          // LIMIT
+          // =====================================
+
+          {
+
+            $limit: 10
+
           }
+
+        ]);
+
+      // =====================================
+      // FINAL OPEN STATUS
+      // =====================================
+
+      items = items.map(item => {
+
+        let finalopenstatus =
+          "Closed";
+
+        const store =
+          item.storedetails;
+
+        if (store) {
+
+          // =========================
+          // FORCE OPEN
+          // =========================
+
+          if (
+
+            store.openCloseStatus ===
+
+            "ForceOpen"
+
+          ) {
+
+            finalopenstatus =
+              "Open";
+
+          }
+
+          // =========================
+          // FORCE CLOSE
+          // =========================
+
+          else if (
+
+            store.openCloseStatus ===
+
+            "ForceClose"
+
+          ) {
+
+            finalopenstatus =
+              "Closed";
+
+          }
+
+          // =========================
+          // AUTO
+          // =========================
+
+          else {
+
+            const today =
+              moment()
+                .format("dddd");
+
+            // not week off
+
+            if (
+
+              !store.weekOff
+                ?.includes(today)
+
+            ) {
+
+              // opening closing exists
+
+              if (
+
+                store.openingTime &&
+                store.closingTime
+
+              ) {
+
+                const now =
+                  moment();
+
+                const openTime =
+                  moment(
+
+                    store.openingTime,
+
+                    "HH:mm"
+
+                  );
+
+                const closeTime =
+                  moment(
+
+                    store.closingTime,
+
+                    "HH:mm"
+
+                  );
+
+                if (
+
+                  now.isBetween(
+
+                    openTime,
+
+                    closeTime
+
+                  )
+
+                ) {
+
+                  finalopenstatus =
+                    "Open";
+
+                }
+
+              }
+
+            }
+
+          }
+
+          // inject
+
+          item.storedetails.finalopenstatus =
+
+            finalopenstatus;
+
         }
-      },
 
-      {
-        $project: {
+        return item;
 
-          variants: 0,
+      });
 
-          priceArray: 0
-        }
-      },
+      // =====================================
+      // RESPONSE
+      // =====================================
 
-      {
-        $limit: 10
-      }
+      res.json({
 
-    ]);
+        success: true,
 
-    res.json({
-      success: true,
-      items
-    });
+        items
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false,
+
+        message: err.message
+
+      });
+
+    }
 
   }
-
-  catch (err) {
-
-    res.status(500).json({
-      success: false,
-      message: err.message
-    });
-
-  }
-
-});
+);
 
 module.exports = router;
  

@@ -28,7 +28,13 @@ const OrderSchema = new mongoose.Schema({
   orderStatus: { type: String, default: "pending" }, // pending, store_accepted, assigned, accepted, packed, delivered, cancelled
   paymentStatus: { type: String, default: "pending" }, // pending, paid
   assignTime: { type: Date },
-  status: { type: Boolean, default: true }
+  status: { type: Boolean, default: true },
+  couponcode: { type: String },
+  discountAmount: { type: Number, default: 0 },
+  paymentMethod: { type: String, default: "cod" }, // cod, online
+  transactionId: { type: String },
+  deliveryCharge: { type: Number, default: 0 },
+  totalAmount: { type: Number, required: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", OrderSchema);

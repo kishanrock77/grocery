@@ -787,7 +787,7 @@ router.post("/getcategoryyselectedara", async (req, res) => {
 
       status: true
 
-    }); 
+    });
     // =========================================
     // ✅ LOOP LEVEL 1
     // =========================================
@@ -800,8 +800,8 @@ router.post("/getcategoryyselectedara", async (req, res) => {
 
     res.json({
 
-      success: true, 
-      categories  
+      success: true,
+      categories
     });
 
   }
@@ -915,14 +915,14 @@ router.post(
     try {
 
       const {
-        level2Id,
+        level1Id,
         adminId
       } = req.body;
 
       const level2Cat =
         await Category.findOne({
 
-          _id: level2Id,
+          _id: level1Id,
 
           addedBy: adminId,
 
@@ -933,7 +933,8 @@ router.post(
       const categories =
         await Category.find({
 
-          parent_id: level2Id,
+                  
+grandparent_id : level1Id,
 
           addedBy: adminId,
 
@@ -941,13 +942,7 @@ router.post(
 
         })
 
-          .select({
-
-            categoryName: 1,
-
-            imagepath: 1
-
-          })
+          
 
           .sort({
 
@@ -1617,4 +1612,1704 @@ router.post(
 
   }
 );
+ router.post(
+  "/searchItems",
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        keyword,
+        adminId,
+        categoryId,
+        categoryLevel,
+        searchfromUrl
+
+      } = req.body;
+
+      // =====================================
+      // COMMON MATCH
+      // =====================================
+
+      const commonMatch = {
+
+        addedBy:
+          new mongoose.Types
+            .ObjectId(adminId),
+
+        status: true,
+
+        showOnFront: true,
+
+        useThisItemAsChild:
+          false,
+
+        storeId: {
+          $ne: null
+        },
+
+        itemName: {
+
+          $regex: keyword,
+
+          $options: "i"
+
+        }
+
+      };
+
+      // =====================================
+      // PIPELINE FUNCTION
+      // =====================================
+
+      const createPipeline =
+        (matchObj) => [
+
+          // =========================
+          // MATCH
+          // =========================
+
+          {
+            $match: matchObj
+          },
+
+          // =========================
+          // LATEST
+          // =========================
+
+          {
+            $sort: {
+              createdAt: -1
+            }
+          },
+
+          // =========================
+          // REMOVE DUPLICATE
+          // =========================
+
+          {
+            $group: {
+
+              _id: {
+
+                $ifNull: [
+
+                  "$original_item_id",
+
+                  "$_id"
+
+                ]
+
+              },
+
+              doc: {
+
+                $first:
+                  "$$ROOT"
+
+              }
+
+            }
+
+          },
+
+          {
+            $replaceRoot: {
+
+              newRoot: "$doc"
+
+            }
+
+          },
+
+          // =========================
+          // STORE DETAILS
+          // =========================
+
+          {
+            $lookup: {
+
+              from: "stores",
+
+              localField:
+                "storeId",
+
+              foreignField:
+                "_id",
+
+              as: "storedetails"
+
+            }
+
+          },
+
+          {
+            $addFields: {
+
+              storedetails: {
+
+                $arrayElemAt: [
+
+                  "$storedetails",
+
+                  0
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =========================
+          // ACTIVE STORE
+          // =========================
+
+          {
+            $match: {
+
+              "storedetails.status":
+                true,
+
+              "storedetails.activeStatus":
+                true
+
+            }
+
+          },
+
+          // =========================
+          // VARIANTS
+          // =========================
+
+          {
+            $lookup: {
+
+              from: "items",
+
+              localField:
+                "variantItems",
+
+              foreignField:
+                "_id",
+
+              as: "variants"
+
+            }
+
+          },
+
+          // =========================
+          // ACTIVE VARIANTS
+          // =========================
+
+          {
+            $addFields: {
+
+              variants: {
+
+                $filter: {
+
+                  input:
+                    "$variants",
+
+                  as: "v",
+
+                  cond: {
+
+                    $eq: [
+
+                      "$$v.status",
+
+                      true
+
+                    ]
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          },
+
+          // =========================
+          // PRICE ARRAY
+          // =========================
+
+          {
+            $addFields: {
+
+              priceArray: {
+
+                $cond: [
+
+                  // variants exist
+
+                  {
+
+                    $gt: [
+
+                      {
+                        $size: "$variants"
+                      },
+
+                      0
+
+                    ]
+
+                  },
+
+                  // variant prices
+
+                  {
+
+                    $map: {
+
+                      input:
+                        "$variants",
+
+                      as: "v",
+
+                      in: {
+
+                        $cond: [
+
+                          {
+
+                            $gt: [
+
+                              "$$v.appPrice",
+
+                              0
+
+                            ]
+
+                          },
+
+                          "$$v.appPrice",
+
+                          "$$v.storePrice"
+
+                        ]
+
+                      }
+
+                    }
+
+                  },
+
+                  // single item price
+
+                  [
+
+                    {
+
+                      $cond: [
+
+                        {
+
+                          $gt: [
+
+                            "$appPrice",
+
+                            0
+
+                          ]
+
+                        },
+
+                        "$appPrice",
+
+                        "$storePrice"
+
+                      ]
+
+                    }
+
+                  ]
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =========================
+          // MIN MAX
+          // =========================
+
+          {
+            $addFields: {
+
+              minPrice: {
+
+                $min:
+                  "$priceArray"
+
+              },
+
+              maxPrice: {
+
+                $max:
+                  "$priceArray"
+
+              }
+
+            }
+
+          },
+
+          // =========================
+          // PRICE RANGE
+          // =========================
+
+          {
+            $addFields: {
+
+              priceRange: {
+
+                $cond: [
+
+                  {
+
+                    $eq: [
+
+                      "$minPrice",
+
+                      "$maxPrice"
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      }
+
+                    ]
+
+                  },
+
+                  {
+
+                    $concat: [
+
+                      "₹",
+
+                      {
+
+                        $toString:
+                          "$minPrice"
+
+                      },
+
+                      " - ₹",
+
+                      {
+
+                        $toString:
+                          "$maxPrice"
+
+                      }
+
+                    ]
+
+                  }
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =========================
+          // REMOVE EXTRA
+          // =========================
+
+          {
+            $project: {
+
+              variants: 0,
+
+              priceArray: 0
+
+            }
+
+          }
+
+        ];
+
+      // =====================================
+      // GLOBAL ITEMS
+      // =====================================
+
+      let globalItems = [];
+
+      if (
+        searchfromUrl ===
+        "global"
+      ) {
+
+        globalItems =
+          await Item.aggregate(
+
+            createPipeline(
+              commonMatch
+            )
+
+          );
+
+      }
+
+      // =====================================
+      // CATEGORY ITEMS
+      // =====================================
+
+      const categoryMatch = {
+
+        ...commonMatch
+
+      };
+
+      // level1
+
+      if (
+        categoryLevel === "l1"
+      ) {
+
+        categoryMatch.categories = {
+
+          $elemMatch: {
+
+            level1:
+              String(categoryId)
+
+          }
+
+        };
+
+      }
+
+      // level2
+
+      if (
+        categoryLevel === "l2"
+      ) {
+
+        categoryMatch.categories = {
+
+          $elemMatch: {
+
+            level2:
+              String(categoryId)
+
+          }
+
+        };
+
+      }
+
+      const categoryItems =
+        await Item.aggregate(
+
+          createPipeline(
+            categoryMatch
+          )
+
+        );
+
+      // =====================================
+      // FINAL OPEN STATUS
+      // =====================================
+
+      const addOpenStatus =
+        (items) => {
+
+          return items.map(item => {
+
+            let finalopenstatus =
+              "Closed";
+
+            const store =
+              item.storedetails;
+
+            if (store) {
+
+              // force open
+
+              if (
+                store.openCloseStatus ===
+                "ForceOpen"
+              ) {
+
+                finalopenstatus =
+                  "Open";
+
+              }
+
+              // force close
+
+              else if (
+                store.openCloseStatus ===
+                "ForceClose"
+              ) {
+
+                finalopenstatus =
+                  "Closed";
+
+              }
+
+              // auto
+
+              else {
+
+                const today =
+                  moment()
+                    .format("dddd");
+
+                // not week off
+
+                if (
+                  !store.weekOff
+                    ?.includes(today)
+                ) {
+
+                  if (
+                    store.openingTime &&
+                    store.closingTime
+                  ) {
+
+                    const now =
+                      moment();
+
+                    const openTime =
+                      moment(
+
+                        store.openingTime,
+
+                        "HH:mm"
+
+                      );
+
+                    const closeTime =
+                      moment(
+
+                        store.closingTime,
+
+                        "HH:mm"
+
+                      );
+
+                    if (
+
+                      now.isBetween(
+
+                        openTime,
+
+                        closeTime
+
+                      )
+
+                    ) {
+
+                      finalopenstatus =
+                        "Open";
+
+                    }
+
+                  }
+
+                }
+
+              }
+
+              item.storedetails
+                .finalopenstatus =
+
+                finalopenstatus;
+
+            }
+
+            return item;
+
+          });
+
+        };
+
+      globalItems =
+        addOpenStatus(
+          globalItems
+        );
+
+      // avoid duplicate api call
+      // in global mode category items not needed
+
+      let finalCategoryItems = [];
+
+      if (
+        searchfromUrl !==
+        "global"
+      ) {
+
+        finalCategoryItems =
+          addOpenStatus(
+            categoryItems
+          );
+
+      }
+
+      // =====================================
+      // RESPONSE
+      // =====================================
+
+      res.json({
+
+        success: true,
+
+        globalItems,
+
+        categoryItems:
+          finalCategoryItems
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false,
+
+        message: err.message,
+
+        globalItems: [],
+
+        categoryItems: []
+
+      });
+
+    }
+
+  }
+);
+ router.post(
+  '/getWishlistItems',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        itemIds,
+        adminId
+
+      } = req.body;
+
+      if (!itemIds?.length) {
+
+        return res.send({
+
+          success: true,
+
+          items: []
+
+        });
+
+      }
+
+      let items =
+        await Item.aggregate([
+
+          // =====================================
+          // ✅ MATCH ITEMS
+          // =====================================
+
+          {
+
+            $match: {
+
+              _id: {
+
+                $in: itemIds.map(
+                  x =>
+                    new mongoose.Types.ObjectId(x)
+                )
+
+              },
+
+              addedBy:
+                new mongoose.Types.ObjectId(
+                  adminId
+                ),
+
+              status: true,
+
+              showOnFront: true
+
+            }
+
+          },
+
+          // =====================================
+          // ✅ STORE DETAILS
+          // =====================================
+
+          {
+
+            $lookup: {
+
+              from: 'stores',
+
+              localField: 'storeId',
+
+              foreignField: '_id',
+
+              as: 'storeData'
+
+            }
+
+          },
+
+          {
+
+            $addFields: {
+
+              storeData: {
+
+                $arrayElemAt: [
+
+                  '$storeData',
+
+                  0
+
+                ]
+
+              }
+
+            }
+
+          },
+
+          // =====================================
+          // ✅ ACTIVE STORE ONLY
+          // =====================================
+
+          {
+
+            $match: {
+
+              'storeData.status': true,
+
+              'storeData.activeStatus': true
+
+            }
+
+          }
+
+        ]);
+
+      // =====================================
+      // ✅ FINAL OPEN STATUS
+      // =====================================
+
+      items = items.map(item => {
+
+        let finalopenstatus =
+          "Closed";
+
+        const store =
+          item.storeData;
+
+        if (store) {
+
+          // FORCE OPEN
+          if (
+            store.openCloseStatus ===
+            "ForceOpen"
+          ) {
+
+            finalopenstatus =
+              "Open";
+
+          }
+
+          // FORCE CLOSE
+          else if (
+            store.openCloseStatus ===
+            "ForceClose"
+          ) {
+
+            finalopenstatus =
+              "Closed";
+
+          }
+
+          // AUTO
+          else {
+
+            const today =
+              moment().format(
+                "dddd"
+              );
+
+            // NOT WEEK OFF
+            if (
+              !store.weekOff?.includes(
+                today
+              )
+            ) {
+
+              // TIME EXISTS
+              if (
+                store.openingTime &&
+                store.closingTime
+              ) {
+
+                const now =
+                  moment();
+
+                const openTime =
+                  moment(
+                    store.openingTime,
+                    "HH:mm"
+                  );
+
+                const closeTime =
+                  moment(
+                    store.closingTime,
+                    "HH:mm"
+                  );
+
+                if (
+                  now.isBetween(
+                    openTime,
+                    closeTime
+                  )
+                ) {
+
+                  finalopenstatus =
+                    "Open";
+
+                }
+
+              }
+
+            }
+
+          }
+
+          // inject
+          item.storeData.finalopenstatus =
+            finalopenstatus;
+
+        }
+
+        return item;
+
+      });
+
+      // =====================================
+      // ✅ RESPONSE
+      // =====================================
+
+      res.send({
+
+        success: true,
+
+        items
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.send({
+
+        success: false,
+
+        items: []
+
+      });
+
+    }
+
+  }
+);
+router.post(
+  '/getLevel1Categories',
+  async (req, res) => {
+
+    try {
+
+      const {
+        adminId
+      } = req.body;
+
+      const categories =
+        await Category.find({
+
+          addedBy:
+            adminId,
+level_no: 1,
+          status: true
+
+        })
+
+          .sort({
+            categoryName: 1
+          });
+
+      res.send({
+
+        success: true,
+
+        categories
+
+      });
+
+    }
+
+    catch (err) {
+
+      res.send({
+
+        success: false,
+
+        categories: []
+
+      });
+
+    }
+
+  }
+);
+router.post(
+  '/getLevel3Categories',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        adminId,
+        level2Id
+
+      } = req.body;
+
+      const categories =
+        await Category.find({
+
+          addedBy:
+            adminId,
+
+       parent_id: level2Id,
+
+          status: true,
+
+ 
+        })
+
+          .sort({
+            position: 1
+          });
+
+      res.send({
+
+        success: true,
+
+        categories
+
+      });
+
+    }
+
+    catch (err) {
+
+      res.send({
+
+        success: false,
+
+        categories: []
+
+      });
+
+    }
+
+  }
+);
+router.post(
+  '/getSearchSuggestions',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        keyword,
+        adminId,
+        categoryId,
+        categoryLevel,
+        searchfromUrl
+
+      } = req.body;
+
+      const match = {
+
+        addedBy:
+          new mongoose.Types
+            .ObjectId(adminId),
+
+        status: true,
+
+        showOnFront: true,
+
+        itemName: {
+          $regex: keyword,
+          $options: 'i'
+        }
+
+      };
+
+      // ======================
+      // CATEGORY CONDITION
+      // ======================
+
+      if (
+        searchfromUrl !== 'global'
+      ) {
+
+        if (
+          categoryLevel === 'l1'
+        ) {
+
+          match.level1Id =
+            new mongoose.Types
+              .ObjectId(categoryId);
+
+        }
+
+        if (
+          categoryLevel === 'l2'
+        ) {
+
+          match.level2Id =
+            new mongoose.Types
+              .ObjectId(categoryId);
+
+        }
+
+      }
+
+      const items =
+        await Item.aggregate([
+
+          {
+            $match: match
+          },
+
+          {
+            $project: {
+
+              itemName: 1,
+
+              image: {
+                $arrayElemAt: [
+                  '$images',
+                  0
+                ]
+              }
+
+            }
+
+          },
+
+          {
+            $limit: 10
+          }
+
+        ]);
+
+      res.send({
+
+        success: true,
+
+        items
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.send({
+
+        success: false,
+
+        items: []
+
+      });
+
+    }
+
+  }
+);
+
+ router.post(
+  '/get-cart-items',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        cartItemIds = [],
+        wishlistItemIds = [],
+        adminId
+
+      } = req.body;
+
+      // =====================================
+      // ✅ COMMON FUNCTION
+      // =====================================
+
+      const getItems = async (ids) => {
+
+        if (!ids?.length) {
+
+          return [];
+
+        }
+
+        let items =
+          await Item.aggregate([
+
+            // =====================================
+            // ✅ MATCH ITEMS
+            // =====================================
+
+            {
+
+              $match: {
+
+                _id: {
+
+                  $in: ids.map(
+                    x =>
+                      new mongoose.Types.ObjectId(x)
+                  )
+
+                },
+
+                addedBy:
+                  new mongoose.Types.ObjectId(
+                    adminId
+                  ),
+
+                status: true,
+
+                showOnFront: true
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ STORE DETAILS
+            // =====================================
+
+            {
+
+              $lookup: {
+
+                from: 'stores',
+
+                localField: 'storeId',
+
+                foreignField: '_id',
+
+                as: 'storeId'
+
+              }
+
+            },
+
+            {
+
+              $addFields: {
+
+                storeId: {
+
+                  $arrayElemAt: [
+
+                    '$storeId',
+
+                    0
+
+                  ]
+
+                }
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ ACTIVE STORE ONLY
+            // =====================================
+
+            {
+
+              $match: {
+
+                'storeId.status': true,
+
+                'storeId.activeStatus': true
+
+              }
+
+            }
+
+          ]);
+
+        // =====================================
+        // ✅ FINAL OPEN STATUS
+        // =====================================
+
+        items = items.map(item => {
+
+          let finalopenstatus =
+            "Closed";
+
+          const store =
+            item.storeId;
+
+          if (store) {
+
+            // FORCE OPEN
+            if (
+              store.openCloseStatus ===
+              "ForceOpen"
+            ) {
+
+              finalopenstatus =
+                "Open";
+
+            }
+
+            // FORCE CLOSE
+            else if (
+              store.openCloseStatus ===
+              "ForceClose"
+            ) {
+
+              finalopenstatus =
+                "Closed";
+
+            }
+
+            // AUTO
+            else {
+
+              const today =
+                moment().format(
+                  "dddd"
+                );
+
+              // NOT WEEK OFF
+              if (
+                !store.weekOff?.includes(
+                  today
+                )
+              ) {
+
+                // TIME EXISTS
+                if (
+                  store.openingTime &&
+                  store.closingTime
+                ) {
+
+                  const now =
+                    moment();
+
+                  const openTime =
+                    moment(
+                      store.openingTime,
+                      "HH:mm"
+                    );
+
+                  const closeTime =
+                    moment(
+                      store.closingTime,
+                      "HH:mm"
+                    );
+
+                  if (
+                    now.isBetween(
+                      openTime,
+                      closeTime
+                    )
+                  ) {
+
+                    finalopenstatus =
+                      "Open";
+
+                  }
+
+                }
+
+              }
+
+            }
+
+            // inject
+            item.storeId.finalopenstatus =
+              finalopenstatus;
+
+          }
+
+          return item;
+
+        });
+
+        return items;
+
+      };
+
+      // =====================================
+      // ✅ GET DATA
+      // =====================================
+
+      const cartItems =
+        await getItems(
+          cartItemIds
+        );
+
+      const wishlistItems =
+        await getItems(
+          wishlistItemIds
+        );
+
+      // =====================================
+      // ✅ RESPONSE
+      // =====================================
+
+      res.send({
+
+        success: true,
+
+        cartItems,
+
+        wishlistItems
+
+      });
+
+    }
+
+    catch (e) {
+
+      console.log(e);
+
+      res.send({
+
+        success: false
+
+      });
+
+    }
+
+  }
+);
+
+router.post('/get-checkout-coupons', async (req, res) => {
+
+  try {
+
+    const {
+
+      adminId,
+      customerId,
+      storeIds
+
+    } = req.body;
+
+    const coupons = await Coupon.find({
+
+      adminId,
+
+      status: true,
+
+      active: true,
+
+      showbydeafultincheckoutpage: true
+
+    }).lean();
+
+    const finalCoupons = [];
+
+    for (const c of coupons) {
+
+      // ===================================
+      // CHECK ALREADY USED
+      // ===================================
+
+      const alreadyUsed = await Order.findOne({
+
+        customerId,
+
+        couponcode: c.couponName
+
+      });
+
+      if (alreadyUsed) {
+        continue;
+      }
+
+      let valid = true;
+
+      // ===================================
+      // ONLY APPLICABLE
+      // ===================================
+
+      if (c.onlyApplicableStoreIds?.length) {
+
+        for (const sid of storeIds) {
+
+          const exists =
+            c.onlyApplicableStoreIds
+              .map(x => x.toString())
+              .includes(sid.toString());
+
+          if (!exists) {
+
+            valid = false;
+
+            break;
+          }
+        }
+      }
+
+      // ===================================
+      // NOT APPLICABLE
+      // ===================================
+
+      if (c.notApplicableStoreIds?.length) {
+
+        for (const sid of storeIds) {
+
+          const blocked =
+            c.notApplicableStoreIds
+              .map(x => x.toString())
+              .includes(sid.toString());
+
+          if (blocked) {
+
+            valid = false;
+
+            break;
+          }
+        }
+      }
+
+      if (valid) {
+
+        finalCoupons.push(c);
+
+      }
+
+    }
+
+    res.send({
+
+      success: true,
+
+      coupons: finalCoupons
+
+    });
+
+  }
+
+  catch (e) {
+
+    console.log(e);
+
+    res.send({
+
+      success: false
+
+    });
+
+  }
+
+});
+
+
+router.post('/validate-coupon', async (req, res) => {
+
+  try {
+
+    const {
+
+      couponCode,
+      adminId,
+      customerId,
+      storeIds
+
+    } = req.body;
+
+    const coupon =
+      await Coupon.findOne({
+
+        couponName: couponCode.toUpperCase(),
+
+        adminId
+
+      }).lean();
+
+    if (!coupon) {
+
+      return res.send({
+
+        success: false,
+
+        message: "Coupon does not exist"
+
+      });
+
+    }
+
+    if (!coupon.status || !coupon.active) {
+
+      return res.send({
+
+        success: false,
+
+        message: "Coupon is not active"
+
+      });
+
+    }
+
+    const alreadyUsed = await Order.findOne({
+
+      customerId,
+
+      couponcode: coupon.couponName
+
+    });
+
+    if (alreadyUsed) {
+
+      return res.send({
+
+        success: false,
+
+        message: "Coupon already used"
+
+      });
+
+    }
+
+    // ==========================
+    // ONLY APPLICABLE
+    // ==========================
+
+    if (coupon.onlyApplicableStoreIds?.length) {
+
+      for (const sid of storeIds) {
+
+        const exists =
+          coupon.onlyApplicableStoreIds
+            .map(x => x.toString())
+            .includes(sid.toString());
+
+        if (!exists) {
+
+          return res.send({
+
+            success: false,
+
+            message: "Coupon is not applicable on cart stores"
+
+          });
+
+        }
+      }
+    }
+
+    // ==========================
+    // NOT APPLICABLE
+    // ==========================
+
+    if (coupon.notApplicableStoreIds?.length) {
+
+      for (const sid of storeIds) {
+
+        const blocked =
+          coupon.notApplicableStoreIds
+            .map(x => x.toString())
+            .includes(sid.toString());
+
+        if (blocked) {
+
+          return res.send({
+
+            success: false,
+
+            message: "Coupon is not applicable on cart stores"
+
+          });
+
+        }
+      }
+    }
+
+    res.send({
+
+      success: true,
+
+      coupon
+
+    });
+
+  }
+
+  catch (e) {
+
+    console.log(e);
+
+    res.send({
+
+      success: false
+
+    });
+
+  }
+
+});
 module.exports = router;
