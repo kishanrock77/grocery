@@ -2662,7 +2662,7 @@ router.post(
 
   }
 );
-router.post(
+ router.post(
   '/getSearchSuggestions',
   async (req, res) => {
 
@@ -2681,8 +2681,7 @@ router.post(
       const match = {
 
         addedBy:
-          new mongoose.Types
-            .ObjectId(adminId),
+          new mongoose.Types.ObjectId(adminId),
 
         status: true,
 
@@ -2699,60 +2698,77 @@ router.post(
       // CATEGORY CONDITION
       // ======================
 
-      if (
-        searchfromUrl !== 'global'
-      ) {
+      if (searchfromUrl !== 'global') {
 
-        if (
-          categoryLevel === 'l1'
-        ) {
+        if (categoryLevel === 'l1') {
 
           match.level1Id =
-            new mongoose.Types
-              .ObjectId(categoryId);
+            new mongoose.Types.ObjectId(categoryId);
 
         }
 
-        if (
-          categoryLevel === 'l2'
-        ) {
+        if (categoryLevel === 'l2') {
 
           match.level2Id =
-            new mongoose.Types
-              .ObjectId(categoryId);
+            new mongoose.Types.ObjectId(categoryId);
 
         }
 
       }
 
-      const items =
-        await Item.aggregate([
+      const items = await Item.aggregate([
 
-          {
-            $match: match
-          },
+        {
+          $match: match
+        },
 
-          {
-            $project: {
+        // same itemName ko group karo
+        {
+          $group: {
 
-              itemName: 1,
+            _id: {
+              $toLower: '$itemName'
+            },
 
-              image: {
+            itemName: {
+              $first: '$itemName'
+            },
+
+            image: {
+              $first: {
                 $arrayElemAt: [
                   '$images',
                   0
                 ]
               }
-
             }
 
-          },
-
-          {
-            $limit: 10
           }
+        },
 
-        ]);
+        {
+          $project: {
+
+            _id: 0,
+
+            itemName: 1,
+
+            image: 1
+
+          }
+        },
+
+        {
+          $sort: {
+            itemName: 1
+          }
+        },
+
+        {
+          $limit: 10
+        }
+
+      ]);
 
       res.send({
 
