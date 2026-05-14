@@ -4,6 +4,7 @@ const Item = require("../models/Item");
 const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
+const Coupon = require("../models/Coupon");
 
 const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
@@ -933,8 +934,8 @@ router.post(
       const categories =
         await Category.find({
 
-                  
-grandparent_id : level1Id,
+
+          grandparent_id: level1Id,
 
           addedBy: adminId,
 
@@ -942,7 +943,7 @@ grandparent_id : level1Id,
 
         })
 
-          
+
 
           .sort({
 
@@ -1612,7 +1613,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   "/searchItems",
   async (req, res) => {
 
@@ -2313,7 +2314,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   '/getWishlistItems',
   async (req, res) => {
 
@@ -2574,7 +2575,7 @@ router.post(
 
           addedBy:
             adminId,
-level_no: 1,
+          level_no: 1,
           status: true
 
         })
@@ -2626,11 +2627,11 @@ router.post(
           addedBy:
             adminId,
 
-       parent_id: level2Id,
+          parent_id: level2Id,
 
           status: true,
 
- 
+
         })
 
           .sort({
@@ -2780,7 +2781,7 @@ router.post(
   }
 );
 
- router.post(
+router.post(
   '/get-cart-items',
   async (req, res) => {
 
