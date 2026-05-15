@@ -909,75 +909,7 @@ router.post("/selectareasubmit", async (req, res) => {
 // ===============================================
 // ✅ BACKEND API
 // ===============================================
-router.post(
-  "/getLevel2CategoriesOnly",
-  async (req, res) => {
 
-    try {
-
-      const {
-        level1Id,
-        adminId
-      } = req.body;
-
-      const level2Cat =
-        await Category.findOne({
-
-          _id: level1Id,
-
-          addedBy: adminId,
-
-          status: true
-
-        });
-
-      const categories =
-        await Category.find({
-
-
-          grandparent_id: level1Id,
-
-          addedBy: adminId,
-
-          status: true
-
-        })
-
-
-
-          .sort({
-
-            categoryName: 1
-
-          });
-
-      res.json({
-
-        success: true,
-
-        level2Category:
-          level2Cat,
-
-        categories
-
-      });
-
-    }
-
-    catch (err) {
-
-      console.log(err);
-
-      res.status(500).json({
-
-        success: false
-
-      });
-
-    }
-
-  }
-);
 router.post(
   "/getLevel3CategoryItems",
   async (req, res) => {
@@ -2609,6 +2541,75 @@ router.post(
   }
 );
 router.post(
+  "/getLevel2CategoriesOnly",
+  async (req, res) => {
+
+    try {
+
+      const {
+        level1Id,
+        adminId
+      } = req.body;
+
+      const level2Cat =
+        await Category.findOne({
+
+          _id: level1Id,
+
+          addedBy: adminId,
+
+          status: true
+
+        });
+
+      const categories =
+        await Category.find({
+
+
+          grandparent_id: level1Id,
+
+          addedBy: adminId,
+
+          status: true
+
+        })
+
+
+
+          .sort({
+
+            categoryName: 1
+
+          });
+
+      res.json({
+
+        success: true,
+
+        level2Category:
+          level2Cat,
+
+        categories
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+
+        success: false
+
+      });
+
+    }
+
+  }
+);
+router.post(
   '/getLevel3Categories',
   async (req, res) => {
 
@@ -2620,7 +2621,16 @@ router.post(
         level2Id
 
       } = req.body;
+      const level2Cat =
+        await Category.findOne({
 
+          _id: level2Id,
+
+          addedBy: adminId,
+
+          status: true
+
+        });
       const categories =
         await Category.find({
 
@@ -2641,7 +2651,7 @@ router.post(
       res.send({
 
         success: true,
-
+        level2Category: level2Cat,
         categories
 
       });
@@ -2662,7 +2672,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   '/getSearchSuggestions',
   async (req, res) => {
 
