@@ -42,7 +42,14 @@ const ItemSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+  rating: {
+      type: Number,
+      default: 0,
+    },
+  ratingCount: {
+      type: Number,
+      default: 0,
+    },
     // ✅ Categories (3-Level Structure)
     categories: [
       {

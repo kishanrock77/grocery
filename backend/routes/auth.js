@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
- 
+
 const DeliveryBoy = require("../models/DeliveryBoy");
 const StoreOwner = require("../models/storeOwner");
 const AdminUser = require("../models/AdminUser");
 // routes define here
-router.get("/", (req,res) => { res.send("ath route") });
+router.get("/", (req, res) => { res.send("ath route") });
 
 
 // signup
@@ -16,25 +16,67 @@ router.post("/signup", async (req, res) => {
 
   try {
 
-    let user = await AdminUser.findOne({ email: req.body.email });
+    // ✅ Email check
+    const emailExist = await AdminUser.findOne({
+      email: req.body.email
+    });
 
-    if (user) {
-      return res.json({ msg: "Email already exist" });
+    if (emailExist) {
+
+      return res.json({
+        success: false,
+        msg: "Email already exists"
+      });
+
     }
 
-    //const hash = await bcrypt.hash(req.body.password, 10);
+    // ✅ City check
+    const cityExist = await AdminUser.findOne({
+      city: req.body.city
+    });
 
-    user = new AdminUser({
+    if (cityExist) {
+
+      return res.json({
+        success: false,
+        msg: "Admin already exists for this city ! "
+      });
+
+    }
+
+    const user = new AdminUser({
+
       ...req.body,
+
+      email: req.body.email.toLowerCase(),
+
       password: req.body.password
+
     });
 
     await user.save();
 
-    res.json({ msg: "User created" });
+    res.json({
+
+      success: true,
+      msg: "User created"
+
+    });
 
   } catch (err) {
+
+    // duplicate key error
+    if (err.code === 11000) {
+
+      return res.json({
+        success: false,
+        msg: "Email or City already exists"
+      });
+
+    }
+
     res.status(500).send(err);
+
   }
 
 });
@@ -90,7 +132,7 @@ router.post("/login", async (req, res) => {
     if (!match) {
       return res.status(401).json({
         success: false,
-        message: "Wrong password"+user.password,
+        message: "Wrong password" + user.password,
       });
     }
 
@@ -118,8 +160,10 @@ router.post("/login", async (req, res) => {
       message: "Login successful",
       token,
       userId: user._id,
+      user: user,
+
       userType: userType,
-      addedBy: user.addedBy 
+      addedBy: user.addedBy
     });
 
   } catch (error) {
@@ -129,6 +173,6 @@ router.post("/login", async (req, res) => {
     });
   }
 });
- 
+
 
 module.exports = router;

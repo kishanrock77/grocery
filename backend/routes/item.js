@@ -52,11 +52,16 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
     ) {
       storeObjectId = new mongoose.Types.ObjectId(body.storeId);
     }
+    let rating =
+          Math.round((Math.random() * 1.5 + 3.5) * 10) / 10;
+    
+        let ratingCount =
+          Math.floor(Math.random() * 4000 + 1000);
     const item = new Item({
       itemType: body.itemType,
       vegtype: body.vegtype,
       variant_or_addon: body.variant_or_addon,
-      itemName: body.itemName,
+      itemName: body.itemName, rating: rating, ratingCount: ratingCount,
       itemSubName: body.itemSubName || "",
       description: body.description || "",
       storePrice: Number(body.storePrice) || 0,

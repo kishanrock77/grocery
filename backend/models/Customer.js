@@ -23,6 +23,14 @@ const customerSchema = new mongoose.Schema({
   // 📍 Multiple Addresses
   address: [
     {
+      contactName: {
+        type: String,
+        default: ""
+      },
+      contactMobile: {
+        type: String,
+        default: ""
+      },
       fullAddress: {
         type: String,
         default: ""
@@ -31,23 +39,20 @@ const customerSchema = new mongoose.Schema({
         type: String,
         default: ""
       },
-       latitude: {
+      latitude: {
         type: Number,
         default: 0
       },
-      area: {
+       
+      city: {
         type: String,
         default: ""
       },
-       city: {
+      state: {
         type: String,
         default: ""
       },
-       state: {
-        type: String,
-        default: ""
-      },
-        pincode: {  
+      pincode: {
         type: String,
         default: ""
       },
@@ -55,11 +60,11 @@ const customerSchema = new mongoose.Schema({
         type: Number,
         default: 0
       },
-       landmark: {
+      landmark: {
         type: String,
         default: ""
       },
-        
+
       label: {
         type: String, // home, office
         default: "home"

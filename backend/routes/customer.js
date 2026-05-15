@@ -3195,9 +3195,50 @@ router.post('/get-checkout-coupons', async (req, res) => {
 
 });
 
+async function updateItemRatings() {
+  try {
+
+    // Sare existing items update karo
+    const items = await Item.find({});
+
+    const bulkOps = items.map((item) => {
+
+      // Rating -> 3.0 se 5.0 ke beech
+      const rating =
+        (Math.random() * (5 - 3) + 3).toFixed(1);
+
+      // Rating Count -> 400 se 500 ke beech
+      const ratingCount =
+        Math.floor(Math.random() * (500 - 400 + 1)) + 400;
+
+      return {
+        updateOne: {
+          filter: { _id: item._id },
+          update: {
+            $set: {
+              rating: Number(rating),
+              ratingCount: ratingCount,
+            },
+          },
+        },
+      };
+    });
+
+    if (bulkOps.length > 0) {
+      await Item.bulkWrite(bulkOps);
+    }
+
+    console.log(
+      `✅ ${bulkOps.length} items updated successfully`
+    );
+
+  } catch (error) {
+    console.error('❌ Error updating ratings:', error);
+  }
+}
 
 router.post('/validate-coupon', async (req, res) => {
-
+  //updateItemRatings();
   try {
 
     const {
@@ -3339,4 +3380,94 @@ router.post('/validate-coupon', async (req, res) => {
   }
 
 });
+// routes/customer.js
+
+// BACKEND API
+
+router.post(
+  '/addAddress',
+  async (req, res) => {
+
+    try {
+
+      const {
+        customerId,
+        address,
+        isEdit,
+        editIndex
+      } = req.body;
+
+      const user =
+        await Customer.findById(customerId);
+
+      if (!user) {
+
+        return res.send({
+
+          success: false,
+
+          msg: 'Customer not found'
+
+        });
+
+      }
+
+      /* EDIT */
+
+      if (isEdit) {
+
+        const oldFullAddress =
+          user.address[editIndex]?.fullAddress;
+
+        user.address[editIndex] = address;
+
+        await user.save();
+
+        return res.send({
+
+          success: true,
+
+          msg: 'Address updated',
+
+          user,
+
+          updatedAddress: {
+            oldFullAddress
+          }
+
+        });
+
+      }
+
+      /* ADD */
+
+      user.address.push(address);
+
+      await user.save();
+
+      return res.send({
+
+        success: true,
+
+        msg: 'Address added',
+
+        user
+
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.send({
+
+        success: false,
+
+        msg: 'Server error'
+
+      });
+
+    }
+
+  });
 module.exports = router;
