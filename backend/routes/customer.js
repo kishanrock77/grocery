@@ -3383,7 +3383,76 @@ router.post('/validate-coupon', async (req, res) => {
 // routes/customer.js
 
 // BACKEND API
+// API ROUTE
 
+router.post(
+  '/deleteCustomerAddress',
+  async (req, res) => {
+
+    try {
+
+      const {
+        customerId,
+        index
+      } = req.body;
+
+      const user =
+        await Customer.findById(customerId);
+
+      if (!user) {
+
+        return res.send({
+
+          success: false,
+          msg: 'Customer not found'
+
+        });
+
+      }
+
+      if (
+        index == null ||
+        index < 0 ||
+        index >= user.address.length
+      ) {
+
+        return res.send({
+
+          success: false,
+          msg: 'Invalid address index'
+
+        });
+
+      }
+
+      /* DELETE */
+
+      user.address.splice(index, 1);
+
+      await user.save();
+
+      return res.send({
+
+        success: true,
+        msg: 'Address deleted',
+        user
+
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      return res.send({
+
+        success: false,
+        msg: 'Server error'
+
+      });
+
+    }
+
+  });
 router.post(
   '/addAddress',
   async (req, res) => {
