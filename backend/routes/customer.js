@@ -2246,17 +2246,15 @@ router.post(
 
   }
 );
-router.post(
+ router.post(
   '/getWishlistItems',
   async (req, res) => {
 
     try {
 
       const {
-
         itemIds,
         adminId
-
       } = req.body;
 
       if (!itemIds?.length) {
@@ -2275,7 +2273,7 @@ router.post(
         await Item.aggregate([
 
           // =====================================
-          // ✅ MATCH ITEMS
+          // MATCH ITEMS
           // =====================================
 
           {
@@ -2305,7 +2303,7 @@ router.post(
           },
 
           // =====================================
-          // ✅ STORE DETAILS
+          // STORE DETAILS
           // =====================================
 
           {
@@ -2318,7 +2316,7 @@ router.post(
 
               foreignField: '_id',
 
-              as: 'storeData'
+              as: 'storedetails'
 
             }
 
@@ -2328,11 +2326,11 @@ router.post(
 
             $addFields: {
 
-              storeData: {
+              storedetails: {
 
                 $arrayElemAt: [
 
-                  '$storeData',
+                  '$storedetails',
 
                   0
 
@@ -2345,16 +2343,16 @@ router.post(
           },
 
           // =====================================
-          // ✅ ACTIVE STORE ONLY
+          // ACTIVE STORE ONLY
           // =====================================
 
           {
 
             $match: {
 
-              'storeData.status': true,
+              'storedetails.status': true,
 
-              'storeData.activeStatus': true
+              'storedetails.activeStatus': true
 
             }
 
@@ -2363,7 +2361,7 @@ router.post(
         ]);
 
       // =====================================
-      // ✅ FINAL OPEN STATUS
+      // FINAL OPEN STATUS
       // =====================================
 
       items = items.map(item => {
@@ -2372,7 +2370,7 @@ router.post(
           "Closed";
 
         const store =
-          item.storeData;
+          item.storedetails;
 
         if (store) {
 
@@ -2453,7 +2451,7 @@ router.post(
           }
 
           // inject
-          item.storeData.finalopenstatus =
+          item.storedetails.finalopenstatus =
             finalopenstatus;
 
         }
@@ -2463,7 +2461,7 @@ router.post(
       });
 
       // =====================================
-      // ✅ RESPONSE
+      // RESPONSE
       // =====================================
 
       res.send({
