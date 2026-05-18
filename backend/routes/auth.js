@@ -175,4 +175,38 @@ router.post("/login", async (req, res) => {
 });
 
 
+router.get("/details/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+     
+
+     
+ 
+
+    // 🔹 Find User
+    const user = await AdminUser.findOne({ _id:id });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Something went wrong",
+      });
+    }
+ 
+    // 🔹 Response
+    res.json({
+      success: true,
+      message: "Fetched successful", 
+      user: user 
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+
 module.exports = router;
