@@ -138,7 +138,7 @@ router.get("/detail/:id", async (req, res) => {
 
   try {
 
-    const item = await Item.findOne({
+    let item = await Item.findOne({
 
       _id: req.params.id,
       status: true
@@ -169,6 +169,14 @@ router.get("/detail/:id", async (req, res) => {
       });
 
     }
+
+    // =====================================
+    // ✅ RENAME storeId -> storedetails
+    // =====================================
+
+    item.storedetails = item.storeId;
+
+    delete item.storeId;
 
     // =====================================
     // ✅ PRICE RANGE
@@ -224,7 +232,7 @@ router.get("/detail/:id", async (req, res) => {
 
     let finalopenstatus = "Closed";
 
-    const store = item.storeId;
+    const store = item.storedetails;
 
     if (store) {
 
@@ -276,7 +284,7 @@ router.get("/detail/:id", async (req, res) => {
       }
 
       // ✅ inject in store object
-      item.storeId.finalopenstatus =
+      item.storedetails.finalopenstatus =
         finalopenstatus;
 
     }
@@ -308,7 +316,6 @@ router.get("/detail/:id", async (req, res) => {
   }
 
 });
-
 router.post("/multi-details", async (req, res) => {
   try {
     const { ids } = req.body;

@@ -2805,7 +2805,7 @@ router.post(
   }
 );
 
-router.post(
+ router.post(
   '/get-cart-items',
   async (req, res) => {
 
@@ -2878,7 +2878,7 @@ router.post(
 
                 foreignField: '_id',
 
-                as: 'storeId'
+                as: 'storedetails'
 
               }
 
@@ -2888,11 +2888,11 @@ router.post(
 
               $addFields: {
 
-                storeId: {
+                storedetails: {
 
                   $arrayElemAt: [
 
-                    '$storeId',
+                    '$storedetails',
 
                     0
 
@@ -2912,9 +2912,9 @@ router.post(
 
               $match: {
 
-                'storeId.status': true,
+                'storedetails.status': true,
 
-                'storeId.activeStatus': true
+                'storedetails.activeStatus': true
 
               }
 
@@ -2932,7 +2932,7 @@ router.post(
             "Closed";
 
           const store =
-            item.storeId;
+            item.storedetails;
 
           if (store) {
 
@@ -3013,7 +3013,7 @@ router.post(
             }
 
             // inject
-            item.storeId.finalopenstatus =
+            item.storedetails.finalopenstatus =
               finalopenstatus;
 
           }
