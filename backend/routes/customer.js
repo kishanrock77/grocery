@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
 const Coupon = require("../models/Coupon");
-
+const Order =
+require('../models/order');
 const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
 const Category = require("../models/Category");
@@ -2246,7 +2247,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   '/getWishlistItems',
   async (req, res) => {
 
@@ -2805,7 +2806,7 @@ router.post(
   }
 );
 
- router.post(
+router.post(
   '/get-cart-items',
   async (req, res) => {
 
@@ -3537,4 +3538,60 @@ router.post(
     }
 
   });
+
+router.post(
+  '/order-count',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        userId,
+        adminId
+
+      } = req.body;
+
+      const totalOrders =
+        await Order.countDocuments({
+
+          userid: userId,
+ 
+
+          orderstatus: {
+
+            $nin: [
+              'cancelled',
+              'failed'
+            ]
+
+          }
+
+        });
+
+      return res.send({
+
+        success: true,
+
+        totalOrders
+
+      });
+
+    }
+
+    catch (e) {
+
+      console.log(e);
+
+      return res.send({
+
+        success: false,
+        totalOrders: 0
+
+      });
+
+    }
+
+  }
+);
 module.exports = router;

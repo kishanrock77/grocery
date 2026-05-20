@@ -94,7 +94,5 @@ const customerSchema = new mongoose.Schema({
   timestamps: false
 });
 
-// ⚡ Fast query index
-customerSchema.index({ mobile: 1 });
-
+ 
 module.exports = mongoose.model("Customer", customerSchema);

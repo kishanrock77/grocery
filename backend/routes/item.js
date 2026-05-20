@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const Item = require("../models/Item");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const Store = require("../models/Store");
 
 const { S3Client } = require("@aws-sdk/client-s3");
 
@@ -1346,4 +1347,82 @@ router.post("/map-items", async (req, res) => {
     });
   }
 });
+ router.post(
+  '/get-complete-cart-data',
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        itemIds = [],
+        storeIds = []
+
+      } = req.body;
+
+      // =========================
+      // ALL ITEMS
+      // =========================
+
+      const items =
+        await Item.find({
+
+          _id: {
+            $in: itemIds
+          },
+
+          status: true,
+
+          showOnFront: true
+
+        })
+
+        .lean();
+
+      // =========================
+      // STORES
+      // =========================
+
+      const stores =
+        await Store.find({
+
+          _id: {
+            $in: storeIds
+          }
+
+        })
+
+        .lean();
+
+      // =========================
+      // RESPONSE
+      // =========================
+
+      return res.send({
+
+        success: true,
+
+        items,
+
+        stores
+
+      });
+
+    }
+
+    catch (e) {
+
+      console.log(e);
+
+      return res.send({
+
+        success: false,
+        message: 'Server error'
+
+      });
+
+    }
+
+  }
+);
 module.exports = router;
