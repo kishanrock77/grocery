@@ -2806,7 +2806,7 @@ router.post(
   }
 );
 
-router.post(
+ router.post(
   '/get-cart-items',
   async (req, res) => {
 
@@ -2885,6 +2885,10 @@ router.post(
 
             },
 
+            // =====================================
+            // ✅ SINGLE STORE OBJECT
+            // =====================================
+
             {
 
               $addFields: {
@@ -2916,6 +2920,286 @@ router.post(
                 'storedetails.status': true,
 
                 'storedetails.activeStatus': true
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ LOOKUP VARIANTS
+            // =====================================
+
+            {
+
+              $lookup: {
+
+                from: "items",
+
+                localField: "variantItems",
+
+                foreignField: "_id",
+
+                as: "variants"
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ FILTER ACTIVE VARIANTS
+            // =====================================
+
+            {
+
+              $addFields: {
+
+                variants: {
+
+                  $filter: {
+
+                    input: "$variants",
+
+                    as: "v",
+
+                    cond: {
+
+                      $eq: [
+
+                        "$$v.status",
+
+                        true
+
+                      ]
+
+                    }
+
+                  }
+
+                }
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ PRICE ARRAY
+            // =====================================
+
+            {
+
+              $addFields: {
+
+                priceArray: {
+
+                  $cond: [
+
+                    // ===========================
+                    // ✅ VARIANTS EXIST
+                    // ===========================
+
+                    {
+
+                      $gt: [
+
+                        {
+
+                          $size: "$variants"
+
+                        },
+
+                        0
+
+                      ]
+
+                    },
+
+                    // ===========================
+                    // ✅ VARIANT PRICES
+                    // ===========================
+
+                    {
+
+                      $map: {
+
+                        input: "$variants",
+
+                        as: "v",
+
+                        in: {
+
+                          $cond: [
+
+                            {
+
+                              $gt: [
+
+                                "$$v.appPrice",
+
+                                0
+
+                              ]
+
+                            },
+
+                            "$$v.appPrice",
+
+                            "$$v.storePrice"
+
+                          ]
+
+                        }
+
+                      }
+
+                    },
+
+                    // ===========================
+                    // ✅ SINGLE PRICE
+                    // ===========================
+
+                    [
+
+                      {
+
+                        $cond: [
+
+                          {
+
+                            $gt: [
+
+                              "$appPrice",
+
+                              0
+
+                            ]
+
+                          },
+
+                          "$appPrice",
+
+                          "$storePrice"
+
+                        ]
+
+                      }
+
+                    ]
+
+                  ]
+
+                }
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ MIN MAX PRICE
+            // =====================================
+
+            {
+
+              $addFields: {
+
+                minPrice: {
+
+                  $min: "$priceArray"
+
+                },
+
+                maxPrice: {
+
+                  $max: "$priceArray"
+
+                }
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ PRICE RANGE
+            // =====================================
+
+            {
+
+              $addFields: {
+
+                priceRange: {
+
+                  $cond: [
+
+                    {
+
+                      $eq: [
+
+                        "$minPrice",
+
+                        "$maxPrice"
+
+                      ]
+
+                    },
+
+                    {
+
+                      $concat: [
+
+                        "₹",
+
+                        {
+
+                          $toString: "$minPrice"
+
+                        }
+
+                      ]
+
+                    },
+
+                    {
+
+                      $concat: [
+
+                        "₹",
+
+                        {
+
+                          $toString: "$minPrice"
+
+                        },
+
+                        " - ₹",
+
+                        {
+
+                          $toString: "$maxPrice"
+
+                        }
+
+                      ]
+
+                    }
+
+                  ]
+
+                }
+
+              }
+
+            },
+
+            // =====================================
+            // ✅ REMOVE EXTRA FIELDS
+            // =====================================
+
+            {
+
+              $project: {
+
+                variants: 0,
+
+                priceArray: 0
 
               }
 
