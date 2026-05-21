@@ -54,10 +54,10 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
       storeObjectId = new mongoose.Types.ObjectId(body.storeId);
     }
     let rating =
-          Math.round((Math.random() * 1.5 + 3.5) * 10) / 10;
-    
-        let ratingCount =
-          Math.floor(Math.random() * 4000 + 1000);
+      Math.round((Math.random() * 1.5 + 3.5) * 10) / 10;
+
+    let ratingCount =
+      Math.floor(Math.random() * 4000 + 1000);
     const item = new Item({
       itemType: body.itemType,
       vegtype: body.vegtype,
@@ -81,7 +81,7 @@ router.post("/add", uploadMultipleImages("images", 5), async (req, res) => {
       images: body.images || [],
       itemQuestions: body.itemQuestions ? parseJSON(body.itemQuestions) : [],
 
-      unit: body.unit || "",      size: body.size || "",
+      unit: body.unit || "", size: body.size || "",
 
       parentId: [],
     });
@@ -135,7 +135,7 @@ router.get("/detail/:id", async (req, res) => {
     });
   }
 });
- router.get("/customeritemdetail/:id", async (req, res) => {
+router.get("/customeritemdetail/:id", async (req, res) => {
 
   try {
 
@@ -146,21 +146,21 @@ router.get("/detail/:id", async (req, res) => {
 
     })
 
-    .populate({
-      path: "variantItems",
-      match: { status: true }
-    })
+      .populate({
+        path: "variantItems",
+        match: { status: true }
+      })
 
-    .populate({
-      path: "addons",
-      match: { status: true }
-    })
+      .populate({
+        path: "addons",
+        match: { status: true }
+      })
 
-    .populate({
-      path: "storeId"
-    })
+      .populate({
+        path: "storeId"
+      })
 
-    .lean();
+      .lean();
 
     if (!item) {
 
@@ -407,7 +407,7 @@ router.put(
 
       let updateData = {
         itemType: body.itemType,
-         vegtype: body.vegtype,
+        vegtype: body.vegtype,
         variant_or_addon: body.variant_or_addon,
         itemName: body.itemName,
         itemSubName: body.itemSubName || "",
@@ -426,7 +426,7 @@ router.put(
         itemQuestions: safeParse(body.itemQuestions),
 
         unit: body.unit || "",
- size: body.size || "",
+        size: body.size || "",
         images: finalImages
       };
 
@@ -531,7 +531,7 @@ router.post("/child-items", async (req, res) => {
     }
 
     const items = await Item.find(filter)
-     
+
       .populate({
         path: "storeId",
         select: "storeName",
@@ -591,7 +591,7 @@ router.post("/addon-items", async (req, res) => {
     }
 
     const items = await Item.find(filter)
-       
+
       .populate({
         path: "storeId",
         select: "storeName",
@@ -1348,7 +1348,9 @@ router.post("/map-items", async (req, res) => {
   }
 });
  router.post(
+
   '/get-complete-cart-data',
+
   async (req, res) => {
 
     try {
@@ -1361,7 +1363,7 @@ router.post("/map-items", async (req, res) => {
       } = req.body;
 
       // =========================
-      // ALL ITEMS
+      // ITEMS
       // =========================
 
       const items =
@@ -1377,13 +1379,13 @@ router.post("/map-items", async (req, res) => {
 
         })
 
-        .lean();
+          .lean();
 
       // =========================
       // STORES
       // =========================
 
-      const stores =
+      let stores =
         await Store.find({
 
           _id: {
@@ -1392,7 +1394,119 @@ router.post("/map-items", async (req, res) => {
 
         })
 
-        .lean();
+          .lean();
+
+      // =========================
+      // FINAL OPEN STATUS
+      // =========================
+
+      stores = stores.map(store => {
+
+        let finalopenstatus =
+          "Closed";
+
+        // =====================
+        // FORCE OPEN
+        // =====================
+
+        if (
+          store.openCloseStatus ===
+          "ForceOpen"
+        ) {
+
+          finalopenstatus =
+            "Open";
+
+        }
+
+        // =====================
+        // FORCE CLOSE
+        // =====================
+
+        else if (
+          store.openCloseStatus ===
+          "ForceClose"
+        ) {
+
+          finalopenstatus =
+            "Closed";
+
+        }
+
+        // =====================
+        // AUTO
+        // =====================
+
+        else {
+
+          const today =
+            moment().format(
+              "dddd"
+            );
+
+          // NOT WEEK OFF
+
+          if (
+            !store.weekOff?.includes(
+              today
+            )
+          ) {
+
+            // TIME EXISTS
+
+            if (
+              store.openingTime &&
+              store.closingTime
+            ) {
+
+              const now =
+                moment();
+
+              const openTime =
+                moment(
+                  store.openingTime,
+                  "HH:mm"
+                );
+
+              const closeTime =
+                moment(
+                  store.closingTime,
+                  "HH:mm"
+                );
+
+              if (
+
+                now.isBetween(
+
+                  openTime,
+
+                  closeTime
+
+                )
+
+              ) {
+
+                finalopenstatus =
+                  "Open";
+
+              }
+
+            }
+
+          }
+
+        }
+
+        // =====================
+        // INJECT
+        // =====================
+
+        store.finalopenstatus =
+          finalopenstatus;
+
+        return store;
+
+      });
 
       // =========================
       // RESPONSE
@@ -1417,12 +1531,15 @@ router.post("/map-items", async (req, res) => {
       return res.send({
 
         success: false,
-        message: 'Server error'
+
+        message:
+          'Server error'
 
       });
 
     }
 
   }
+
 );
 module.exports = router;
