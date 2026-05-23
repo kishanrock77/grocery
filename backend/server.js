@@ -17,7 +17,7 @@ app.use(express.json());
 
 /// MongoDB Connection - Local vs Production
 const mongoURL =process.env.NODE_ENV && process.env.NODE_ENV === 'local'
-  ? process.env.MONGO_URL_LOCAL
+  ? process.env.MONGO_URL_LOCAL_wifi
   : process.env.MONGO_URL ;
 
 mongoose.connect(mongoURL);
