@@ -354,7 +354,7 @@ router.post(
         couponcode,
 
         discountAmount,
-
+handlingCharge,
         deliverydiscount,
         amountfromwallet,
         deliveryCharge,
@@ -597,7 +597,8 @@ router.post(
           amountfromwallet,
           couponcode:
             couponcode || '',
-
+handlingCharge:
+          handlingCharge || 0,
           discountAmount:
             discountAmount || 0,
 
@@ -1573,6 +1574,84 @@ router.get(
 
 );
  
+router.get(
 
+  '/allorders',
+
+  async (req, res) => {
+
+    try {
+
+   
+
+      // ==========================================
+      // MAIN ORDER TABLE
+      // ==========================================
+
+      const mainordertablelist =
+        await Order.find({
+
+          
+
+        })
+
+          .sort({
+
+            createdAt: -1
+
+          });
+
+      // ==========================================
+      // SUB ORDER TABLE
+      // ==========================================
+
+      const subordertablelist =
+        await SubOrder.find({
+
+          
+
+        })
+
+          .sort({
+
+            createdAt: -1
+
+          });
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.json({
+
+        success: true,
+
+        mainordertablelist,
+
+        subordertablelist
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message
+
+      });
+
+    }
+
+  }
+
+);
+ 
 
 module.exports = router;

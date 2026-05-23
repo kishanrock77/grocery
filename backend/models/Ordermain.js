@@ -45,7 +45,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-
+handlingCharge: {
+      type: Number,
+      default: 0
+    },
     paymentMethod: {
       type: String,
       required: true,
