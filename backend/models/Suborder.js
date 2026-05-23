@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 const subOrderSchema = new mongoose.Schema(
   {
-    // MAIN ORDER LINK
+    // MAIN ORDER LINK 
     orderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order',
