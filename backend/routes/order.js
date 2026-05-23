@@ -9,7 +9,7 @@ const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
 const DeliveryBoy = require("../models/DeliveryBoy");
 const OrderLog = require("../models/OrderLog");
-const SubOrder = require("../models/SubOrder");
+const SubOrder = require("../models/Suborder");
 const Item = require("../models/Item");
 
 const Notification =
