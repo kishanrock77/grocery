@@ -1,26 +1,54 @@
-const express = require("express");
+// routes/order.js
+
+const express = require('express');
+
 const router = express.Router();
 
-const Order = require("../models/Order");
+//
+const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
 const DeliveryBoy = require("../models/DeliveryBoy");
 const OrderLog = require("../models/OrderLog");
+const SubOrder = require("../models/SubOrder");
+const Item = require("../models/Item");
 
-const sendNotification = require("../utils/sendNotification");
+const Notification =
+  require('../models/Notification');
+
+//
 
 
-/* --------------------------------
-SAVE ORDER LOG
--------------------------------- */
 
-async function saveLog(orderId, action, message, userId, userType) {
+
+const objectstatusjson =
+  require('../utils/objectstatusjson');
+
+
+
+// ======================================================
+// SAVE LOG
+// ======================================================
+
+async function saveLog(
+
+  orderId,
+  action,
+  message,
+  userId,
+  userType
+
+) {
 
   await OrderLog.create({
 
     orderId,
+
     action,
+
     message,
+
     actionById: userId,
+
     actionByType: userType
 
   });
@@ -28,936 +56,1523 @@ async function saveLog(orderId, action, message, userId, userType) {
 }
 
 
-/* --------------------------------
-FIND NEAREST DELIVERY BOY
--------------------------------- */
 
-async function findNearestBoy(lat, lng) {
+// ======================================================
+// SAVE NOTIFICATION
+// ======================================================
 
-  return await DeliveryBoy.findOne({
+async function saveNotification({
 
-    status: true,
-    isAvailable: true,
+  userId,
+  userType,
+  title,
+  message,
+  relatedOrderId
 
-    location: {
-      $near: {
-        $geometry: {
-          type: "Point",
-          coordinates: [lng, lat]
-        },
-        $maxDistance: 5000
-      }
+}) {
 
-    }
+  if (!userId) {
+    return;
+  }
+
+  await Notification.create({
+
+    userId,
+
+    userType,
+
+    title,
+
+    message,
+
+    relatedOrderId
 
   });
 
 }
 
 
-/* --------------------------------
-CREATE ORDER (Customer)
--------------------------------- */
 
-router.post("/create", async (req, res) => {
-  try {
-    const { customerId, storeId, deliveryAddress, latitude, longitude, items } = req.body;
+// ======================================================
+// SEND NOTIFICATIONS
+// ======================================================
 
-    const store = await Store.findById(storeId);
-    if (!store) return res.status(404).json({ msg: "Store not found" });
+async function sendNotifications({
 
-    // Calculate total orderAmount
-    let totalAmount = 0;
-    const orderItems = items.map(item => {
-      let addOnTotal = 0;
-      if (item.addOns && item.addOns.length > 0) {
-        addOnTotal = item.addOns.reduce((sum, a) => sum + a.price, 0);
-      }
-      const itemTotal = item.price * item.quantity + addOnTotal;
-      totalAmount += itemTotal;
+  statuskey,
+  order,
+  subOrder
 
-      return {
-        productId: item.productId,
-        mainProductId: item.mainProductId,
-        name: item.name,
-        variantName: item.variantName,
-        quantity: item.quantity,
-        price: item.price,
-        addOns: item.addOns || []
-      };
-    });
+}) {
 
-    const order = new Order({
-      orderNumber: "ORD" + Date.now(),
-      customerId,
-      storeId,
-      orderItems,
-      orderAmount: totalAmount,
-      deliveryAddress,
-      userLocation: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
-      orderStatus: "pending"
-    });
+  const statusData =
+    objectstatusjson[statuskey];
 
-    await order.save();
-
-    // Log
-    await saveLog(order._id, "order_created", "Order placed by customer", customerId, "user");
-
-    res.json({ msg: "Order created", order });
-
-  } catch (err) {
-    console.log(err);
-    res.status(500).send(err);
+  if (
+    !statusData ||
+    !statusData.notificationto
+  ) {
+    return;
   }
-});
-router.post("/payment-success", async (req, res) => {
 
-  await Order.findByIdAndUpdate(
+  const notifications =
+    statusData.notificationto;
 
-    req.body.orderId,
+  // ==========================================
+  // CUSTOMER
+  // ==========================================
 
-    {
-      paymentStatus: "paid",
-      paymentId: req.body.paymentId,
-      paymentGateway: "razorpay"
+  if (notifications.Customer) {
+
+    await saveNotification({
+
+      userId:
+        order.customerId,
+
+      userType:
+        'Customer',
+
+      title:
+        'Order Update',
+
+      message:
+        notifications.Customer.message,
+
+      relatedOrderId:
+        order._id
+
+    });
+
+  }
+
+  // ==========================================
+  // DELIVERY BOY
+  // ==========================================
+
+  if (
+    notifications.DeliveryBoy &&
+    subOrder.deliveryBoyId
+  ) {
+
+    await saveNotification({
+
+      userId:
+        subOrder.deliveryBoyId,
+
+      userType:
+        'DeliveryBoy',
+
+      title:
+        'Order Update',
+
+      message:
+        notifications.DeliveryBoy.message,
+
+      relatedOrderId:
+        order._id
+
+    });
+
+  }
+
+  // ==========================================
+  // STORE
+  // ==========================================
+
+  if (notifications.Store) {
+
+    const store =
+      await Store.findById(
+        subOrder.storeId
+      );
+
+    if (store?.ownerid) {
+
+      await saveNotification({
+
+        userId:
+          store.ownerid,
+
+        userType:
+          'Store',
+
+        title:
+          'Order Update',
+
+        message:
+          notifications.Store.message,
+
+        relatedOrderId:
+          order._id
+
+      });
+
     }
+
+  }
+
+}
+
+
+
+// ======================================================
+// UPDATE SUB ORDER STATUS
+// ======================================================
+
+async function updateSubOrderStatus({
+
+  subOrder,
+  statuskey,
+  actionById,
+  actionByType
+
+}) {
+
+  const statusData =
+    objectstatusjson[statuskey];
+
+  if (!statusData) {
+
+    throw new Error(
+      'Invalid status key'
+    );
+
+  }
+
+  // ==========================================
+  // VALID FLOW CHECK
+  // ==========================================
+
+  if (
+    subOrder.currentstatuskey
+  ) {
+
+    const currentStatusData =
+
+      objectstatusjson[
+      subOrder.currentstatuskey
+      ];
+
+    const allowedNextActions =
+
+      currentStatusData
+        ?.nextactionkey || [];
+
+    if (
+
+      !allowedNextActions.includes(
+        statuskey
+      )
+
+    ) {
+
+      throw new Error(
+
+        `Invalid status flow from ${subOrder.currentstatuskey} to ${statuskey}`
+
+      );
+
+    }
+
+  }
+
+  // ==========================================
+  // UPDATE STATUS
+  // ==========================================
+
+  subOrder.currentstatuskey =
+    statuskey;
+
+  subOrder.suborderstatus =
+
+    statusData
+      .keyvalueforfrontend;
+
+  subOrder.statustext =
+
+    statusData
+      .textmessageofstatus;
+
+  await subOrder.save();
+
+  // ==========================================
+  // SAVE LOG
+  // ==========================================
+
+  await saveLog(
+
+    subOrder.orderId,
+
+    statuskey,
+
+    statusData
+      .orderlogmessage,
+
+    actionById,
+
+    actionByType
 
   );
 
-  res.json({ msg: "Payment updated" });
+  // ==========================================
+  // SEND NOTIFICATION
+  // ==========================================
 
-});
-router.post("/cod-payment", async (req, res) => {
-
-  try {
-
-    const order = await Order.findById(req.body.orderId);
-
-    if (!order) {
-      return res.json({ msg: "Order not found" });
-    }
-
-    if (order.paymentMethod !== "cod") {
-      return res.json({ msg: "Not a COD order" });
-    }
-
-    order.paymentStatus = "paid";
-    order.paymentGateway = "cash";
-    order.paymentId = "COD-" + Date.now();
-
-    await order.save();
-
-    await saveLog(
-
-      order._id,
-      "payment_collected",
-      "Cash collected by delivery boy",
-      req.body.deliveryBoyId,
-      "deliveryboy"
-
+  const order =
+    await Order.findById(
+      subOrder.orderId
     );
 
-    res.json({ msg: "COD payment confirmed" });
+  await sendNotifications({
 
-  } catch (err) {
-    res.status(500).send(err);
-  }
+    statuskey,
 
-});
-/* --------------------------------
-STORE ACCEPT ORDER
--------------------------------- */
+    order,
 
-router.post("/store-accept", async (req, res) => {
+    subOrder
 
-  try {
+  });
 
-    const order = await Order.findById(req.body.orderId);
+}
 
-    order.orderStatus = "store_accepted";
+// ======================================================
+// CREATE ORDER
+// ======================================================
 
-    await order.save();
+router.post(
 
+  '/create-order',
 
-    await saveLog(
+  async (req, res) => {
 
-      order._id,
-      "store_accepted",
-      "Store accepted the order",
-      req.body.storeId,
-      "store"
+    try {
 
-    );
+      const {
 
+        cart,
 
-    /* FIND NEAREST BOY */
+        couponcode,
 
-    const store = await Store.findById(order.storeId);
+        discountAmount,
 
-    const storeLat = store.location.coordinates[1];
-    const storeLng = store.location.coordinates[0];
+        deliverydiscount,
+        amountfromwallet,
+        deliveryCharge,
 
-    const boy = await findNearestBoy(storeLat, storeLng);
+        totalamount,
 
+        customerId,
 
-    if (boy) {
+        adminId,
 
-      order.deliveryBoyId = boy._id;
-      order.orderStatus = "assigned";
-      order.assignTime = new Date();
+        selectedaddress,
 
-      await order.save();
+        deleveryinstruction,
 
+        paymentMethod,
+
+        paymentStatus
+
+      } = req.body;
+
+      // ==========================================
+      // VALIDATION
+      // ==========================================
+
+      if (!customerId) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Customer id required'
+
+        });
+
+      }
+
+      if (!adminId) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Admin id required'
+
+        });
+
+      }
+
+      if (
+
+        !cart ||
+
+        !Array.isArray(cart) ||
+
+        cart.length == 0
+
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Cart empty'
+
+        });
+
+      }
+
+      // ==========================================
+      // STORE + ITEM VALIDATION
+      // ==========================================
+
+      for (const storeBlock of cart) {
+
+        const store =
+          await Store.findById(
+            storeBlock.storeId
+          );
+
+        if (!store) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              'Store not found'
+
+          });
+
+        }
+
+        // ======================================
+        // STORE STATUS
+        // ======================================
+
+        if (
+          store.status == false
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              `${store.storeName} unavailable`
+
+          });
+
+        }
+
+        // ======================================
+        // ACTIVE STATUS
+        // ======================================
+
+        if (
+          store.activeStatus == false
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              `${store.storeName} inactive`
+
+          });
+
+        }
+
+        // ======================================
+        // OPEN STATUS
+        // ======================================
+
+        if (
+          store.finalopenstatus ==
+          'Closed'
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              `${store.storeName} closed`
+
+          });
+
+        }
+
+        // ======================================
+        // ITEM VALIDATION
+        // ======================================
+
+        for (const itemBlock of storeBlock.items) {
+
+          const item =
+            await Item.findById(
+              itemBlock.itemId
+            );
+
+          if (!item) {
+
+            return res.status(400).json({
+
+              success: false,
+
+              message:
+                'Item not found'
+
+            });
+
+          }
+
+          // ITEM STATUS
+
+          if (
+            item.status == false
+          ) {
+
+            return res.status(400).json({
+
+              success: false,
+
+              message:
+                `${item.itemName} unavailable`
+
+            });
+
+          }
+
+          // SHOW ON FRONT
+
+          if (
+            item.showOnFront == false
+          ) {
+
+            return res.status(400).json({
+
+              success: false,
+
+              message:
+                `${item.itemName} hidden`
+
+            });
+
+          }
+
+        }
+
+      }
+
+      // ==========================================
+      // CREATE MAIN ORDER
+      // ==========================================
+
+      const mainorderid =
+
+        'ORD-' +
+
+        Date.now();
+
+      const order =
+        await Order.create({
+
+          mainorderid,
+
+          customerId,
+
+          adminId,
+
+          date:
+            new Date()
+              .toLocaleDateString(),
+
+          totalamount,
+          amountfromwallet,
+          couponcode:
+            couponcode || '',
+
+          discountAmount:
+            discountAmount || 0,
+
+          paymentMethod,
+
+          paymentStatus,
+
+          transactionId:
+            null,
+
+          deliveryCharge:
+            deliveryCharge || 0,
+
+          deliverydiscount:
+            deliverydiscount || 0,
+
+          selectedaddress,
+
+          deleveryinstruction
+
+        });
+
+      // ==========================================
+      // SAVE MAIN ORDER LOG
+      // ==========================================
 
       await saveLog(
 
         order._id,
-        "boy_auto_assigned",
-        "Delivery boy auto assigned",
-        boy._id,
-        "system"
+
+        'orderplacedbycustomer',
+
+        objectstatusjson
+          .orderplacedbycustomer
+          .orderlogmessage,
+
+        customerId,
+
+        'Customer'
 
       );
 
+      // ==========================================
+      // CREATE SUB ORDERS
+      // ==========================================
 
-      /* DELIVERY BOY NOTIFICATION */
+      const createdSubOrders = [];
 
-      await sendNotification(
+      for (const storeBlock of cart) {
 
-        boy._id,
-        "deliveryboy",
+        const suborderid =
 
-        "New Order Assigned",
+          'SUB-' +
 
-        "You have received a new delivery order",
+          Date.now() +
 
-        order._id
+          '-' +
 
-      );
+          Math.floor(
+            Math.random() * 10000
+          );
 
-    }
-    else {
+        const subOrder =
+          await SubOrder.create({
 
-      /* SEND NOTIFICATION TO ALL BOYS */
+            orderId:
+              order._id,
 
-      const boys = await DeliveryBoy.find({ status: true });
+            mainorderid:
+              order.mainorderid,
 
-      for (const b of boys) {
+            suborderid,
 
-        await sendNotification(
+            customerId,
 
-          b._id,
-          "deliveryboy",
+            adminId,
 
-          "New Order Available",
+            storeId:
+              storeBlock.storeId,
 
-          "Please accept delivery order",
+            deliveryBoyId:
+              null,
 
-          order._id
+            storeTotal:
+              storeBlock.storeTotal,
+
+            currentstatuskey:
+              'orderplacedbycustomer',
+
+            suborderstatus:
+
+              objectstatusjson
+                .orderplacedbycustomer
+                .keyvalueforfrontend,
+
+            statustext:
+
+              objectstatusjson
+                .orderplacedbycustomer
+                .textmessageofstatus,
+
+            storeInfo:
+              storeBlock.storeInfo,
+
+            items:
+              storeBlock.items
+
+          });
+
+        createdSubOrders.push(
+          subOrder
+        );
+
+        // ======================================
+        // SAVE SUB ORDER LOG
+        // ======================================
+
+        await saveLog(
+
+          subOrder._id,
+
+          'orderplacedbycustomer',
+
+          objectstatusjson
+            .orderplacedbycustomer
+            .orderlogmessage,
+
+          customerId,
+
+          'Customer'
 
         );
 
+        // ======================================
+        // SEND NOTIFICATION
+        // ======================================
+
+        await sendNotifications({
+
+          statuskey:
+            'orderplacedbycustomer',
+
+          order,
+
+          subOrder
+
+        });
+
+      }
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          'Order created successfully',
+
+        order,
+
+        subOrders:
+          createdSubOrders
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message
+
+      });
+
+    }
+
+  }
+
+);
+
+// ======================================================
+// CREATE ORDER
+// ======================================================
+async function sendNotifications({
+
+  statuskey,
+  order,
+  subOrder
+
+}) {
+
+  const statusData =
+    objectstatusjson[statuskey];
+
+  if (
+    !statusData ||
+    !statusData.notificationto
+  ) {
+    return;
+  }
+
+  const notifications =
+    statusData.notificationto;
+
+  // ==========================================
+  // ADMIN
+  // ==========================================
+
+  if (
+    notifications.Admin &&
+    order.adminId
+  ) {
+
+    await saveNotification({
+
+      userId:
+        order.adminId,
+
+      userType:
+        'Admin',
+
+      title:
+        'Order Update',
+
+      message:
+        notifications.Admin.message,
+
+      relatedOrderId:
+        order._id
+
+    });
+
+  }
+
+  // ==========================================
+  // CUSTOMER
+  // ==========================================
+
+  if (notifications.Customer) {
+
+    await saveNotification({
+
+      userId:
+        order.customerId,
+
+      userType:
+        'Customer',
+
+      title:
+        'Order Update',
+
+      message:
+        notifications.Customer.message,
+
+      relatedOrderId:
+        order._id
+
+    });
+
+  }
+
+  // ==========================================
+  // DELIVERY BOY
+  // ==========================================
+
+  if (
+    notifications.DeliveryBoy &&
+    subOrder.deliveryBoyId
+  ) {
+
+    await saveNotification({
+
+      userId:
+        subOrder.deliveryBoyId,
+
+      userType:
+        'DeliveryBoy',
+
+      title:
+        'Order Update',
+
+      message:
+        notifications.DeliveryBoy.message,
+
+      relatedOrderId:
+        order._id
+
+    });
+
+  }
+
+  // ==========================================
+  // STORE
+  // ==========================================
+
+  if (notifications.Store) {
+
+    const store =
+      await Store.findById(
+        subOrder.storeId
+      );
+
+    if (store?.ownerid) {
+
+      await saveNotification({
+
+        userId:
+          store.ownerid,
+
+        userType:
+          'Store',
+
+        title:
+          'Order Update',
+
+        message:
+          notifications.Store.message,
+
+        relatedOrderId:
+          order._id
+
+      });
+
+    }
+
+  }
+
+}
+
+// ======================================================
+// CHANGE SUB ORDER STATUS
+// ======================================================
+
+router.post(
+
+  '/change-suborder-status',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        subOrderId,
+
+        statuskey,
+
+        actionById,
+
+        actionByType
+
+      } = req.body;
+
+      // ==========================================
+      // FIND SUB ORDER
+      // ==========================================
+
+      const subOrder =
+        await SubOrder.findById(
+          subOrderId
+        );
+
+      if (!subOrder) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Sub order not found'
+
+        });
+
+      }
+
+      // ==========================================
+      // UPDATE STATUS
+      // ==========================================
+
+      await updateSubOrderStatus({
+
+        subOrder,
+
+        statuskey,
+
+        actionById,
+
+        actionByType
+
+      });
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.json({
+
+        success: true,
+
+        message:
+          'Status updated successfully'
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message
+
+      });
+
+    }
+
+  }
+
+);
+
+
+
+// ======================================================
+// ORDER DETAILS
+// ======================================================
+
+router.get(
+
+  '/order-details/:id/:ordertype',
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        id,
+        ordertype
+      } = req.params;
+
+      // ==========================================
+      // MAIN ORDER
+      // ==========================================
+
+      if (ordertype == 'main') {
+
+        // MAIN ORDER
+
+        const order =
+          await Order.findOne({
+
+            _id: id
+
+          });
+
+        if (!order) {
+
+          return res.status(404).json({
+
+            success: false,
+
+            message:
+              'Order not found'
+
+          });
+
+        }
+
+        // SUB ORDERS
+
+        const subOrdersRaw =
+          await SubOrder.find({
+
+            orderId:
+              order._id
+
+          })
+
+            .sort({
+
+              createdAt: -1
+
+            });
+
+        // SUB ORDERS WITH LOGS
+
+        const subOrders = [];
+
+        for (const subOrder of subOrdersRaw) {
+
+          const logs =
+            await OrderLog.find({
+
+              orderId:
+                subOrder._id
+
+            })
+
+              .sort({
+
+                createdAt: 1
+
+              });
+
+          subOrders.push({
+
+            ...subOrder.toObject(),
+
+            logs
+
+          });
+
+        }
+
+        // MAIN ORDER LOGS
+
+        const mainOrderLogs =
+          await OrderLog.find({
+
+            orderId:
+              order._id
+
+          })
+
+            .sort({
+
+              createdAt: 1
+
+            });
+
+        // RESPONSE
+
+        return res.json({
+
+          success: true,
+
+          ordertype:
+            'main',
+
+          order: {
+
+            ...order.toObject(),
+
+            logs:
+              mainOrderLogs
+
+          },
+
+          subOrders
+
+        });
+
+      }
+
+      // ==========================================
+      // SUB ORDER
+      // ==========================================
+
+      else if (
+        ordertype == 'sub'
+      ) {
+
+        // SUB ORDER
+
+        const subOrderRaw =
+          await SubOrder.findOne({
+
+            _id: id
+
+          });
+
+        if (!subOrderRaw) {
+
+          return res.status(404).json({
+
+            success: false,
+
+            message:
+              'Sub order not found'
+
+          });
+
+        }
+
+        // MAIN ORDER
+
+        const mainOrder =
+          await Order.findById(
+
+            subOrderRaw.orderId
+
+          );
+
+        // SUB ORDER LOGS
+
+        const subOrderLogs =
+          await OrderLog.find({
+
+            orderId:
+              subOrderRaw._id
+
+          })
+
+            .sort({
+
+              createdAt: 1
+
+            });
+
+        // MAIN ORDER LOGS
+
+        const mainOrderLogs =
+          await OrderLog.find({
+
+            orderId:
+              mainOrder._id
+
+          })
+
+            .sort({
+
+              createdAt: 1
+
+            });
+
+        // RESPONSE
+
+        return res.json({
+
+          success: true,
+
+          ordertype:
+            'sub',
+
+          mainOrder: {
+
+            ...mainOrder.toObject(),
+
+            logs:
+              mainOrderLogs
+
+          },
+
+          subOrder: {
+
+            ...subOrderRaw.toObject(),
+
+            logs:
+              subOrderLogs
+
+          }
+
+        });
+
+      }
+
+      // ==========================================
+      // INVALID TYPE
+      // ==========================================
+
+      else {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid order type'
+
+        });
+
       }
 
     }
 
-    res.json({ msg: "Store accepted order" });
+    catch (error) {
 
-  } catch (err) {
+      console.log(error);
 
-    res.status(500).send(err);
-
-  }
-
-});
-
-
-/* --------------------------------
-STORE REJECT ORDER
--------------------------------- */
-
-router.post("/store-reject", async (req, res) => {
-
-  try {
-
-    const order = await Order.findById(req.body.orderId);
-
-    order.orderStatus = "store_rejected";
-
-    await order.save();
-
-
-    await saveLog(
-
-      order._id,
-      "store_rejected",
-      "Store rejected the order",
-      req.body.storeId,
-      "store"
-
-    );
-
-
-    /* CUSTOMER NOTIFICATION */
-
-    await sendNotification(
-
-      order.customerId,
-      "user",
-
-      "Order Rejected",
-
-      "Store rejected your order",
-
-      order._id
-
-    );
-
-
-    /* IF DELIVERY BOY ASSIGNED */
-
-    if (order.deliveryBoyId) {
-
-      await sendNotification(
-
-        order.deliveryBoyId,
-        "deliveryboy",
-
-        "Order Cancelled",
-
-        "Order cancelled by store",
-
-        order._id
-
-      );
-
-      order.deliveryBoyId = null;
-
-      await order.save();
-
-    }
-
-    res.json({ msg: "Order rejected by store" });
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-
-
-/* --------------------------------
-DELIVERY BOY ACCEPT
--------------------------------- */
-
-router.post("/boy-accept", async (req, res) => {
-
-  try {
-
-    const order = await Order.findOneAndUpdate(
-
-      {
-        _id: req.body.orderId,
-        deliveryBoyId: req.body.deliveryBoyId,
-        orderStatus: "assigned"
-      },
-
-      {
-        $set: {
-          orderStatus: "boy_accepted"
-        }
-      },
-
-      { new: true }
-
-    );
-
-
-    if (!order) {
-
-      return res.json({
+      return res.status(500).json({
 
         success: false,
-        msg: "Order already accepted by another delivery boy"
+
+        message:
+          error.message
 
       });
 
     }
 
-
-    /* ORDER LOG */
-
-    await saveLog(
-
-      order._id,
-      "boy_accepted",
-      "Delivery boy accepted order",
-      req.body.deliveryBoyId,
-      "deliveryboy"
-
-    );
-
-    res.json({
-
-      success: true,
-      msg: "Order accepted"
-
-    });
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
   }
 
-});
+);
 
-/* --------------------------------
-DELIVERY BOY REJECT
--------------------------------- */
 
-router.post("/boy-reject", async (req, res) => {
+// ======================================================
+// CUSTOMER ORDERS GROUPED
+// ======================================================
 
-  try {
+router.get(
 
-    const order = await Order.findOneAndUpdate(
+  '/customer-orders/:customerId',
 
-      {
-        _id: req.body.orderId,
-        deliveryBoyId: req.body.deliveryBoyId,
-        orderStatus: "assigned"
-      },
+  async (req, res) => {
 
-      {
-        $set: {
-          orderStatus: "boy_rejected",
-          deliveryBoyId: null
-        }
-      },
+    try {
 
-      { new: true }
+      const {
+        customerId
+      } = req.params;
 
-    );
+      if (!customerId) {
 
-    if (!order) {
+        return res.status(400).json({
 
-      return res.json({
+          success: false,
 
-        success: false,
-        msg: "Order already processed"
+          message:
+            'Customer id required'
 
-      });
+        });
 
-    }
+      }
 
+      // ==========================================
+      // FIND SUB ORDERS
+      // ==========================================
 
-    /* LOG */
+      const subOrders =
+        await SubOrder.find({
 
-    await saveLog(
+          customerId
 
-      order._id,
-      "boy_rejected",
-      "Delivery boy rejected order",
-      req.body.deliveryBoyId,
-      "deliveryboy"
+        })
 
-    );
+          .sort({
 
-    res.json({
+            createdAt: -1
 
-      success: true,
-      msg: "Order rejected"
+          });
 
-    });
+      // ==========================================
+      // GROUPS
+      // ==========================================
 
-  } catch (err) {
+      const groupedOrders = {
 
-    res.status(500).send(err);
+        pending: [],
 
-  }
+        delivered: [],
 
-});
-
-/* --------------------------------
-CUSTOMER CANCEL ORDER
--------------------------------- */
-
-router.post("/cancel-by-customer", async (req, res) => {
-
-  try {
-
-    const order = await Order.findById(req.body.orderId);
-
-    if (order.orderStatus === "packed") {
-
-      return res.json({ msg: "Order cannot be cancelled now" });
-
-    }
-
-    order.orderStatus = "cancelled_by_customer";
-
-    await order.save();
-
-
-    await saveLog(
-
-      order._id,
-      "cancelled_by_customer",
-      "Order cancelled by customer",
-      req.body.customerId,
-      "user"
-
-    );
-
-
-    /* STORE NOTIFICATION */
-
-    await sendNotification(
-
-      order.storeId,
-      "store",
-
-      "Order Cancelled",
-
-      "Customer cancelled the order",
-
-      order._id
-
-    );
-
-
-    /* DELIVERY BOY NOTIFICATION */
-
-    if (order.deliveryBoyId) {
-
-      await sendNotification(
-
-        order.deliveryBoyId,
-        "deliveryboy",
-
-        "Order Cancelled",
-
-        "Customer cancelled order",
-
-        order._id
-
-      );
-
-    }
-
-    res.json({ msg: "Order cancelled" });
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-
-
-/* --------------------------------
-ORDER LIST
--------------------------------- */
-
-router.get("/list", async (req, res) => {
-
-  const orders = await Order.find({ status: true })
-
-    .populate("storeId")
-    .populate("deliveryBoyId")
-
-    .sort({ createdAt: -1 });
-
-  res.json(orders);
-
-});
-
-
-/* --------------------------------
-ORDER LOGS
--------------------------------- */
-
-router.get("/logs/:orderId", async (req, res) => {
-
-  const logs = await OrderLog.find({
-
-    orderId: req.params.orderId,
-    status: true
-
-  }).sort({ createdAt: 1 });
-
-  res.json(logs);
-
-});
-router.get("/store/:storeId", async (req, res) => {
-
-  try {
-
-    const orders = await Order.find({
-
-      storeId: req.params.storeId,
-      status: true
-
-    })
-
-      .populate("deliveryBoyId")
-
-      .sort({ createdAt: -1 });
-
-    res.json(orders);
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-router.get("/deliveryboy/:boyId", async (req, res) => {
-
-  try {
-
-    const orders = await Order.find({
-
-      deliveryBoyId: req.params.boyId,
-      status: true
-
-    })
-
-      .populate("storeId")
-
-      .sort({ createdAt: -1 });
-
-    res.json(orders);
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-router.get("/customer/:customerId", async (req, res) => {
-
-  try {
-
-    const orders = await Order.find({
-
-      customerId: req.params.customerId,
-      status: true
-
-    })
-
-      .populate("storeId")
-
-      .sort({ createdAt: -1 });
-
-    res.json(orders);
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-router.get("/admin", async (req, res) => {
-
-  try {
-
-    const orders = await Order.find({ status: true })
-
-      .populate("storeId")
-      .populate("deliveryBoyId")
-
-      .sort({ createdAt: -1 });
-
-    res.json(orders);
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-router.get("/filter", async (req, res) => {
-
-  try {
-
-    let query = { status: true };
-
-
-    /* ORDER STATUS */
-
-    if (req.query.status) {
-
-      query.orderStatus = req.query.status;
-
-    }
-
-
-    /* STORE WISE */
-
-    if (req.query.storeId) {
-
-      query.storeId = req.query.storeId;
-
-    }
-
-
-    /* DATE FILTER */
-
-    if (req.query.startDate && req.query.endDate) {
-
-      query.createdAt = {
-
-        $gte: new Date(req.query.startDate),
-        $lte: new Date(req.query.endDate)
+        returned: []
 
       };
 
+      // ==========================================
+      // LOOP
+      // ==========================================
+
+      for (const subOrder of subOrders) {
+
+        const mainOrder =
+          await Order.findById(
+
+            subOrder.orderId
+
+          );
+
+        const finalObj = {
+
+          mainOrder,
+
+          subOrder
+
+        };
+
+        // ======================================
+        // DELIVERED
+        // ======================================
+
+        if (
+
+          subOrder.suborderstatus ==
+          'Delivered'
+
+        ) {
+
+          groupedOrders
+            .delivered
+            .push(finalObj);
+
+        }
+
+        // ======================================
+        // RETURNED
+        // ======================================
+
+        else if (
+
+          subOrder.suborderstatus ==
+          'Returned'
+
+        ) {
+
+          groupedOrders
+            .returned
+            .push(finalObj);
+
+        }
+
+        // ======================================
+        // PENDING
+        // ======================================
+
+        else {
+
+          groupedOrders
+            .pending
+            .push(finalObj);
+
+        }
+
+      }
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.json({
+
+        success: true,
+
+        orders:
+          groupedOrders
+
+      });
+
     }
 
+    catch (error) {
 
-    /* TODAY ORDERS */
+      console.log(error);
 
-    if (req.query.type === "today") {
+      return res.status(500).json({
 
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
+        success: false,
 
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
+        message:
+          error.message
 
-      query.createdAt = { $gte: start, $lte: end };
-
-    }
-
-
-    /* LAST 7 DAYS */
-
-    if (req.query.type === "last7days") {
-
-      const start = new Date();
-      start.setDate(start.getDate() - 7);
-
-      query.createdAt = { $gte: start };
+      });
 
     }
-
-
-    let orders = await Order.find(query)
-
-      .populate("storeId")
-      .populate("deliveryBoyId")
-
-      .sort({ createdAt: -1 });
-
-
-    /* CITY FILTER (store city) */
-
-    if (req.query.city) {
-
-      orders = orders.filter(o =>
-
-        o.storeId && o.storeId.city &&
-        o.storeId.city.toLowerCase() === req.query.city.toLowerCase()
-
-      );
-
-    }
-
-
-    res.json(orders);
-
-  } catch (err) {
-
-    res.status(500).send(err);
 
   }
 
-});
-router.get("/revenue-stats", async (req, res) => {
-
-  try {
-
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-
-    const last7days = new Date();
-    last7days.setDate(last7days.getDate() - 7);
-
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
+);
 
 
-    /* TOTAL REVENUE */
 
-    const totalRevenue = await Order.aggregate([
-      {
-        $match: {
-          status: true,
-          orderStatus: "delivered"
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$orderAmount" }
-        }
-      }
-    ]);
+// ======================================================
+// CUSTOMER ALL ORDER TABLE DATA
+// ======================================================
 
+router.get(
 
-    /* TODAY REVENUE */
+  '/customer-order-table-data/:customerId',
 
-    const todayRevenue = await Order.aggregate([
-      {
-        $match: {
-          status: true,
-          orderStatus: "delivered",
-          createdAt: { $gte: todayStart, $lte: todayEnd }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$orderAmount" }
-        }
-      }
-    ]);
+  async (req, res) => {
 
+    try {
 
-    /* LAST 7 DAYS */
+      const {
+        customerId
+      } = req.params;
 
-    const last7Revenue = await Order.aggregate([
-      {
-        $match: {
-          status: true,
-          orderStatus: "delivered",
-          createdAt: { $gte: last7days }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$orderAmount" }
-        }
-      }
-    ]);
+      // ==========================================
+      // VALIDATION
+      // ==========================================
 
+      if (!customerId) {
 
-    /* MONTHLY */
+        return res.status(400).json({
 
-    const monthRevenue = await Order.aggregate([
-      {
-        $match: {
-          status: true,
-          orderStatus: "delivered",
-          createdAt: { $gte: monthStart }
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$orderAmount" }
-        }
-      }
-    ]);
+          success: false,
 
+          message:
+            'Customer id required'
 
-    /* STORE WISE */
+        });
 
-    const storeRevenue = await Order.aggregate([
-      {
-        $match: {
-          status: true,
-          orderStatus: "delivered"
-        }
-      },
-      {
-        $group: {
-          _id: "$storeId",
-          totalRevenue: { $sum: "$orderAmount" },
-          orders: { $sum: 1 }
-        }
-      },
-      {
-        $sort: { totalRevenue: -1 }
-      },
-      {
-        $limit: 10
-      }
-    ]);
-
-
-    res.json({
-
-      totalRevenue: totalRevenue[0]?.total || 0,
-      todayRevenue: todayRevenue[0]?.total || 0,
-      last7Revenue: last7Revenue[0]?.total || 0,
-      monthlyRevenue: monthRevenue[0]?.total || 0,
-      topStores: storeRevenue
-
-    });
-
-  } catch (err) {
-
-    res.status(500).send(err);
-
-  }
-
-});
-router.get("/detail/:orderId", async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.orderId)
-      .populate("customerId", "name email mobile")
-      .populate("storeId", "name city")
-      .populate("deliveryBoyId", "name email mobile")
-      .lean(); // lean() for easier manipulation
-
-    if (!order) return res.status(404).json({ msg: "Order not found" });
-
-    // Populate each order item product info (name, images)
-    for (let i = 0; i < order.orderItems.length; i++) {
-      const item = order.orderItems[i];
-      const product = await Product.findById(item.productId).lean();
-      if (product) {
-        item.productImages = product.images || [];
-        item.productDescription = product.description || "";
       }
 
-      // If mainProductId exists, fetch main product info
-      if (item.mainProductId) {
-        const mainProduct = await Product.findById(item.mainProductId).lean();
-        if (mainProduct) {
-          item.mainProductName = mainProduct.name;
-          item.mainProductImages = mainProduct.images || [];
-        }
-      }
+      // ==========================================
+      // MAIN ORDER TABLE
+      // ==========================================
+
+      const mainordertablelist =
+        await Order.find({
+
+          customerId
+
+        })
+
+          .sort({
+
+            createdAt: -1
+
+          });
+
+      // ==========================================
+      // SUB ORDER TABLE
+      // ==========================================
+
+      const subordertablelist =
+        await SubOrder.find({
+
+          customerId
+
+        })
+
+          .sort({
+
+            createdAt: -1
+
+          });
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.json({
+
+        success: true,
+
+        mainordertablelist,
+
+        subordertablelist
+
+      });
+
     }
 
-    res.json(order);
-  } catch (err) {
-    console.log(err);
-    res.status(500).send(err);
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+
+        message:
+          error.message
+
+      });
+
+    }
+
   }
-});
-// store_pending
-// store_accepted
-// store_rejected
-// assigned
-// boy_accepted
-// boy_rejected
-// cancelled_by_customer
-// packed
-// delivered
+
+);
+ 
+
+
 module.exports = router;

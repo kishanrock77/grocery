@@ -1,6 +1,6 @@
 const cron = require("node-cron");
 
-const Order = require("../models/Order");
+const Order = require("../models/Ordermain");
 const Notification = require("../models/Notification");
 const OrderLog = require("../models/OrderLog");
 

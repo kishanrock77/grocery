@@ -32,6 +32,25 @@ router.get("/list/:userId", async (req, res) => {
 
 });
 
+router.get("/completelist", async (req, res) => {
+
+  try {
+
+    const list = await Notification.find({
+ 
+      status: true
+
+    }).sort({ createdAt: -1 });
+
+    res.json(list);
+
+  } catch (err) {
+
+    res.status(500).send(err);
+
+  }
+
+});
 
 
 /*

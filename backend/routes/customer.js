@@ -6,7 +6,7 @@ const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
 const Coupon = require("../models/Coupon");
 const Order =
-require('../models/Order');
+require('../models/Ordermain');
 const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
 const Category = require("../models/Category");

@@ -4,13 +4,20 @@ const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema(
   {
-    orderid: {
+    mainorderid: {
       type: String,
       required: true,
       unique: true,
       trim: true
     },
-
+    amountfromwallet: {
+      type: Number,
+      default: 0
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AdminUser"
+    },
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
@@ -42,7 +49,12 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      
+
+    },
+    paymentStatus: {
+      type: String,
+      required: true,
+
     },
 
     transactionId: {
@@ -61,11 +73,7 @@ const orderSchema = new mongoose.Schema(
       default: 0
     },
 
-    mainorderstatus: {
-      type: String,
-      default: 'Pending' 
-       
-    },
+
 
     ordrdatetime: {
       type: Date,
@@ -78,5 +86,5 @@ const orderSchema = new mongoose.Schema(
 );
 
 module.exports =
-  mongoose.models.Order ||
-  mongoose.model('Order', orderSchema);
+  mongoose.models.Ordermain ||
+  mongoose.model('Ordermain', orderSchema);

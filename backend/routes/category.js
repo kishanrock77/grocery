@@ -5,7 +5,9 @@ const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploa
 
 const Store = require("../models/Store");
 const Otp = require("../models/Otp");
-const Order = require("../models/Order");
+const Order = require("../models/Ordermain");
+const Suborder = require("../models/Suborder");
+
 const OrderLog = require("../models/OrderLog");
 const Item = require("../models/Item");
 const DeliveryBoy = require("../models/DeliveryBoy");
@@ -275,25 +277,25 @@ router.delete('/emptydb/:table', async (req, res, next) => {
   if (req.params.table == 'All') {
     modelsArray = [AdminUser, Category,
       Customer, DeliveryArea, DeliveryBoy, Item,
-      Notification, Order, OrderLog, Otp, Store, storeOwner];
+      Notification, Order, Suborder, OrderLog, Otp, Store, storeOwner];
 
   } else if (req.params.table == 'DelieveryBoy') {
     modelsArray = [DelieveryBoy];
 
   } else if (req.params.table == 'Category') {
-    modelsArray = [Category, Item, Order, OrderLog];
+    modelsArray = [Category, Item, Order, Suborder, OrderLog];
 
   } else if (req.params.table == 'Notification') {
     modelsArray = [Notification];
 
   } else if (req.params.table == 'Customer') {
-    modelsArray = [Customer, Order, OrderLog];
+    modelsArray = [Customer, Order, Suborder, OrderLog];
 
   } else if (req.params.table == 'Otp') {
     modelsArray = [Otp];
 
   } else if (req.params.table == 'Order') {
-    modelsArray = [Order, OrderLog];
+    modelsArray = [Suborder,Order, OrderLog];
 
   }
   else if (req.params.table == 'StoreOwner') {
@@ -301,10 +303,10 @@ router.delete('/emptydb/:table', async (req, res, next) => {
 
   }
   else if (req.params.table == 'Store') {
-    modelsArray = [Store, Order, OrderLog];
+    modelsArray = [Store, Order,Suborder, OrderLog];
 
   } else if (req.params.table == 'Item') {
-    modelsArray = [Item, Order, OrderLog];
+    modelsArray = [Item, Order,Suborder, OrderLog];
 
   }
   try {
@@ -314,8 +316,9 @@ router.delete('/emptydb/:table', async (req, res, next) => {
 
     }
     console.log("All specified models cleared.");
+      if (req.params.table == 'All') {
     await deleteAllFilesFromFolder("uploads/");
-
+      }
 
 
 

@@ -28,6 +28,10 @@ const NotificationSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     }
+    ,notificationssent: {
+        type: Boolean,
+        default: false
+    }
 
 }, { timestamps: true });
 
