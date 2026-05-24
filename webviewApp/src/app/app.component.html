@@ -1,0 +1,159 @@
+<!-- =========================
+LOADER
+========================= -->
+
+<div
+  class="header-boy"
+  *ngIf="loading"
+>
+
+  <img src="/assets/boy.gif">
+
+</div>
+
+<div
+  class="top"
+  *ngIf="loading"
+>
+
+  <h1 class="logo">
+
+    <i>
+      fast <span>bite</span>
+    </i>
+
+  </h1>
+
+  <strong
+    style="margin-top: -10px;"
+  >
+
+    Delivery in Minutes
+
+  </strong>
+
+</div>
+
+<!-- =========================
+PERMISSION SCREEN
+========================= -->
+
+<div
+  class="permission-screen"
+  *ngIf="showPermissionScreen && !loading"
+>
+
+  <div class="permission-card">
+
+    <div class="top">
+
+      <h1 class="logo">
+
+        <i>
+          fast <span>bite</span>
+        </i>
+
+      </h1>
+
+      <strong
+        style="margin-top: -10px;"
+      >
+
+        Delivery in Minutes
+
+      </strong>
+
+    </div>
+
+    <h2>
+      Permissions Required
+    </h2>
+
+    <p>
+
+      App properly use karne ke liye
+      neeche di gayi permissions allow karni hongi.
+
+    </p>
+
+    <!-- =========================
+    LOCATION
+    ========================= -->
+
+    <div class="permission-item">
+
+      <span>
+
+        📍 Location
+
+      </span>
+
+      <button
+        *ngIf="!permissions.location"
+        (click)="allowLocation()"
+      >
+
+        Allow
+
+      </button>
+
+      <span
+        class="approved"
+        *ngIf="permissions.location"
+      >
+
+        Approved
+
+      </span>
+
+    </div>
+
+    <!-- =========================
+    MICROPHONE
+    ========================= -->
+
+    <div class="permission-item">
+
+      <span>
+
+        🎤 Microphone
+
+      </span>
+
+      <button
+        *ngIf="!permissions.microphone"
+        (click)="allowMicrophone()"
+      >
+
+        Allow
+
+      </button>
+
+      <span
+        class="approved"
+        *ngIf="permissions.microphone"
+      >
+
+        Approved
+
+      </span>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+WEBSITE
+========================= -->
+
+<iframe
+  *ngIf="safeUrl"
+  [src]="safeUrl"
+  (load)="onLoad()"
+  allow="geolocation; microphone; camera"
+  allowfullscreen
+  class="fastBite"
+>
+</iframe>
