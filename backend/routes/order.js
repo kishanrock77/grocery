@@ -1802,8 +1802,7 @@ console.log(newSubOrders);
 
         success: true,
 
-        orders: {
-newSubOrders,
+        orders: { 
           new: formatOrders(newSubOrders),
 
           inprogress: formatOrders(inProgressSubOrders)
