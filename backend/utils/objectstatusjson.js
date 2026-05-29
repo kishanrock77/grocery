@@ -4,7 +4,7 @@ let objectstatusjson = {
     whenwillhappen: "When order is placed by customer",
     iscancellable: true,
     actionby: "Customer",
-    nextactionby: ["Any_DeliveryBoy"],
+    nextactionby: ["Admin","Any_DeliveryBoy"],
     notificationto: {
       "Admin": { "message": "New order placed. Please assign a delivery boy." },
       "All_Online_DeliveryBoys": { "message": "A new order has been placed." }
@@ -19,7 +19,6 @@ let objectstatusjson = {
   orderacceptedbydeliveryboy: {
     whenwillhappen: "When delivery boy     accepts the order",
     iscancellable: true,
-
     actionby: "DeliveryBoy",
     nextactionby: ["Admin", "DeliveryBoy", "Store"],
     notificationto: {
@@ -30,7 +29,7 @@ let objectstatusjson = {
     orderlogmessage: "Order Accepted by Delivery Boy",
     keyvalueforfrontend: "Pending",
     textmessageofstatus: "Waiting for store acceptance",
-    nextactionkey: ['orderrejectedbydeliveryboy', 'orderacceptedbystore', 'cancelledbycustomer'],
+    nextactionkey: ['orderrejectedbydeliveryboy', 'orderacceptedbystore', 'orderrejectedbystore','cancelledbycustomer'],
     prevousactionkey: ['orderplacedbycustomer']
   },
   orderrejectedbydeliveryboy: {
@@ -61,13 +60,13 @@ let objectstatusjson = {
     },
     orderlogmessage: "Order Accepted by Store",
     keyvalueforfrontend: "Pending",
-    textmessageofstatus: "Store has accepted the order",
+    textmessageofstatus: "Store has accepted the order and waiting for start of preparation",
     nextactionkey: ['orderrejectedbystore', 'underpreparation', 'cancelledbycustomer'],
     prevousactionkey: ['orderacceptedbydeliveryboy']
   },
   orderrejectedbystore: {
     whenwillhappen: "When store rejects the order",
-    iscancellable: true,
+    iscancellable: false,  ///ek bar order cancel karde tab koi kuch nahi kar sakta
     actionby: "Store",
     nextactionby: ["Automatic"],
     notificationto: {
@@ -78,7 +77,7 @@ let objectstatusjson = {
     orderlogmessage: "Order Rejected by Store",
     keyvalueforfrontend: "Cancelled",
     textmessageofstatus: "Your order has been rejected by the store. Please create a new order.",
-    nextactionkey: ['cancelledbycustomer'],
+    nextactionkey: [],
     prevousactionkey: ['packedorder', 'underpreparation', 'orderacceptedbystore']
   },
   cancelledbycustomer: {

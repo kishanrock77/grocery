@@ -41,11 +41,11 @@ const subOrderSchema = new mongoose.Schema(
       ref: 'Store',
       required: true
     },
-//final  STORE aasign value bewlo once store accepts the order and if store rejects the order
-//  then finalstoreid will be null because order will be assigned to another store if there is any other store in order items list or else order will be cancelled. So finalstoreid will be null in case of order rejection by store.
+    //final  STORE aasign value bewlo once store accepts the order and if store rejects the order
+    //  then finalstoreid will be null because order will be assigned to another store if there is any other store in order items list or else order will be cancelled. So finalstoreid will be null in case of order rejection by store.
     finalstoreId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Store', 
+      ref: 'Store',
     },
     // DELIVERY BOY
     deliveryBoyId: {
@@ -53,18 +53,26 @@ const subOrderSchema = new mongoose.Schema(
       ref: 'Deliveryboy',
       default: null
     },
-
+    deliveryBoyName: {
+      type: String, 
+      default: null
+    },
     // STORE TOTAL
     storeTotal: {
       type: Number,
       required: true,
       default: 0
     },
-currentstatuskey: {
+    storeTotaltoshowtostore: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    currentstatuskey: {
       type: String,
-    }, 
+    },
 
-iscancellable: {
+    iscancellable: {
       type: Boolean,
       default: true
     },

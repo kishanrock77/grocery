@@ -1,7 +1,8 @@
-admin/
-customerFinal/
+admin/node_modules/
+customerFinal/node_modules/
 backend/node_modules/
 webviewApp/*.pem 
+webviewApp/node_modules/
 git 
 *.pem 
 git 

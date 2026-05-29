@@ -3,11 +3,12 @@
 const express = require('express');
 
 const router = express.Router();
+const Wallet = require("../models/Wallet");
 
 //
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
-const DeliveryBoy = require("../models/DeliveryBoy"); 
+const DeliveryBoy = require("../models/DeliveryBoy");
 const DeliveryArea = require("../models/DeliveryArea");
 
 const OrderLog = require("../models/OrderLog");
@@ -181,16 +182,17 @@ async function updateSubOrderStatus({
     statusData
       .textmessageofstatus;
 
-  if (subOrder.currentstatuskey == 'orderacceptedbystore') {
+
+
+
+
+
+  if (subOrder.currentstatuskey == 'orderrejectedbystore' || subOrder.currentstatuskey == 'orderacceptedbystore') {
 
     subOrder.finalstoreId = subOrder.storeId;
 
   }
-  else if (statuskey == 'orderrejectedbystore') {
 
-    subOrder.finalstoreId = null;
-
-  }
   await subOrder.save();
 
   // ==========================================
@@ -200,7 +202,7 @@ async function updateSubOrderStatus({
   //let logmessage = "Sub order -" + subOrder.suborderid + ", Store - " + subOrder.storeInfo.storeName + " - " + statusData.orderlogmessage;
   await saveLog(
 
-    subOrder.orderId,
+    subOrder._id,
 
     statuskey,
 
@@ -583,6 +585,7 @@ router.post(
 
             storeTotal:
               storeBlock.storeTotal,
+            storeTotaltoshowtostore: storeBlock.storeTotaltoshowtostore,
 
             currentstatuskey:
               'orderplacedbycustomer',
@@ -763,6 +766,36 @@ router.post(
 
         actionByType:
           'Customer'
+
+      });
+
+      //Ordermain se subOrder.orderId ka use kar k data nikalo
+      // fir totalamount me se storeTotal minus kardp or new
+      //totalamount nikalo..agar totalamount<199 or couponcode  FIRST50 tha to dicount bhi zero karo or couponcode ko blank or uska discountAmount totalamount me add kardo
+      //fir main order me update kardo data..dusri jagah se bhi call krana h,,,first50 k alawa koi discount h to use 0 karo , couponcode  ko blank or uska discountAmount totalamount me add kardo
+      //...agar paymentStatus pending nahi h to  storeTotal   amount uske waalet me save krado
+      //ye pura code ek function me daalna.
+
+      console.log(subOrder)
+
+      await handleRejectedSubOrderAmount({
+
+        statuskey:
+          'cancelledbycustomer',
+
+        subOrder,
+
+        cancelAmount:
+          subOrder.storeTotal,
+
+        actionById:
+          customerId,
+
+        actionByType:
+          'Customer',
+
+        suffix:
+          'by customer'
 
       });
 
@@ -1029,7 +1062,7 @@ async function sendNotifications({
           notifications.Store.message,
 
         relatedOrderId:
-          order._id
+          subOrder._id
 
       });
 
@@ -1056,11 +1089,11 @@ router.post(
         subOrderId,
 
         statuskey,
-
+        storeTotal,
         actionById,
 
-        actionByType
-
+        actionByType,
+        amountforalstore
       } = req.body;
 
       // ==========================================
@@ -1086,7 +1119,7 @@ router.post(
       }
 
       // ==========================================
-      // UPDATE STATUS
+      // UPDATE STATUS change-suborder-status
       // ==========================================
 
       await updateSubOrderStatus({
@@ -1099,7 +1132,43 @@ router.post(
 
         actionByType
 
+
       });
+
+      if (statuskey == 'delivered' && amountforalstore == 'YES') {
+        const mainOrder =
+          await Order.findById(
+            subOrder.orderId
+          );
+
+        mainOrder.paymentStatus = "completed";
+        await mainOrder.save();
+      }
+      if (statuskey == 'orderrejectedbystore') {
+        //Ordermain se subOrder.orderId ka use kar k data nikalo
+        // fir totalamount me se storeTotal minus kardp or new
+        //totalamount nikalo..agar totalamount<199 or couponcode  FIRST50 tha to dicount bhi zero karo or couponcode ko blank or uska discountAmount totalamount me add kardo
+        //fir main order me update kardo data..dusri jagah se bhi call krana h,,,first50 k alawa koi discount h to use 0 karo , couponcode  ko blank or uska discountAmount totalamount me add kardo
+        //...agar paymentStatus pending nahi h to  storeTotal   amount uske waalet me save krado
+        //ye pura code ek function me daalna.
+        await handleRejectedSubOrderAmount({
+
+          statuskey,
+
+          subOrder,
+
+          cancelAmount:
+            storeTotal,
+
+          actionById,
+
+          actionByType,
+
+          suffix:
+            'by store'
+
+        });
+      }
 
       // ==========================================
       // RESPONSE
@@ -1134,6 +1203,227 @@ router.post(
   }
 
 );
+// ==========================================
+// FUNCTION
+// ==========================================
+
+
+
+async function handleRejectedSubOrderAmount({
+  statuskey,
+  subOrder,
+  cancelAmount,
+  actionById,
+  actionByType,
+  suffix
+
+}) {
+
+  // ==========================================
+  // FIND MAIN ORDER
+  // ==========================================
+
+  const mainOrder =
+    await Order.findById(
+      subOrder.orderId
+    );
+
+  if (!mainOrder) {
+    throw new Error("Main order not found");
+  }
+
+  // ==========================================
+  // FIND TOTAL SUB ORDERS
+  // ==========================================
+
+  const totalSubOrdersCount =
+    await SubOrder.countDocuments({
+
+      orderId:
+        subOrder.orderId, suborderstatus: {
+          $ne: 'Cancelled'
+        }
+
+    });
+
+  // ==========================================
+  // IF ONLY ONE SUBORDER
+  // ==========================================
+  //
+  //
+  if (totalSubOrdersCount == 1) {
+    cancelAmount = mainOrder.totalamount;
+    mainOrder.totalamount = 0;
+
+    mainOrder.discountAmount = 0;
+
+    mainOrder.deliveryCharge = 0;
+    mainOrder.handlingCharge = 0;
+
+    mainOrder.deliverydiscount = 0;
+
+    mainOrder.couponcode = "";
+
+    await mainOrder.save();
+
+  }
+
+  // ==========================================
+  // MULTIPLE SUBORDERS
+  // ==========================================
+
+  else {
+
+    // ==========================================
+    // UPDATE TOTAL AMOUNT
+    // ==========================================
+
+    let newTotal =
+      Number(mainOrder.totalamount || 0) -
+      Number(cancelAmount || 0);
+
+    if (newTotal < 0) {
+      newTotal = 0;
+    }
+
+    // ==========================================
+    // REMOVE DISCOUNT / COUPON
+    // ==========================================
+
+    if (mainOrder.discountAmount > 0) {
+
+      // FIRST50 condition
+      if (
+        newTotal < 199 &&
+        mainOrder.couponcode == "FIRST50"
+      ) {
+
+        newTotal =
+          newTotal +
+          Number(mainOrder.discountAmount || 0);
+
+        mainOrder.discountAmount = 0;
+
+        mainOrder.couponcode = "";
+
+      }
+      else if (
+        newTotal > 199 &&
+        mainOrder.couponcode == "FIRST50"
+      ) {
+
+
+
+      }
+      // any other coupon also remove
+      else if (
+        mainOrder.couponcode
+      ) {
+
+        newTotal =
+          newTotal +
+          Number(mainOrder.discountAmount || 0);
+
+        mainOrder.discountAmount = 0;
+
+        mainOrder.couponcode = "";
+
+      }
+
+    }
+
+    // ==========================================
+    // SAVE NEW TOTAL
+    // ==========================================
+
+    mainOrder.totalamount = newTotal;
+
+    await mainOrder.save();
+
+  }
+
+  // ==========================================
+  // WALLET CREDIT
+  // ==========================================
+
+  if (
+    mainOrder.paymentStatus &&
+    mainOrder.paymentStatus != "pending"
+  ) {
+
+    await Wallet.create({
+
+      customerId:
+        mainOrder.customerId,
+
+      reason:
+        `Refund for cancelled suborder ${subOrder.suborderid} ${suffix}`,
+
+      amountType:
+        "credit",
+
+      amount:
+        Number(cancelAmount || 0),
+
+      actionById,
+
+      actionByType,
+
+      datetime:
+        new Date()
+
+    });
+
+    // ==========================================
+    // SAVE LOG
+    // ==========================================
+
+    await saveLog(
+
+      subOrder._id,
+
+      statuskey,
+
+      Number(cancelAmount || 0) +
+      ' has been credited to your wallet because of cancelled order ' +
+      subOrder.suborderid,
+
+      actionById,
+
+      actionByType
+
+    );
+
+    // ==========================================
+    // SEND NOTIFICATION
+    // ==========================================
+
+    await saveNotification({
+
+      userId:
+        subOrder.customerId,
+
+      userType:
+        'Customer',
+
+      title:
+        'Wallet updated with amount Rs ' +
+        Number(cancelAmount || 0),
+
+      message:
+        Number(cancelAmount || 0) +
+        ' has been credited to your wallet because of cancelled order ' +
+        subOrder.suborderid,
+
+      relatedOrderId:
+        subOrder._id
+
+    });
+
+  }
+
+}
+
 
 
 
@@ -1572,7 +1862,7 @@ router.get(
 
 );
 
- router.get(
+router.get(
   '/role-orders/:usertype/:userId',
   async (req, res) => {
 
@@ -1732,7 +2022,7 @@ router.get(
           .lean()
 
       ]);
-console.log(newSubOrders);
+      console.log(newSubOrders);
       // =====================================
       // UNIQUE MAIN ORDER IDS
       // =====================================
@@ -1785,7 +2075,7 @@ console.log(newSubOrders);
 
           mainOrder:
             orderMap[
-              subOrder.orderId?.toString()
+            subOrder.orderId?.toString()
             ] || null,
 
           subOrder
@@ -1802,7 +2092,7 @@ console.log(newSubOrders);
 
         success: true,
 
-        orders: { 
+        orders: {
           new: formatOrders(newSubOrders),
 
           inprogress: formatOrders(inProgressSubOrders)
@@ -2013,5 +2303,167 @@ router.get(
 
 );
 
+// ======================================================
+// DELIVERY BOY SELF ASSIGN MAIN ORDER
+// ======================================================
 
+router.post(
+  '/assign-main-order-and-sub-order-to-deliveryboy',
+  async (req, res) => {
+
+    try {
+
+      const {
+        orderMainId,
+        deliveryBoyId, deliveryBoyName,
+        actionById
+      } = req.body;
+
+      // ==========================================
+      // VALIDATION
+      // ==========================================
+
+      if (!orderMainId) {
+
+        return res.status(400).json({
+
+          success: false,
+          message: 'Main order id required'
+
+        });
+
+      }
+
+      if (!deliveryBoyId) {
+
+        return res.status(400).json({
+
+          success: false,
+          message: 'Delivery boy id required'
+
+        });
+
+      }
+
+      // ==========================================
+      // FIND MAIN ORDER
+      // ==========================================
+
+      const mainOrder = await Order.findById(
+        orderMainId
+      );
+
+      if (!mainOrder) {
+
+        return res.status(404).json({
+
+          success: false,
+          message: 'Main order not found'
+
+        });
+
+      }
+
+      // ==========================================
+      // FIND ALL SUB ORDERS
+      // ==========================================
+
+      const subOrders = await SubOrder.find({
+
+        orderId: mainOrder._id
+
+      });
+
+      if (!subOrders.length) {
+
+        return res.status(404).json({
+
+          success: false,
+          message: 'No suborders found'
+
+        });
+
+      }
+
+      // ==========================================
+      // CHECK IF ALREADY ASSIGNED
+      // ==========================================
+
+      const alreadyAssigned = subOrders.find(
+        x => x.deliveryBoyId && x.subOrderstatus != 'Cancelled'
+      );
+
+      if (alreadyAssigned) {
+
+        return res.status(400).json({
+
+          success: false,
+          message:
+            'Delivery boy already assigned to one or more suborders'
+
+        });
+
+      }
+
+      // ==========================================
+      // ASSIGN DELIVERY BOY
+      // ==========================================
+
+      for (const subOrder of subOrders) {
+        if (subOrder.suborderstatus != 'Cancelled') {
+
+          subOrder.deliveryBoyId = deliveryBoyId;
+
+          subOrder.deliveryBoyName = deliveryBoyName;
+
+
+          await updateSubOrderStatus({
+
+            subOrder,
+
+            statuskey:
+              'orderacceptedbydeliveryboy',
+
+            actionById:
+              deliveryBoyId,
+
+            actionByType:
+              'DeliveryBoy'
+
+          });
+
+        }
+
+      }
+
+      // ==========================================
+      // RESPONSE
+      // ==========================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        message:
+          'Delivery boy assigned successfully to all suborders'
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+        message: error.message
+
+      });
+
+    }
+
+  }
+);
 module.exports = router;

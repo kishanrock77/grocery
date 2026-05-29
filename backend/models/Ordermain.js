@@ -75,10 +75,10 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
-selectedaddress: {
-      type: Object 
+    selectedaddress: {
+      type: Object
     },
-profit: {
+    profit: {
       type: Number,
       default: 0
     },
