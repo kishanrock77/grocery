@@ -60,8 +60,7 @@ const orderSchema = new mongoose.Schema(
 
     },
 transaction_details: {
-      type: String,
-      required: true,
+      type: Object,
 
     },
     transactionId: {
