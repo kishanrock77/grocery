@@ -1,6 +1,7 @@
 // routes/order.js
 
 const express = require('express');
+const Razorpay = require('razorpay');
 
 const router = express.Router();
 const Wallet = require("../models/Wallet");
@@ -541,6 +542,11 @@ router.post(
         'Customer'
 
       );
+
+      if (amountfromwallet > 0) {
+        await subtractamountfromwalletfromwallet(amountfromwallet, customerId, mainorderid, order._id);
+      }
+
 
       // ==========================================
       // CREATE SUB ORDERS
@@ -1093,7 +1099,7 @@ router.post(
         actionById,
 
         actionByType,
-        amountforalstore
+        singleDelievryBoyOrMultipleDelievryBoyForAllStores
       } = req.body;
 
       // ==========================================
@@ -1135,13 +1141,15 @@ router.post(
 
       });
 
-      if (statuskey == 'delivered' && amountforalstore == 'YES') {
+      if (statuskey == 'delivered') {
         const mainOrder =
           await Order.findById(
             subOrder.orderId
           );
 
         mainOrder.paymentStatus = "completed";
+
+        //jan multiple store h and multiple delevery bouy h to hum cod accpt nahi kar rahe h
         await mainOrder.save();
       }
       if (statuskey == 'orderrejectedbystore') {
@@ -1207,7 +1215,62 @@ router.post(
 // FUNCTION
 // ==========================================
 
+async function subtractamountfromwalletfromwallet(amountfromwallet, customerId, mainorderid, _id) {
 
+
+  await Wallet.create({
+
+    customerId:
+      customerId,
+
+    reason:
+      `Amount deducted from wallet for use in order  ${mainorderid}`,
+
+    amountType:
+      "debit",
+
+    amount:
+      Number(amountfromwallet || 0),
+
+    customerId,
+
+    actionByType: 'Customer',
+
+    datetime:
+      new Date()
+
+  });
+
+
+
+  // ==========================================
+  // SEND NOTIFICATION
+  // ==========================================
+
+  await saveNotification({
+
+    userId:
+      customerId,
+
+    userType:
+      'Customer',
+
+    title:
+      'Wallet updated with debit of amount Rs ' +
+      Number(amountfromwallet || 0) + ' for use in order ' + mainorderid,
+
+    message:
+      Number(amountfromwallet || 0) +
+      ' has been debited from your wallet because of   order placed usng wallet amount ' +
+      mainorderid,
+
+    relatedOrderId:
+      _id
+
+  });
+
+
+}
 
 async function handleRejectedSubOrderAmount({
   statuskey,
@@ -1251,7 +1314,7 @@ async function handleRejectedSubOrderAmount({
   // ==========================================
   //
   //
-  if (totalSubOrdersCount == 1) {
+  if (totalSubOrdersCount == 0) {
     cancelAmount = mainOrder.totalamount;
     mainOrder.totalamount = 0;
 
@@ -1337,6 +1400,10 @@ async function handleRejectedSubOrderAmount({
     // ==========================================
 
     mainOrder.totalamount = newTotal;
+
+    if (newTotal < Number(cancelAmount || 0)) {
+      cancelAmount = newTotal;
+    }
 
     await mainOrder.save();
 
@@ -2466,4 +2533,72 @@ router.post(
 
   }
 );
+
+
+
+
+//razorpay
+
+router.post('/ceatebackendorderforazorpay', (req, res, next) => {
+
+  var customerid = req.body.customerid;
+  var order_id =  req.body.orderId ;
+  var amount = +req.body.amount;
+  // var key_id = 'rzp_test_j7RLzYPQkJqadt';
+  // var instance = new Razorpay({
+  //   key_id: key_id,
+  //   key_secret: '4vXK6ldx0cm6msN1ys00Ptcs'
+  // })
+
+  // original start//
+  var key_id = 'rzp_live_LJWKXNL2lGNgFd';// 'rzp_test_2c2QJAZekFLCny';
+  var instance = new Razorpay({
+    key_id: key_id,
+    key_secret: 'ycoSZmQ8n8qSNgcD3LS8dnMM'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
+  })
+
+  //original end//
+
+  //test start
+  var key_id = 'rzp_test_2c2QJAZekFLCny';// 'rzp_test_2c2QJAZekFLCny';
+  var instance = new Razorpay({
+    key_id: key_id,
+    key_secret: 'Z6y6VmieaPGXU7uuwBuEpuW5'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
+  })
+  // test end
+  var options = {
+    amount: parseInt(amount) * 100,  // amount in the smallest currency unit
+    currency: "INR",
+    receipt: order_id,
+    notes: { "customerid": customerid, "order_id": order_id }
+  };
+
+  instance.orders.create(options, function (err, order) {
+
+    if (err) {
+      res.json({ message: "Something went wrong ! ", err, status: "ERROR" });
+    } else {
+      res.json({ message: "Worked Successfully !", rajororder: order, order_id: order_id,
+         key: key_id, status: "true" });
+    }
+  });
+});
+
+router.post('/completeorderforrazorpay', async (req, res, next) => {
+
+  var customerid = req.body.customerid;
+  var order_id = req.body.order_id;
+  var amount = req.body.amount;
+
+  var transaction_details = req.body.transaction_details;
+  await Order.updateOne({ _id:order_id }, {
+    $set: {
+      paymentMethod: 'online',
+      paymentStatus: 'paid', transaction_details: transaction_details, transactionId: 'to do'
+    }
+  });
+  return res.json({ success: true, message: "Payment completed successfully." });
+});
+
+//razorpay end
 module.exports = router;

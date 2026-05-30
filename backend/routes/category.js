@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
+const Wallet = require("../models/Wallet");
 
 const Store = require("../models/Store");
 const Otp = require("../models/Otp");
@@ -17,7 +18,7 @@ const Notification = require("../models/Notification");
 const AdminUser = require("../models/AdminUser");
 
 
-  
+
 
 
 const {
@@ -25,7 +26,7 @@ const {
   ListObjectsV2Command,
   DeleteObjectsCommand
 } = require("@aws-sdk/client-s3");
- 
+
 const storeOwner = require("../models/storeOwner");
 const BUCKET = process.env.AWS_BUCKET;
 
@@ -276,7 +277,7 @@ router.delete('/emptydb/:table', async (req, res, next) => {
   let modelsArray = [];
   if (req.params.table == 'All') {
     modelsArray = [AdminUser, Category,
-      Customer, DeliveryArea, DeliveryBoy, Item,
+      Customer, DeliveryArea, DeliveryBoy, Item, Wallet,
       Notification, Order, Suborder, OrderLog, Otp, Store, storeOwner];
 
   } else if (req.params.table == 'DelieveryBoy') {
@@ -289,24 +290,27 @@ router.delete('/emptydb/:table', async (req, res, next) => {
     modelsArray = [Notification];
 
   } else if (req.params.table == 'Customer') {
-    modelsArray = [Customer, Order, Suborder, OrderLog];
+    modelsArray = [Customer, Order, Suborder, OrderLog, Wallet];
 
   } else if (req.params.table == 'Otp') {
     modelsArray = [Otp];
 
   } else if (req.params.table == 'Order') {
-    modelsArray = [Suborder,Order, OrderLog];
+    modelsArray = [Suborder, Order, OrderLog,Wallet];
 
   }
   else if (req.params.table == 'StoreOwner') {
-    modelsArray = [ storeOwner  ];
+    modelsArray = [storeOwner];
 
   }
   else if (req.params.table == 'Store') {
-    modelsArray = [Store, Order,Suborder, OrderLog];
+    modelsArray = [Store, Order, Suborder, OrderLog];
 
   } else if (req.params.table == 'Item') {
-    modelsArray = [Item, Order,Suborder, OrderLog];
+    modelsArray = [Item, Order, Suborder, OrderLog];
+
+  } else if (req.params.table == 'Wallet') {
+    modelsArray = [Wallet];
 
   }
   try {
@@ -316,9 +320,9 @@ router.delete('/emptydb/:table', async (req, res, next) => {
 
     }
     console.log("All specified models cleared.");
-      if (req.params.table == 'All') {
-    await deleteAllFilesFromFolder("uploads/");
-      }
+    if (req.params.table == 'All') {
+      await deleteAllFilesFromFolder("uploads/");
+    }
 
 
 

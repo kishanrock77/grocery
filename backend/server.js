@@ -48,6 +48,7 @@ app.use("/api/category", require("./routes/category"));
 app.use("/api/item", require("./routes/item"));
 app.use("/api/customer", require("./routes/customer"));
 app.use("/api/home", require("./routes/home"));
+app.use("/api/wallet", require("./routes/wallet"));
 
 app.use("/uploads", express.static("uploads"));
 

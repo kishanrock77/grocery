@@ -89,6 +89,9 @@ const customerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+  ,dateofbirth:{
+      type: Date,
+  }
 
 }, {
   timestamps: false

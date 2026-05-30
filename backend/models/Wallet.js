@@ -31,11 +31,11 @@ const WalletSchema = new mongoose.Schema({
         min: 0
     },
 
-    actionById:{
-        type:mongoose.Schema.Types.ObjectId
-      },actionByType:{
-    type:String
-  } 
+    actionById: {
+        type: mongoose.Schema.Types.ObjectId
+    }, actionByType: {
+        type: String
+    }
 
 }, {
     timestamps: true

@@ -59,7 +59,11 @@ const orderSchema = new mongoose.Schema(
       required: true,
 
     },
+transaction_details: {
+      type: String,
+      required: true,
 
+    },
     transactionId: {
       type: String,
       default: null,
@@ -83,7 +87,7 @@ const orderSchema = new mongoose.Schema(
       default: 0
     },
 
-    ordrdatetime: {
+    orderdatetime: {
       type: Date,
       default: Date.now
     }
