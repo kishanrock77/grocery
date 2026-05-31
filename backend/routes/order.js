@@ -33,14 +33,7 @@ const Notification =
 const objectstatusjson =
   require('../utils/objectstatusjson');
 
-
-admin.auth().listUsers(1)
-.then(result => {
-  console.log('Firebase OK');
-})
-.catch(err => {
-  console.log('Firebase Error', err);
-});
+ 
 
 // ======================================================
 // SAVE LOG

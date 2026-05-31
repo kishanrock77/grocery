@@ -4,7 +4,8 @@ const admin = require('./firebase');
   try {
 
     const token = await admin.messaging().send({
-      token: 'fake-token',
+      token: "doRbo96V5NE7JzySnsxqvW:APA91bEqdTLYC54wvLQcNFYb5ATrOgdWYM-tcFnfGDuYWm3LYfr9p44b_QE_rxT13zJ-jPcFJ4QBq2bMdRQAqVRIfb5qyboi8kvmT98DRcxxmqQRureeMoc"
+,
       notification: {
         title: 'Test',
         body: 'Hello'
