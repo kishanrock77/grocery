@@ -5,7 +5,8 @@ const Razorpay = require('razorpay');
 
 const router = express.Router();
 const Wallet = require("../models/Wallet");
-
+const { getIO } =
+require("../socket");
  
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
@@ -78,20 +79,37 @@ async function saveNotification({
   if (!userId) {
     return;
   }
+ const notification =
+await Notification.create({
 
-  await Notification.create({
+  userId,
+  userType,
+  title,
+  message,
+  relatedOrderId
 
-    userId,
+});
 
-    userType,
+try {
 
-    title,
+  const io = getIO();
 
-    message,
+  io.to(
+    userId.toString()
+  ).emit(
+    "newNotification",
+    notification
+  );
 
-    relatedOrderId
+}
+catch (err) {
 
-  });
+  console.log(
+    "Socket notification error:",
+    err.message
+  );
+
+}
 
 }
 
@@ -1283,7 +1301,7 @@ async function handleRejectedSubOrderAmount({
 }) {
 
   // ==========================================
-  // FIND MAIN ORDER
+  // FIND MAIN ORDER 
   // ==========================================
 
   const mainOrder =
@@ -1413,11 +1431,31 @@ async function handleRejectedSubOrderAmount({
   // WALLET CREDIT
   // ==========================================
 
+
+  let amounttoaddinwallet=0;
   if (
     mainOrder.paymentStatus &&
     mainOrder.paymentStatus != "pending"
   ) {
+amounttoaddinwallet = cancelAmount;
+ }else{
+     if (totalSubOrdersCount == 0) {
+amounttoaddinwallet  =  mainOrder.amountfromwallet;
+     }else{
 
+      if(cancelAmount> mainOrder.amountfromwallet){
+amounttoaddinwallet=  mainOrder.amountfromwallet;
+      }else if(cancelAmount < mainOrder.amountfromwallet){
+amounttoaddinwallet=  mainOrder.amountfromwallet-cancelAmount;
+      }else if(cancelAmount == mainOrder.amountfromwallet){
+amounttoaddinwallet= 
+cancelAmount;
+      }
+     }
+  }
+
+   
+  if(amounttoaddinwallet>0){
     await Wallet.create({
 
       customerId:
@@ -1430,7 +1468,7 @@ async function handleRejectedSubOrderAmount({
         "credit",
 
       amount:
-        Number(cancelAmount || 0),
+        Number(amounttoaddinwallet || 0),
 
       actionById,
 
@@ -1451,7 +1489,7 @@ async function handleRejectedSubOrderAmount({
 
       statuskey,
 
-      Number(cancelAmount || 0) +
+      Number(amounttoaddinwallet || 0) +
       ' has been credited to your wallet because of cancelled order ' +
       subOrder.suborderid,
 
@@ -1475,10 +1513,10 @@ async function handleRejectedSubOrderAmount({
 
       title:
         'Wallet updated with amount Rs ' +
-        Number(cancelAmount || 0),
+        Number(amounttoaddinwallet || 0),
 
       message:
-        Number(cancelAmount || 0) +
+        Number(amounttoaddinwallet || 0) +
         ' has been credited to your wallet because of cancelled order ' +
         subOrder.suborderid,
 
@@ -2594,7 +2632,7 @@ router.post('/completeorderforrazorpay', async (req, res, next) => {
   await Order.updateOne({ _id:order_id }, {
     $set: {
       paymentMethod: 'online',
-      paymentStatus: 'paid', transaction_details: transaction_details, transactionId: 'to do'
+      paymentStatus: 'paid', transaction_details: transaction_details, transactionId: transaction_details.razorpay_order_id
     }
   });
   return res.json({ success: true, message: "Payment completed successfully." });

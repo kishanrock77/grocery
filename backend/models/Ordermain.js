@@ -59,7 +59,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
 
     },
-transaction_details: {
+    transaction_details: {
       type: Object,
 
     },
