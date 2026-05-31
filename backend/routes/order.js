@@ -2,7 +2,7 @@
 
 const express = require('express');
 const Razorpay = require('razorpay');
-const adminfirebase =
+const admin =
   require('../firebase');
 const router = express.Router();
 const Wallet = require("../models/Wallet");
@@ -80,7 +80,7 @@ async function sendFCM({
       return;
     }
 
-    await adminfirebase
+    await admin
       .messaging()
       .send({
 
