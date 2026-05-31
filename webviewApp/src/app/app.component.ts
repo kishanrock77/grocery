@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 
 import {
   DomSanitizer,
@@ -41,6 +43,37 @@ export class AppComponent {
   ) { }
 
   async ngOnInit() {
+
+
+
+    
+(window as any).openExternalPayment =
+  async (url: string) => {
+
+    await Browser.open({
+      url: url
+    });
+
+  };
+
+window.addEventListener(
+  'message',
+  async (event: any) => {
+
+    if (
+      event.data?.type ===
+      'OPEN_EXTERNAL_PAYMENT'
+    ) {
+
+      await Browser.open({
+        url: event.data.url
+      });
+
+    }
+
+  }
+);
+
 
     // =========================
     // VOICE SEARCH
@@ -97,6 +130,20 @@ export class AppComponent {
 
       };
 
+App.addListener('appStateChange', ({ isActive }) => {
+
+  if (isActive) {
+
+    const iframe: any =
+      document.querySelector('iframe');
+
+    iframe?.contentWindow?.postMessage({
+      type: 'PAYMENT_CHECK'
+    }, '*');
+
+  }
+
+});
     await this.checkPermissions();
 
   }
@@ -244,7 +291,7 @@ export class AppComponent {
       }
 
       finalUrl =
-        `${this.baseUrl}?lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
+        `${this.baseUrl}?v=1&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
 
     } catch (e) {
 
