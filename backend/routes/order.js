@@ -82,38 +82,26 @@ async function sendFCM({
       return;
     }
 
-    await admin
-      .messaging()
-      .send({
-
-        token,
-
+    await admin.messaging().send({
+      token,
+      notification: {
+        title,
+        body
+      },
+      android: {
+        priority: "high",
         notification: {
-
-          title,
-          body
-
-        },
-
-        webpush: {
-
-          notification: {
-
-            icon:
-              'https://app.fastbite.food/logo.png',
-
-            badge:
-              'https://app.fastbite.food/logo.png',
-
-            requireInteraction:
-              true
-
-          }
-
+          sound: "default",
+          channelId: "default"
         }
-
-      });
-
+      },
+      webpush: {
+        notification: {
+          icon: "https://app.fastbite.food/logo.png",
+          requireInteraction: true
+        }
+      }
+    });
     console.log(
       'FCM Sent'
     );
