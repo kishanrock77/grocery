@@ -21,7 +21,7 @@ const DeliveryArea = require("../models/DeliveryArea");
 const OrderLog = require("../models/OrderLog");
 const SubOrder = require("../models/Suborder");
 const Item = require("../models/Item");
-const AdminUser = require("../models/AdminUser");
+const AdminUserModel  = require("../models/AdminUser");
 
 const Notification =
   require('../models/Notification');
@@ -194,7 +194,7 @@ async function saveNotification({
   ) {
 
     const AdminUser =
-      await AdminUser.findById(
+      await AdminUserModel.findById(
         userId
       );
 
