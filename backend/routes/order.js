@@ -2,7 +2,8 @@
 
 const express = require('express');
 const Razorpay = require('razorpay');
-
+const adminfirebase =
+  require('../firebase');
 const router = express.Router();
 const Wallet = require("../models/Wallet");
 const { getIO } =
@@ -10,6 +11,9 @@ const { getIO } =
 
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
+ 
+const StoreOwner = require("../models/storeOwner");
+
 const DeliveryBoy = require("../models/DeliveryBoy");
 const DeliveryArea = require("../models/DeliveryArea");
 
@@ -62,6 +66,69 @@ async function saveLog(
 
 
 
+async function sendFCM({
+
+  token,
+  title,
+  body
+
+}) {
+
+  try {
+
+    if (!token) {
+      return;
+    }
+
+    await adminfirebase
+      .messaging()
+      .send({
+
+        token,
+
+        notification: {
+
+          title,
+          body
+
+        },
+
+        webpush: {
+
+          notification: {
+
+            icon:
+              'https://app.fastbite.food/logo.png',
+
+            badge:
+              'https://app.fastbite.food/logo.png',
+
+            requireInteraction:
+              true
+
+          }
+
+        }
+
+      });
+
+    console.log(
+      'FCM Sent'
+    );
+
+  }
+
+  catch (err) {
+
+    console.log(
+      'FCM Error',
+      err.message
+    );
+
+  }
+
+}
+
 // ======================================================
 // SAVE NOTIFICATION
 // ======================================================
@@ -90,6 +157,67 @@ async function saveNotification({
 
     });
 
+  //fcm 
+
+  let token = '';
+
+  if (userType == 'Customer') {
+
+    const Customer =
+      require('../models/Customer');
+
+    const user =
+      await Customer.findById(
+        userId
+      );
+
+    token =
+      user?.fcmToken;
+
+  }
+
+  else if (
+    userType == 'DeliveryBoy'
+  ) {
+
+    const user =
+      await DeliveryBoy.findById(
+        userId
+      );
+
+    token =
+      user?.fcmToken;
+
+  }
+
+  else if (
+    userType == 'Store'
+  ) {
+
+    const StoreOwner =
+      await StoreOwner.findById(
+        userId
+      );
+
+    token =
+      store?.fcmToken;
+
+  }
+
+await sendFCM({
+
+  token,
+
+  title,
+
+  body: message
+
+});
+
+  //fcm emnd
+
+
+
   try {
 
     const io = getIO();
@@ -100,12 +228,12 @@ async function saveNotification({
       "newNotification",
       notification
     );
-await Notification.create({
+    await Notification.create({
 
       userId,
       userType,
-    title:  'newNotification'+title,
-    message:  'newNotification'+message,
+      title: 'newNotification' + title,
+      message: 'newNotification' + message,
       relatedOrderId
 
     });
@@ -888,7 +1016,7 @@ async function sendNotifications({
   if (statuskey == 'orderplacedbycustomer') {
     title = "Main order-" + order.mainorderid + " - New Order Placed";
   } else {
-    title = "Sub order-" + subOrder.suborderid + " - " + notifications;
+    title = "Update for order-" + subOrder.suborderid;
   }
   // ==========================================
   // ADMIN

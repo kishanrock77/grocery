@@ -85,6 +85,63 @@ router.post("/signup", async (req, res) => {
 // login 
 
 
+router.post("/tokenupdtae", async (req, res) => {
+  try {
+    const { userType, userid, token } = req.body;
+
+    if (!token || !userid || !userType) {
+      return res.status(400).json({
+        success: false,
+        message: "something is wrong ",
+      });
+    }
+
+    let Model;
+
+    // 🔹 Select Model Based on User Type
+    switch (userType) {
+      case "admin":
+        Model = AdminUser;
+        break;
+      case "deliveryboy":
+        Model = DeliveryBoy;
+        break;
+      case "store":
+        Model = StoreOwner;
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user type",
+        });
+    }
+
+    // 🔹 Find User
+    const user = await Model.findOne({ _id: userid });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid userid",
+      });
+    }
+    user.fcmToken = token;
+   await user.save();
+    // 🔹 Response
+    res.json({
+      success: true,
+      message: "token updated successful",
+
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password, userType } = req.body;
@@ -178,13 +235,13 @@ router.post("/login", async (req, res) => {
 router.get("/details/:id", async (req, res) => {
   const id = req.params.id;
   try {
-     
 
-     
- 
+
+
+
 
     // 🔹 Find User
-    const user = await AdminUser.findOne({ _id:id });
+    const user = await AdminUser.findOne({ _id: id });
 
     if (!user) {
       return res.status(401).json({
@@ -192,12 +249,12 @@ router.get("/details/:id", async (req, res) => {
         message: "Something went wrong",
       });
     }
- 
+
     // 🔹 Response
     res.json({
       success: true,
-      message: "Fetched successful", 
-      user: user 
+      message: "Fetched successful",
+      user: user
     });
 
   } catch (error) {

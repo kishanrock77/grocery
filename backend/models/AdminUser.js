@@ -17,7 +17,7 @@ state: String,
 country: String,
 
 latitude: Number,
-
+fcmToken: String,
 longitude: Number,
 
 userType: { type: String, default: "admin" }

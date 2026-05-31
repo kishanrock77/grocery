@@ -11,6 +11,7 @@ const StoreOwnerSchema = new mongoose.Schema({
         trim: true
     },
     addedBy: mongoose.Schema.Types.ObjectId,
+fcmToken: String,
 
     status: {
         type: Boolean,

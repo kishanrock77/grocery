@@ -13,7 +13,7 @@ const customerSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-
+fcmToken: String,
   name: {
     type: String,
     required: true,

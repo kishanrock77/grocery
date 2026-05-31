@@ -43,6 +43,8 @@ const DeliveryBoySchema = new mongoose.Schema({
       default: [0, 0]
     }
   },
+  fcmToken: String,
+
   address_map:{
       type: String,
       default: ""
