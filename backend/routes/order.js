@@ -126,14 +126,10 @@ async function sendFCM({
 
   }
 
-  catch (err) {
-
-    console.log(
-      'FCM Error',
-      err.message
-    );
-
-  }
+     catch (err) {
+  console.log('FCM FULL ERROR');
+  console.log(err);
+}
 
 }
 
