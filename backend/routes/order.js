@@ -8,12 +8,13 @@ const router = express.Router();
 const Wallet = require("../models/Wallet");
 const { getIO } =
   require("../socket");
+const Customer = require("../models/Customer");
 
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
+ const StoreOwner = require("../models/storeOwner");
  
-const StoreOwner = require("../models/storeOwner");
-
+ 
 const DeliveryBoy = require("../models/DeliveryBoy");
 const DeliveryArea = require("../models/DeliveryArea");
 
@@ -33,6 +34,13 @@ const objectstatusjson =
   require('../utils/objectstatusjson');
 
 
+admin.auth().listUsers(1)
+.then(result => {
+  console.log('Firebase OK');
+})
+.catch(err => {
+  console.log('Firebase Error', err);
+});
 
 // ======================================================
 // SAVE LOG
@@ -163,8 +171,7 @@ async function saveNotification({
 
   if (userType == 'Customer') {
 
-    const Customer =
-      require('../models/Customer');
+ 
 
     const user =
       await Customer.findById(
