@@ -6,8 +6,8 @@ const Razorpay = require('razorpay');
 const router = express.Router();
 const Wallet = require("../models/Wallet");
 const { getIO } =
-require("../socket");
- 
+  require("../socket");
+
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
 const DeliveryBoy = require("../models/DeliveryBoy");
@@ -79,37 +79,45 @@ async function saveNotification({
   if (!userId) {
     return;
   }
- const notification =
+  const notification =
+    await Notification.create({
+
+      userId,
+      userType,
+      title,
+      message,
+      relatedOrderId
+
+    });
+
+  try {
+
+    const io = getIO();
+
+    io.to(
+      userId.toString()
+    ).emit(
+      "newNotification",
+      notification
+    );
 await Notification.create({
 
-  userId,
-  userType,
-  title,
-  message,
-  relatedOrderId
+      userId,
+      userType,
+    title:  'newNotification'+title,
+    message:  'newNotification'+message,
+      relatedOrderId
 
-});
+    });
+  }
+  catch (err) {
 
-try {
+    console.log(
+      "Socket notification error:",
+      err.message
+    );
 
-  const io = getIO();
-
-  io.to(
-    userId.toString()
-  ).emit(
-    "newNotification",
-    notification
-  );
-
-}
-catch (err) {
-
-  console.log(
-    "Socket notification error:",
-    err.message
-  );
-
-}
+  }
 
 }
 
@@ -1432,30 +1440,30 @@ async function handleRejectedSubOrderAmount({
   // ==========================================
 
 
-  let amounttoaddinwallet=0;
+  let amounttoaddinwallet = 0;
   if (
     mainOrder.paymentStatus &&
     mainOrder.paymentStatus != "pending"
   ) {
-amounttoaddinwallet = cancelAmount;
- }else{
-     if (totalSubOrdersCount == 0) {
-amounttoaddinwallet  =  mainOrder.amountfromwallet;
-     }else{
+    amounttoaddinwallet = cancelAmount;
+  } else {
+    if (totalSubOrdersCount == 0) {
+      amounttoaddinwallet = mainOrder.amountfromwallet;
+    } else {
 
-      if(cancelAmount> mainOrder.amountfromwallet){
-amounttoaddinwallet=  mainOrder.amountfromwallet;
-      }else if(cancelAmount < mainOrder.amountfromwallet){
-amounttoaddinwallet=  mainOrder.amountfromwallet-cancelAmount;
-      }else if(cancelAmount == mainOrder.amountfromwallet){
-amounttoaddinwallet= 
-cancelAmount;
+      if (cancelAmount > mainOrder.amountfromwallet) {
+        amounttoaddinwallet = mainOrder.amountfromwallet;
+      } else if (cancelAmount < mainOrder.amountfromwallet) {
+        amounttoaddinwallet = mainOrder.amountfromwallet - cancelAmount;
+      } else if (cancelAmount == mainOrder.amountfromwallet) {
+        amounttoaddinwallet =
+          cancelAmount;
       }
-     }
+    }
   }
 
-   
-  if(amounttoaddinwallet>0){
+
+  if (amounttoaddinwallet > 0) {
     await Wallet.create({
 
       customerId:
@@ -2580,7 +2588,7 @@ router.post(
 router.post('/ceatebackendorderforazorpay', (req, res, next) => {
 
   var customerid = req.body.customerid;
-  var order_id =  req.body.orderId ;
+  var order_id = req.body.orderId;
   var amount = +req.body.amount;
   // var key_id = 'rzp_test_j7RLzYPQkJqadt';
   // var instance = new Razorpay({
@@ -2616,8 +2624,10 @@ router.post('/ceatebackendorderforazorpay', (req, res, next) => {
     if (err) {
       res.json({ message: "Something went wrong ! ", err, status: "ERROR" });
     } else {
-      res.json({ message: "Worked Successfully !", rajororder: order, order_id: order_id,
-         key: key_id, status: "true" });
+      res.json({
+        message: "Worked Successfully !", rajororder: order, order_id: order_id,
+        key: key_id, status: "true"
+      });
     }
   });
 });
@@ -2629,7 +2639,7 @@ router.post('/completeorderforrazorpay', async (req, res, next) => {
   var amount = req.body.amount;
 
   var transaction_details = req.body.transaction_details;
-  await Order.updateOne({ _id:order_id }, {
+  await Order.updateOne({ _id: order_id }, {
     $set: {
       paymentMethod: 'online',
       paymentStatus: 'paid', transaction_details: transaction_details, transactionId: transaction_details.razorpay_order_id
