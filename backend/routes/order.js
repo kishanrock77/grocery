@@ -12,15 +12,16 @@ const Customer = require("../models/Customer");
 
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
- const StoreOwner = require("../models/storeOwner");
- 
- 
+const StoreOwner = require("../models/storeOwner");
+
+
 const DeliveryBoy = require("../models/DeliveryBoy");
 const DeliveryArea = require("../models/DeliveryArea");
 
 const OrderLog = require("../models/OrderLog");
 const SubOrder = require("../models/Suborder");
 const Item = require("../models/Item");
+const AdminUser = require("../models/AdminUser");
 
 const Notification =
   require('../models/Notification');
@@ -33,7 +34,7 @@ const Notification =
 const objectstatusjson =
   require('../utils/objectstatusjson');
 
- 
+
 
 // ======================================================
 // SAVE LOG
@@ -119,10 +120,10 @@ async function sendFCM({
 
   }
 
-     catch (err) {
-  console.log('FCM FULL ERROR');
-  console.log(err);
-}
+  catch (err) {
+    console.log('FCM FULL ERROR');
+    console.log(err);
+  }
 
 }
 
@@ -160,7 +161,7 @@ async function saveNotification({
 
   if (userType == 'Customer') {
 
- 
+
 
     const user =
       await Customer.findById(
@@ -196,19 +197,32 @@ async function saveNotification({
       );
 
     token =
-      store?.fcmToken;
+      StoreOwner?.fcmToken;
 
   }
 
-await sendFCM({
+  else if (
+    userType == 'Admin'
+  ) {
 
-  token,
+    const AdminUser =
+      await AdminUser.findById(
+        userId
+      );
 
-  title,
+    token =
+      AdminUser?.fcmToken;
 
-  body: message
+  }
+  await sendFCM({
 
-});
+    token,
+
+    title,
+
+    body: message
+
+  });
 
   //fcm emnd
 
