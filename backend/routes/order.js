@@ -96,12 +96,9 @@ async function sendFCM({
         }
       },
       webpush: {
-        "headers": {
-          "Urgency": "high"
-        },
-        "notification": {
-          "requireInteraction": true,
-          "icon": "https://app.fastbite.food/logo.png"
+        notification: {
+          icon: "https://app.fastbite.food/logo.png",
+          requireInteraction: true
         }
       }
     });
