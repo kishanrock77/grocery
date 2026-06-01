@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Customer = require("../models/Customer");
 
 const DeliveryBoy = require("../models/DeliveryBoy");
 const StoreOwner = require("../models/storeOwner");
@@ -109,6 +110,9 @@ router.post("/tokenupdtae", async (req, res) => {
       case "store":
         Model = StoreOwner;
         break;
+      case "customer":
+        Model = Customer;
+        break;
       default:
         return res.status(400).json({
           success: false,
@@ -126,7 +130,7 @@ router.post("/tokenupdtae", async (req, res) => {
       });
     }
     user.fcmToken = token;
-   await user.save();
+    await user.save();
     // 🔹 Response
     res.json({
       success: true,
