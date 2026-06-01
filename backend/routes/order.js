@@ -21,7 +21,7 @@ const DeliveryArea = require("../models/DeliveryArea");
 const OrderLog = require("../models/OrderLog");
 const SubOrder = require("../models/Suborder");
 const Item = require("../models/Item");
-const AdminUserModel  = require("../models/AdminUser");
+const AdminUserModel = require("../models/AdminUser");
 
 const Notification =
   require('../models/Notification');
@@ -96,9 +96,12 @@ async function sendFCM({
         }
       },
       webpush: {
-        notification: {
-          icon: "https://app.fastbite.food/logo.png",
-          requireInteraction: true
+        "headers": {
+          "Urgency": "high"
+        },
+        "notification": {
+          "requireInteraction": true,
+          "icon": "https://app.fastbite.food/logo.png"
         }
       }
     });
@@ -202,7 +205,7 @@ async function saveNotification({
       AdminUser?.fcmToken;
 
   }
-  title = "Hi "+userType +" - "+title;
+  title = "Hi " + userType + " - " + title;
   await sendFCM({
 
     token,
