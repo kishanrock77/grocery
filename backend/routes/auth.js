@@ -7,6 +7,8 @@ const Customer = require("../models/Customer");
 const DeliveryBoy = require("../models/DeliveryBoy");
 const StoreOwner = require("../models/storeOwner");
 const AdminUser = require("../models/AdminUser");
+const Notifytoken = require("../models/Notifytoken");
+
 // routes define here
 router.get("/", (req, res) => { res.send("ath route") });
 
@@ -84,8 +86,107 @@ router.post("/signup", async (req, res) => {
 
 
 // login 
+router.post("/tokenupdtaefordevice", async (req, res) => {
+  try {
+    const { uniqueidofdevice, token } = req.body;
 
+    if (!token || !uniqueidofdevice) {
+      return res.status(400).json({
+        success: false,
+        message: "something is wrong ",
+      });
+    }
 
+     
+
+    // 🔹 Find device
+    const device = await Notifytoken.findOne({ uniqueidofdevice });
+
+    if (!device) {
+      // 🔹 Create new device entry
+      const newDevice = new Notifytoken({
+        uniqueidofdevice,
+        fcmToken: token
+      });
+      await newDevice.save();
+    } else {
+      device.fcmToken = token;
+      await device.save();
+    }
+    // 🔹 Response
+    res.json({
+      success: true,
+      message: "token updated successful",
+
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+router.post("/saveuniqueidofdevice", async (req, res) => {
+  try {
+    const { userType, userid, uniqueidofdevice } = req.body;
+
+    if (!uniqueidofdevice || !userid || !userType) {
+      return res.status(400).json({
+        success: false,
+        message: "something is wrong ",
+      });
+    }
+
+    let Model;
+
+    // 🔹 Select Model Based on User Type
+    switch (userType) {
+      case "admin":
+        Model = AdminUser;
+        break;
+      case "deliveryboy":
+        Model = DeliveryBoy;
+        break;
+      case "store":
+        Model = StoreOwner;
+        break;
+      case "customer":
+        Model = Customer;
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: "Invalid user type",
+        });
+    }
+
+    // 🔹 Find User
+    const user = await Model.findOne({ _id: userid });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid userid",
+      });
+    }
+    user.uniqueidofdevice = uniqueidofdevice;
+    await user.save();
+    // 🔹 Response
+    res.json({
+      success: true,
+      message: "uniqueidofdevice updated successful",
+
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 router.post("/tokenupdtae", async (req, res) => {
   try {
     const { userType, userid, token } = req.body;
@@ -145,7 +246,6 @@ router.post("/tokenupdtae", async (req, res) => {
     });
   }
 });
-
 router.post("/login", async (req, res) => {
   try {
     const { email, password, userType } = req.body;

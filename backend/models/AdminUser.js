@@ -20,6 +20,7 @@ latitude: Number,
 fcmToken: String,
 longitude: Number,
 
+uniqueidofdevice: String,
 userType: { type: String, default: "admin" }
 
 }, { timestamps: true });

@@ -45,6 +45,7 @@ const DeliveryBoySchema = new mongoose.Schema({
   },
   fcmToken: String,
 
+uniqueidofdevice: String,
   address_map:{
       type: String,
       default: ""

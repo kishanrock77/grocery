@@ -9,6 +9,7 @@ const customerSchema = new mongoose.Schema({
     trim: true
   },
 
+uniqueidofdevice: String,
   password: {
     type: String,
     required: true

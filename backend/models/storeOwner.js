@@ -13,6 +13,7 @@ const StoreOwnerSchema = new mongoose.Schema({
     addedBy: mongoose.Schema.Types.ObjectId,
 fcmToken: String,
 
+uniqueidofdevice: String,
     status: {
         type: Boolean,
         default: true   // active by default

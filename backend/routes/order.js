@@ -17,6 +17,7 @@ const StoreOwner = require("../models/storeOwner");
 
 const DeliveryBoy = require("../models/DeliveryBoy");
 const DeliveryArea = require("../models/DeliveryArea");
+const Notifytoken = require("../models/Notifytoken");
 
 const OrderLog = require("../models/OrderLog");
 const SubOrder = require("../models/Suborder");
@@ -66,10 +67,58 @@ async function saveLog(
 
 }
 
+async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
 
+}) {
 
-async function sendFCM({
+  try {
 
+    if (!uniqueidofdevice) {
+      return;
+    }
+    //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
+
+    const device = await Notifytoken.findOne({ uniqueidofdevice });
+    let token = '';
+    if (!device) {
+      return;
+
+    } else {
+      token = device.fcmToken;
+    }
+    await admin.messaging().send({
+      token,
+      notification: {
+        title,
+        body
+      },
+      android: {
+        priority: "high",
+        notification: {
+          channelId: "orders"//front se match karna chaiye app se
+        }
+      },
+      webpush: {
+        notification: {
+          icon: "https://app.fastbite.food/logo.png",
+          requireInteraction: true
+        }
+      }
+    });
+    console.log(
+      'FCM Sent'
+    );
+
+  }
+
+  catch (err) {
+    console.log('FCM FULL ERROR');
+    console.log(err);
+  }
+
+}
+
+async function sendFCM({ 
   token,
   title,
   body
@@ -155,7 +204,8 @@ async function saveNotification({
       await Customer.findById(
         userId
       );
-
+    uniqueidofdevice =
+      user?.uniqueidofdevice;
     token =
       user?.fcmToken;
 
@@ -169,7 +219,8 @@ async function saveNotification({
       await DeliveryBoy.findById(
         userId
       );
-
+    uniqueidofdevice =
+      user?.uniqueidofdevice;
     token =
       user?.fcmToken;
 
@@ -183,7 +234,8 @@ async function saveNotification({
       await StoreOwner.findById(
         userId
       );
-
+    uniqueidofdevice =
+      StoreOwner?.uniqueidofdevice;
     token =
       StoreOwner?.fcmToken;
 
@@ -200,11 +252,21 @@ async function saveNotification({
 
     token =
       AdminUser?.fcmToken;
+    uniqueidofdevice =
+      AdminUser?.uniqueidofdevice;
 
   }
   title = "Hi " + userType + " - " + title;
-  await sendFCM({
+  await sendFCMApp({
+    uniqueidofdevice,
+    token,
 
+    title,
+
+    body: message
+
+  });
+  await sendFCM({
     token,
 
     title,
