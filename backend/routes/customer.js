@@ -147,7 +147,33 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+router.get("/customerfulllist", async (req, res) => {
+    try {
 
+       
+
+        
+         
+
+          areas = await Customer.find({
+            
+            status: true
+        })
+            .sort({ createdAt: -1 });
+ 
+
+        res.json({
+            success: true,
+            data: areas
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+});
 // ===============================
 // 📲 FORGOT PASSWORD (SEND OTP)
 // ===============================

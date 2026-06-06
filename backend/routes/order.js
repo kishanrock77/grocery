@@ -94,7 +94,7 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
       },
       android: {
         priority: "high",
-        notification: {
+        notification: { icon: "https://app.fastbite.food/logo.png",
           channelId: "orders"//front se match karna chaiye app se
         }
       },

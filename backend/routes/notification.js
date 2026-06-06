@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Notifytoken = require("../models/Notifytoken");
 
 const Notification = require("../models/Notification");
 
@@ -52,7 +53,24 @@ router.get("/completelist", async (req, res) => {
 
 });
 
+router.get("/completelisttoken", async (req, res) => {
 
+  try {
+
+    const list = await Notifytoken.find({
+  
+
+    }).sort({ createdAt: -1 });
+
+    res.json(list);
+
+  } catch (err) {
+
+    res.status(500).send(err);
+
+  }
+
+});
 /*
 ----------------------------------
 MARK AS READ
