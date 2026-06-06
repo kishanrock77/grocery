@@ -12,9 +12,11 @@ router.get("/list", async (req, res) => {
                 message: "adminId is required"
             });
         }
+        let areas;
+
 if(adminId=='69ef67a741c55c6dbffd2a94'){
 
-        const areas = await DeliveryArea.find({
+          areas = await DeliveryArea.find({
             
             status: true
         })
@@ -22,7 +24,7 @@ if(adminId=='69ef67a741c55c6dbffd2a94'){
 }else{
 
  
-        const areas = await DeliveryArea.find({
+          areas = await DeliveryArea.find({
             adminId: adminId,
             status: true
         })
