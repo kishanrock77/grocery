@@ -2795,11 +2795,11 @@ router.post('/ceatebackendorderforazorpay', (req, res, next) => {
   //original end//
 
   //test start
-  var key_id = 'rzp_test_2c2QJAZekFLCny';// 'rzp_test_2c2QJAZekFLCny';
-  var instance = new Razorpay({
-    key_id: key_id,
-    key_secret: 'Z6y6VmieaPGXU7uuwBuEpuW5'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
-  })
+  //var key_id = 'rzp_test_2c2QJAZekFLCny';// 'rzp_test_2c2QJAZekFLCny';
+  //var instance = new Razorpay({
+   // key_id: key_id,
+   // key_secret: 'Z6y6VmieaPGXU7uuwBuEpuW5'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
+  //})
   // test end
   var options = {
     amount: parseInt(amount) * 100,  // amount in the smallest currency unit
