@@ -692,9 +692,9 @@ router.post(
 
       const mainorderid =
 
-        'ORD-' +
-
-        Date.now();
+       'ORD-' +
+  new Date().getDate() +
+  Math.floor(1000 + Math.random() * 9000);
 
       const order =
         await Order.create({
@@ -774,14 +774,9 @@ router.post(
         const suborderid =
 
           'SUB-' +
-
-          Date.now() +
-
-          '-' +
-
-          Math.floor(
-            Math.random() * 10000
-          );
+ 
+  new Date().getDate() +
+  Math.floor(1000 + Math.random() * 9000);
 
         const subOrder =
           await SubOrder.create({
@@ -2785,11 +2780,11 @@ router.post('/ceatebackendorderforazorpay', (req, res, next) => {
   //   key_secret: '4vXK6ldx0cm6msN1ys00Ptcs'
   // })
 
-  // original start//
-  var key_id = 'rzp_live_LJWKXNL2lGNgFd';// 'rzp_test_2c2QJAZekFLCny';
+  // original start fastbite//
+  var key_id = 'rzp_live_SyjCU22ljP4QGI'; 
   var instance = new Razorpay({
     key_id: key_id,
-    key_secret: 'ycoSZmQ8n8qSNgcD3LS8dnMM'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
+    key_secret: 'n00r4MoiKECB4SdWluJNJAn0'  
   })
 
   //original end//
