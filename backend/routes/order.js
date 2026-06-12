@@ -2160,12 +2160,12 @@ router.get(
 );
 
 router.get(
-  '/role-orders/:usertype/:userId',
+  '/role-orders/:usertype/:userId:/storeId',
   async (req, res) => {
 
     try {
 
-      const { usertype, userId } = req.params;
+      const { usertype, userId,soreId } = req.params;
 
       let newQuery = {};
       let inProgressQuery = {};
@@ -2228,7 +2228,7 @@ router.get(
 
         newQuery = {
 
-          storeId: userId,
+          storeId: storeId,
 
           finalstoreId: null,
 
@@ -2241,7 +2241,7 @@ router.get(
 
         inProgressQuery = {
 
-          finalstoreId: userId,
+          finalstoreId: storeId,
 
           suborderstatus: 'Pending'
 
@@ -2404,6 +2404,188 @@ router.get(
 
       console.log(
         'role-orders error',
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        message: error.message
+
+      });
+
+    }
+
+  }
+);
+router.get(
+  '/role-orders-cancelled/:usertype/:userId/:storeId',
+  async (req, res) => {
+
+    try {
+
+      const { usertype, userId,storeId } = req.params;
+
+      let newQuery = {};
+      let inProgressQuery = {};
+
+      // =====================================
+      // DELIVERY BOY
+      // =====================================
+
+     
+
+      // =====================================
+      // STORE
+      // =====================================
+
+        if (usertype === 'store') {
+
+        // NEW
+        // store assigned nahi hua
+
+        newQuery = {
+
+          storeId: storeId,
+
+          finalstoreId: storeId,
+
+          suborderstatus: 'Cancelled'
+
+        };
+
+         
+
+      }
+
+      // =====================================
+      // ADMIN
+      // =====================================
+
+      else if (usertype === 'admin') {
+
+        // NEW
+        // finalstoreId ya deliveryBoyId me se
+        // koi bhi null ho
+
+        newQuery = {
+
+          adminId: userId,
+
+          suborderstatus: 'Cancelled',
+
+           
+
+        };
+
+        
+
+      }
+
+      else {
+
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid usertype'
+        });
+
+      }
+
+      // =====================================
+      // FETCH SUB ORDERS
+      // =====================================
+
+      const [
+        newSubOrders 
+      ] = await Promise.all([
+
+        SubOrder.find(newQuery)
+          .sort({ createdAt: -1 })
+          .lean() 
+
+      ]);
+       
+      // =====================================
+      // UNIQUE MAIN ORDER IDS
+      // =====================================
+
+      const allOrderIds = [
+
+        ...new Set([
+
+          ...newSubOrders.map(
+            x => x.orderId?.toString()
+          ) 
+
+        ])
+
+      ];
+
+      // =====================================
+      // FETCH MAIN ORDERS
+      // =====================================
+
+      const mainOrders = await Order.find({
+        _id: { $in: allOrderIds }
+      }).lean();
+
+      // =====================================
+      // CREATE MAP
+      // =====================================
+
+      const orderMap = {};
+
+      mainOrders.forEach(order => {
+
+        orderMap[
+          order._id.toString()
+        ] = order;
+
+      });
+
+      // =====================================
+      // FORMAT FUNCTION
+      // =====================================
+
+      const formatOrders = (subOrders = []) => {
+
+        return subOrders.map(subOrder => ({
+
+          mainOrder:
+            orderMap[
+            subOrder.orderId?.toString()
+            ] || null,
+
+          subOrder
+
+        }));
+
+      };
+
+      // =====================================
+      // RESPONSE
+      // =====================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        orders: {
+          cancelled: formatOrders(newSubOrders),
+
+           
+
+        }
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'role-orders-cancelled error',
         error
       );
 
@@ -2612,7 +2794,7 @@ router.post(
 
       const {
         orderMainId,
-        deliveryBoyId, deliveryBoyName,
+        deliveryBoyId, deliveryBoyName,deliveryBoyMobile,
         actionById
       } = req.body;
 
@@ -2712,6 +2894,7 @@ router.post(
           subOrder.deliveryBoyId = deliveryBoyId;
 
           subOrder.deliveryBoyName = deliveryBoyName;
+ subOrder.deliveryBoyName = deliveryBoyMobile;
 
 
           await updateSubOrderStatus({

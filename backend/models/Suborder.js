@@ -56,6 +56,10 @@ const subOrderSchema = new mongoose.Schema(
       type: String,
       default: null
     },
+     deliveryBoyMobile: {
+      type: String,
+      default: null
+    },
     // STORE TOTAL
     storeTotal: {
       type: Number,

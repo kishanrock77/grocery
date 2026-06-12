@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
 const Coupon = require("../models/Coupon");
+const { sendOtp } = require('../utils/sms.service');
 const Order =
   require('../models/Ordermain');
 const DeliveryArea = require("../models/DeliveryArea");
@@ -15,6 +16,8 @@ const moment = require('moment');
 // 🧪 COMMON OTP FUNCTION
 // ===============================
 const generateAndSaveOtp = async (mobile, type = "register") => {
+
+  //verify register forgot
   let otp;
   if (mobile == '8802010213') {
     otp = "1111"; // 🔥 static for now
@@ -25,13 +28,16 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
   }
 
 
+
   await OtpModel.findOneAndUpdate(
     { mobile },
     { otp, type },
     { upsert: true, new: true }
   );
   //verify forgot register
-  let txttowhatsapp = "Use OTP -" + otp + " to " + type + " in FastBite App."
+  let txttowhatsapp = "Use OTP -" + otp + " to " + type + " in FastBite App.";
+
+  //await sendOtp(mobile, otp);
 
   console.log(`OTP ${otp} sent to ${mobile}`);
 };
@@ -148,31 +154,31 @@ router.post("/login", async (req, res) => {
   }
 });
 router.get("/customerfulllist", async (req, res) => {
-    try {
+  try {
 
-       
 
-        
-         
 
-          areas = await Customer.find({
-            
-            status: true
-        })
-            .sort({ createdAt: -1 });
- 
 
-        res.json({
-            success: true,
-            data: areas
-        });
 
-    } catch (err) {
-        res.status(500).json({
-            success: false,
-            message: err.message
-        });
-    }
+
+    areas = await Customer.find({
+
+      status: true
+    })
+      .sort({ createdAt: -1 });
+
+
+    res.json({
+      success: true,
+      data: areas
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
 });
 // ===============================
 // 📲 FORGOT PASSWORD (SEND OTP)
