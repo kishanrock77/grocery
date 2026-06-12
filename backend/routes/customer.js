@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
 const OtpModel = require("../models/Otp");
 const Coupon = require("../models/Coupon");
-const { sendOtp } = require('../utils/sms.service');
+const { sendOtp } = require('../utils/sms.service.js');
 const Order =
   require('../models/Ordermain');
 const DeliveryArea = require("../models/DeliveryArea");
