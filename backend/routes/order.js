@@ -2165,7 +2165,7 @@ router.get(
 
     try {
 
-      const { usertype, userId,soreId } = req.params;
+      const { usertype, userId,storeId } = req.params;
 
       let newQuery = {};
       let inProgressQuery = {};
