@@ -2160,12 +2160,12 @@ router.get(
 );
 
 router.get(
-  '/role-orders/:usertype/:userId:/storeId',
+  '/role-orders/:usertype/:userId/:storeId',
   async (req, res) => {
 
     try {
 
-      const { usertype, userId,storeId } = req.params;
+      const { usertype, userId, storeId } = req.params;
 
       let newQuery = {};
       let inProgressQuery = {};
