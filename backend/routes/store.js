@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Store = require("../models/Store");
 const Category = require("../models/Category");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 const Item = require("../models/Item");
 const moment = require("moment"); // install if not
@@ -263,40 +264,9 @@ router.post("/listforcustomer", async (req, res) => {
 
 
     const finalData = filtered.map(s => {
-      let finalopenstatus = "Closed";
+      let finalopenstatus = getfinalopenstatus(s);
 
-      // 🔥 1. Force नियम (highest priority)
-      if (s.openCloseStatus === "ForceOpen") {
-        finalopenstatus = "Open";
-      } else if (s.openCloseStatus === "ForceClose") {
-        finalopenstatus = "Closed";
-      } else {
-
-        // 🔥 2. Week off check
-        const today = moment().format("dddd"); // e.g. Monday
-
-        if (s.weekOff && s.weekOff.includes(today)) {
-          finalopenstatus = "Closed";
-        } else {
-
-          // 🔥 3. Time check
-          if (s.openingTime && s.closingTime) {
-            const now = moment();
-
-            const openTime = moment(s.openingTime, "HH:mm");
-            const closeTime = moment(s.closingTime, "HH:mm");
-
-            if (now.isBetween(openTime, closeTime)) {
-              finalopenstatus = "Open";
-            } else {
-              finalopenstatus = "Closed";
-            }
-          } else {
-            finalopenstatus = "Closed";
-          }
-        }
-      }
-
+       
       return {
         ...s._doc,
         ownerName: s.ownerid.name,
@@ -508,27 +478,7 @@ STORE DETAIL
     // ===============================
     // STORE OPEN STATUS
     // ===============================
-    let finalopenstatus = "Closed";
-
-    if (store.openCloseStatus === "ForceOpen") {
-      finalopenstatus = "Open";
-    } else if (store.openCloseStatus === "ForceClose") {
-      finalopenstatus = "Closed";
-    } else {
-      const today = moment().format("dddd");
-
-      if (!store.weekOff?.includes(today)) {
-        if (store.openingTime && store.closingTime) {
-          const now = moment();
-          const openTime = moment(store.openingTime, "HH:mm");
-          const closeTime = moment(store.closingTime, "HH:mm");
-
-          if (now.isBetween(openTime, closeTime)) {
-            finalopenstatus = "Open";
-          }
-        }
-      }
-    }
+    let finalopenstatus = getfinalopenstatus(store);
 
     // ===============================
     // FINAL RESPONSE

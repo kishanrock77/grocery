@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Customer = require("../models/Customer");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 const DeliveryBoy = require("../models/DeliveryBoy");
 const StoreOwner = require("../models/storeOwner");

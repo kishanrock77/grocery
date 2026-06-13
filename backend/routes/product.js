@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require("../models/Product");
 const multer = require("multer");
 const path = require("path");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 // Multer setup for image upload
 const storage = multer.diskStorage({

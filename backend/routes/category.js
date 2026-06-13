@@ -3,6 +3,7 @@ const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const Wallet = require("../models/Wallet");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 const Store = require("../models/Store");
 const Otp = require("../models/Otp");

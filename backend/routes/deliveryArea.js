@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+
 const DeliveryArea = require("../models/DeliveryArea");
 router.get("/list", async (req, res) => {
     try {

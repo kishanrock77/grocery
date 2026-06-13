@@ -12,6 +12,7 @@ const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
 const Category = require("../models/Category");
 const moment = require('moment');
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
@@ -1493,87 +1494,11 @@ router.post(
 
       items = items.map(item => {
 
-        let finalopenstatus = "Closed";
-
+       
         const store =
           item.storedetails;
 
-        if (store) {
-
-          // FORCE OPEN
-          if (
-            store.openCloseStatus ===
-            "ForceOpen"
-          ) {
-
-            finalopenstatus = "Open";
-
-          }
-
-          // FORCE CLOSE
-          else if (
-            store.openCloseStatus ===
-            "ForceClose"
-          ) {
-
-            finalopenstatus = "Closed";
-
-          }
-
-          // AUTO
-          else {
-
-            const today =
-              moment().format("dddd");
-
-            // NOT WEEK OFF
-            if (
-              !store.weekOff?.includes(today)
-            ) {
-
-              // TIME EXISTS
-              if (
-                store.openingTime &&
-                store.closingTime
-              ) {
-
-                const now =
-                  moment();
-
-                const openTime =
-                  moment(
-                    store.openingTime,
-                    "HH:mm"
-                  );
-
-                const closeTime =
-                  moment(
-                    store.closingTime,
-                    "HH:mm"
-                  );
-
-                if (
-                  now.isBetween(
-                    openTime,
-                    closeTime
-                  )
-                ) {
-
-                  finalopenstatus = "Open";
-
-                }
-
-              }
-
-            }
-
-          }
-
-          // inject
-          item.storedetails.finalopenstatus =
-            finalopenstatus;
-
-        }
+         item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
         return item;
 
@@ -2206,108 +2131,12 @@ router.post(
 
           return items.map(item => {
 
-            let finalopenstatus =
-              "Closed";
+           
 
             const store =
               item.storedetails;
 
-            if (store) {
-
-              // force open
-
-              if (
-                store.openCloseStatus ===
-                "ForceOpen"
-              ) {
-
-                finalopenstatus =
-                  "Open";
-
-              }
-
-              // force close
-
-              else if (
-                store.openCloseStatus ===
-                "ForceClose"
-              ) {
-
-                finalopenstatus =
-                  "Closed";
-
-              }
-
-              // auto
-
-              else {
-
-                const today =
-                  moment()
-                    .format("dddd");
-
-                // not week off
-
-                if (
-                  !store.weekOff
-                    ?.includes(today)
-                ) {
-
-                  if (
-                    store.openingTime &&
-                    store.closingTime
-                  ) {
-
-                    const now =
-                      moment();
-
-                    const openTime =
-                      moment(
-
-                        store.openingTime,
-
-                        "HH:mm"
-
-                      );
-
-                    const closeTime =
-                      moment(
-
-                        store.closingTime,
-
-                        "HH:mm"
-
-                      );
-
-                    if (
-
-                      now.isBetween(
-
-                        openTime,
-
-                        closeTime
-
-                      )
-
-                    ) {
-
-                      finalopenstatus =
-                        "Open";
-
-                    }
-
-                  }
-
-                }
-
-              }
-
-              item.storedetails
-                .finalopenstatus =
-
-                finalopenstatus;
-
-            }
+               item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
             return item;
 
@@ -2494,95 +2323,12 @@ router.post(
 
       items = items.map(item => {
 
-        let finalopenstatus =
-          "Closed";
+        
 
         const store =
           item.storedetails;
 
-        if (store) {
-
-          // FORCE OPEN
-          if (
-            store.openCloseStatus ===
-            "ForceOpen"
-          ) {
-
-            finalopenstatus =
-              "Open";
-
-          }
-
-          // FORCE CLOSE
-          else if (
-            store.openCloseStatus ===
-            "ForceClose"
-          ) {
-
-            finalopenstatus =
-              "Closed";
-
-          }
-
-          // AUTO
-          else {
-
-            const today =
-              moment().format(
-                "dddd"
-              );
-
-            // NOT WEEK OFF
-            if (
-              !store.weekOff?.includes(
-                today
-              )
-            ) {
-
-              // TIME EXISTS
-              if (
-                store.openingTime &&
-                store.closingTime
-              ) {
-
-                const now =
-                  moment();
-
-                const openTime =
-                  moment(
-                    store.openingTime,
-                    "HH:mm"
-                  );
-
-                const closeTime =
-                  moment(
-                    store.closingTime,
-                    "HH:mm"
-                  );
-
-                if (
-                  now.isBetween(
-                    openTime,
-                    closeTime
-                  )
-                ) {
-
-                  finalopenstatus =
-                    "Open";
-
-                }
-
-              }
-
-            }
-
-          }
-
-          // inject
-          item.storedetails.finalopenstatus =
-            finalopenstatus;
-
-        }
+          item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
         return item;
 
@@ -3428,95 +3174,12 @@ router.post(
 
         items = items.map(item => {
 
-          let finalopenstatus =
-            "Closed";
+         
 
           const store =
             item.storedetails;
 
-          if (store) {
-
-            // FORCE OPEN
-            if (
-              store.openCloseStatus ===
-              "ForceOpen"
-            ) {
-
-              finalopenstatus =
-                "Open";
-
-            }
-
-            // FORCE CLOSE
-            else if (
-              store.openCloseStatus ===
-              "ForceClose"
-            ) {
-
-              finalopenstatus =
-                "Closed";
-
-            }
-
-            // AUTO
-            else {
-
-              const today =
-                moment().format(
-                  "dddd"
-                );
-
-              // NOT WEEK OFF
-              if (
-                !store.weekOff?.includes(
-                  today
-                )
-              ) {
-
-                // TIME EXISTS
-                if (
-                  store.openingTime &&
-                  store.closingTime
-                ) {
-
-                  const now =
-                    moment();
-
-                  const openTime =
-                    moment(
-                      store.openingTime,
-                      "HH:mm"
-                    );
-
-                  const closeTime =
-                    moment(
-                      store.closingTime,
-                      "HH:mm"
-                    );
-
-                  if (
-                    now.isBetween(
-                      openTime,
-                      closeTime
-                    )
-                  ) {
-
-                    finalopenstatus =
-                      "Open";
-
-                  }
-
-                }
-
-              }
-
-            }
-
-            // inject
-            item.storedetails.finalopenstatus =
-              finalopenstatus;
-
-          }
+            item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
           return item;
 

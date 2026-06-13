@@ -7,6 +7,7 @@ const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const Store = require("../models/Store");
 const moment = require('moment');
 const { S3Client } = require("@aws-sdk/client-s3");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -230,65 +231,10 @@ router.get("/customeritemdetail/:id", async (req, res) => {
     // =====================================
     // ✅ STORE OPEN STATUS
     // =====================================
-
-    let finalopenstatus = "Closed";
-
+ 
     const store = item.storedetails;
 
-    if (store) {
-
-      if (store.openCloseStatus === "ForceOpen") {
-
-        finalopenstatus = "Open";
-
-      }
-
-      else if (store.openCloseStatus === "ForceClose") {
-
-        finalopenstatus = "Closed";
-
-      }
-
-      else {
-
-        const today = moment().format("dddd");
-
-        // ✅ not week off
-        if (!store.weekOff?.includes(today)) {
-
-          // ✅ timing exists
-          if (store.openingTime && store.closingTime) {
-
-            const now = moment();
-
-            const openTime =
-              moment(store.openingTime, "HH:mm");
-
-            const closeTime =
-              moment(store.closingTime, "HH:mm");
-
-            if (
-              now.isBetween(
-                openTime,
-                closeTime
-              )
-            ) {
-
-              finalopenstatus = "Open";
-
-            }
-
-          }
-
-        }
-
-      }
-
-      // ✅ inject in store object
-      item.storedetails.finalopenstatus =
-        finalopenstatus;
-
-    }
+      item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
     // =====================================
     // ✅ RESPONSE
@@ -1401,108 +1347,10 @@ router.post("/map-items", async (req, res) => {
       // =========================
 
       stores = stores.map(store => {
-
-        let finalopenstatus =
-          "Closed";
-
-        // =====================
-        // FORCE OPEN
-        // =====================
-
-        if (
-          store.openCloseStatus ===
-          "ForceOpen"
-        ) {
-
-          finalopenstatus =
-            "Open";
-
-        }
-
-        // =====================
-        // FORCE CLOSE
-        // =====================
-
-        else if (
-          store.openCloseStatus ===
-          "ForceClose"
-        ) {
-
-          finalopenstatus =
-            "Closed";
-
-        }
-
-        // =====================
-        // AUTO
-        // =====================
-
-        else {
-
-          const today =
-            moment().format(
-              "dddd"
-            );
-
-          // NOT WEEK OFF
-
-          if (
-            !store.weekOff?.includes(
-              today
-            )
-          ) {
-
-            // TIME EXISTS
-
-            if (
-              store.openingTime &&
-              store.closingTime
-            ) {
-
-              const now =
-                moment();
-
-              const openTime =
-                moment(
-                  store.openingTime,
-                  "HH:mm"
-                );
-
-              const closeTime =
-                moment(
-                  store.closingTime,
-                  "HH:mm"
-                );
-
-              if (
-
-                now.isBetween(
-
-                  openTime,
-
-                  closeTime
-
-                )
-
-              ) {
-
-                finalopenstatus =
-                  "Open";
-
-              }
-
-            }
-
-          }
-
-        }
-
-        // =====================
-        // INJECT
-        // =====================
+ 
 
         store.finalopenstatus =
-          finalopenstatus;
+          getfinalopenstatus(store);
 
         return store;
 

@@ -8,6 +8,7 @@ const moment = require('moment');
 const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
 const Category = require("../models/Category");
+  const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
   
   
 
@@ -576,127 +577,12 @@ router.post("/stores", async (req, res) => {
 
       items = items.map(item => {
 
-        let finalopenstatus =
-          "Closed";
+       
 
         const store =
           item.storedetails;
 
-        if (store) {
-
-          // =========================
-          // FORCE OPEN
-          // =========================
-
-          if (
-
-            store.openCloseStatus ===
-
-            "ForceOpen"
-
-          ) {
-
-            finalopenstatus =
-              "Open";
-
-          }
-
-          // =========================
-          // FORCE CLOSE
-          // =========================
-
-          else if (
-
-            store.openCloseStatus ===
-
-            "ForceClose"
-
-          ) {
-
-            finalopenstatus =
-              "Closed";
-
-          }
-
-          // =========================
-          // AUTO
-          // =========================
-
-          else {
-
-            const today =
-              moment()
-                .format("dddd");
-
-            // not week off
-
-            if (
-
-              !store.weekOff
-                ?.includes(today)
-
-            ) {
-
-              // opening closing exists
-
-              if (
-
-                store.openingTime &&
-                store.closingTime
-
-              ) {
-
-                const now =
-                  moment();
-
-                const openTime =
-                  moment(
-
-                    store.openingTime,
-
-                    "HH:mm"
-
-                  );
-
-                const closeTime =
-                  moment(
-
-                    store.closingTime,
-
-                    "HH:mm"
-
-                  );
-
-                if (
-
-                  now.isBetween(
-
-                    openTime,
-
-                    closeTime
-
-                  )
-
-                ) {
-
-                  finalopenstatus =
-                    "Open";
-
-                }
-
-              }
-
-            }
-
-          }
-
-          // inject
-
-          item.storedetails.finalopenstatus =
-
-            finalopenstatus;
-
-        }
+         item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
         return item;
 

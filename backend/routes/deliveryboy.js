@@ -3,6 +3,7 @@ const router = express.Router();
 const DeliveryBoy = require("../models/DeliveryBoy");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
 
 const { S3Client } = require("@aws-sdk/client-s3");
 

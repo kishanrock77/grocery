@@ -9,6 +9,7 @@ const Wallet = require("../models/Wallet");
 const { getIO } =
   require("../socket");
 const Customer = require("../models/Customer");
+const getfinalopenstatus = require('../utils/checkstoreopenstatus.js');
 
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
@@ -94,7 +95,8 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
       },
       android: {
         priority: "high",
-        notification: {  "icon": "ic_stat_fastbite",
+        notification: {
+          "icon": "ic_stat_fastbite",
           channelId: "orders"//front se match karna chaiye app se
         }
       },
@@ -118,7 +120,7 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
 
 }
 
-async function sendFCM({ 
+async function sendFCM({
   token,
   title,
   body
@@ -607,7 +609,7 @@ router.post(
         // ======================================
         // OPEN STATUS
         // ======================================
-
+        store.finalopenstatus = getfinalopenstatus(store);
         if (
           store.finalopenstatus ==
           'Closed'
@@ -686,15 +688,80 @@ router.post(
 
       }
 
+      /// check if deliievry bot avaibale or not in the area of customer and store area
+      // and check if isAvailable true and activeStatus and status is true and 
+      // deliveryAreas and pickupAreas match with customer city and store city
+      //deliveryAreas and pickupAreas are array of strings in DeliveryBoy model and customer city and store city are strings  
+      // if not available then return error message aaccordingly
+      // CUSTOMER CITY ID
+
+      const customerCityId =
+        order?.selectedaddress?.city;
+
+      // STORE CITY NAME
+      const storeCityName =
+        subOrder?.storeInfo?.city
+          ?.trim();
+
+      if (
+        customerCityId &&
+        storeCityName
+      ) {
+
+        // STORE CITY DOCUMENT
+        const storeCity =
+          await DeliveryArea.findOne({
+
+            cityName: {
+              $regex: new RegExp(
+                `^${storeCityName}$`,
+                "i"
+              )
+            }
+
+          });
+
+        if (storeCity?._id) {
+
+          // FIND MATCHING DELIVERY BOYS
+          const deliveryBoys =
+            await DeliveryBoy.find({
+
+              isAvailable: true,
+
+              activeStatus: true,
+
+              deliveryAreas: {
+                $in: [customerCityId]
+              },
+
+              pickupAreas: {
+                $in: [storeCity._id]
+              }
+
+            });
+
+          if (deliveryBoys.length == 0) {
+            return res.status(400).json({
+              success: false,
+              message: "No available delivery boys in the selected area"
+            });
+          }
+
+        }
+
+      }
+      ////end
+
       // ==========================================
       // CREATE MAIN ORDER
       // ==========================================
 
       const mainorderid =
 
-       'ORD-' +
-  new Date().getDate() +
-  Math.floor(1000 + Math.random() * 9000);
+        'ORD-' +
+        new Date().getDate() +
+        Math.floor(1000 + Math.random() * 9000);
 
       const order =
         await Order.create({
@@ -774,9 +841,9 @@ router.post(
         const suborderid =
 
           'SUB-' +
- 
-  new Date().getDate() +
-  Math.floor(1000 + Math.random() * 9000);
+
+          new Date().getDate() +
+          Math.floor(1000 + Math.random() * 9000);
 
         const subOrder =
           await SubOrder.create({
@@ -2425,7 +2492,7 @@ router.get(
 
     try {
 
-      const { usertype, userId,storeId } = req.params;
+      const { usertype, userId, storeId } = req.params;
 
       let newQuery = {};
       let inProgressQuery = {};
@@ -2434,13 +2501,13 @@ router.get(
       // DELIVERY BOY
       // =====================================
 
-     
+
 
       // =====================================
       // STORE
       // =====================================
 
-        if (usertype === 'store') {
+      if (usertype === 'store') {
 
         // NEW
         // store assigned nahi hua
@@ -2455,7 +2522,7 @@ router.get(
 
         };
 
-         
+
 
       }
 
@@ -2475,11 +2542,11 @@ router.get(
 
           suborderstatus: 'Cancelled',
 
-           
+
 
         };
 
-        
+
 
       }
 
@@ -2497,15 +2564,15 @@ router.get(
       // =====================================
 
       const [
-        newSubOrders 
+        newSubOrders
       ] = await Promise.all([
 
         SubOrder.find(newQuery)
           .sort({ createdAt: -1 })
-          .lean() 
+          .lean()
 
       ]);
-       
+
       // =====================================
       // UNIQUE MAIN ORDER IDS
       // =====================================
@@ -2516,7 +2583,7 @@ router.get(
 
           ...newSubOrders.map(
             x => x.orderId?.toString()
-          ) 
+          )
 
         ])
 
@@ -2574,7 +2641,7 @@ router.get(
         orders: {
           cancelled: formatOrders(newSubOrders),
 
-           
+
 
         }
 
@@ -2794,7 +2861,7 @@ router.post(
 
       const {
         orderMainId,
-        deliveryBoyId, deliveryBoyName,deliveryBoyMobile,
+        deliveryBoyId, deliveryBoyName, deliveryBoyMobile,
         actionById
       } = req.body;
 
@@ -2894,7 +2961,7 @@ router.post(
           subOrder.deliveryBoyId = deliveryBoyId;
 
           subOrder.deliveryBoyName = deliveryBoyName;
- subOrder.deliveryBoyName = deliveryBoyMobile;
+          subOrder.deliveryBoyName = deliveryBoyMobile;
 
 
           await updateSubOrderStatus({
@@ -2964,10 +3031,10 @@ router.post('/ceatebackendorderforazorpay', (req, res, next) => {
   // })
 
   // original start fastbite//
-  var key_id = 'rzp_live_SyjCU22ljP4QGI'; 
+  var key_id = 'rzp_live_SyjCU22ljP4QGI';
   var instance = new Razorpay({
     key_id: key_id,
-    key_secret: 'n00r4MoiKECB4SdWluJNJAn0'  
+    key_secret: 'n00r4MoiKECB4SdWluJNJAn0'
   })
 
   //original end//
@@ -2975,8 +3042,8 @@ router.post('/ceatebackendorderforazorpay', (req, res, next) => {
   //test start
   //var key_id = 'rzp_test_2c2QJAZekFLCny';// 'rzp_test_2c2QJAZekFLCny';
   //var instance = new Razorpay({
-   // key_id: key_id,
-   // key_secret: 'Z6y6VmieaPGXU7uuwBuEpuW5'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
+  // key_id: key_id,
+  // key_secret: 'Z6y6VmieaPGXU7uuwBuEpuW5'  //'Z6y6VmieaPGXU7uuwBuEpuW5'
   //})
   // test end
   var options = {
