@@ -1,5 +1,5 @@
 // routes/order.js
-
+const mongoose = require("mongoose");
 const express = require('express');
 const Razorpay = require('razorpay');
 const admin =
@@ -9,7 +9,7 @@ const Wallet = require("../models/Wallet");
 const { getIO } =
   require("../socket");
 const Customer = require("../models/Customer");
-const getfinalopenstatus = require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
 
 const Order = require("../models/Ordermain");
 const Store = require("../models/Store");
@@ -25,6 +25,9 @@ const SubOrder = require("../models/Suborder");
 const Item = require("../models/Item");
 const AdminUserModel = require("../models/AdminUser");
 
+
+const CustomOrder =
+  require("../models/CustomOrder");
 const Notification =
   require('../models/Notification');
 
@@ -35,8 +38,40 @@ const Notification =
 
 const objectstatusjson =
   require('../utils/objectstatusjson');
+const { uploadSingleImage, uploadMultipleImages, uploadMultipleFields } = require("../middleware/uploadAWSS3");
+const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client } = require("@aws-sdk/client-s3");
 
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
+  }
+});
+// ✅ Safe JSON Parser
+const parseJSON = (data) => {
+  if (!data) return [];
+  if (typeof data === "object") return data;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+};
 
+const deleteFromS3 = async (url) => {
+  try {
+    const key = url.split(".amazonaws.com/")[1];
+
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET,
+      Key: key
+    }));
+  } catch (err) {
+    console.error("S3 delete error:", err);
+  }
+};
 
 // ======================================================
 // SAVE LOG
@@ -232,14 +267,14 @@ async function saveNotification({
     userType == 'Store'
   ) {
 
-    const StoreOwner =
+    const storeOwnerDoc =
       await StoreOwner.findById(
         userId
       );
     uniqueidofdevice =
-      StoreOwner?.uniqueidofdevice;
+      storeOwnerDoc?.uniqueidofdevice;
     token =
-      StoreOwner?.fcmToken;
+      storeOwnerDoc?.fcmToken;
 
   }
 
@@ -547,7 +582,8 @@ router.post(
       // ==========================================
       // STORE + ITEM VALIDATION
       // ==========================================
-
+      const customerCityId =
+        selectedaddress.city;
       for (const storeBlock of cart) {
 
         const store =
@@ -670,7 +706,7 @@ router.post(
           // SHOW ON FRONT
 
           if (
-            item.showOnFront == false
+            item.showOnFront == false &&  item.isitfromcustom == false
           ) {
 
             return res.status(400).json({
@@ -686,6 +722,62 @@ router.post(
 
         }
 
+
+        // STORE CITY NAME
+        const storeCityName =
+          storeBlock?.storeInfo?.city
+            ?.trim();
+
+        if (
+          customerCityId &&
+          storeCityName
+        ) {
+
+          // STORE CITY DOCUMENT
+          const storeCity =
+            await DeliveryArea.findOne({
+
+              cityName: {
+                $regex: new RegExp(
+                  `^${storeCityName}$`,
+                  "i"
+                )
+              }
+
+            });
+
+          if (storeCity?._id) {
+
+            // FIND MATCHING DELIVERY BOYS
+            const deliveryBoys =
+              await DeliveryBoy.find({
+                addedBy: adminId,
+                isAvailable: true,
+
+                activeStatus: true,
+
+                deliveryAreas: {
+                  $in: [customerCityId]
+                },
+
+                pickupAreas: {
+                  $in: [storeCity._id]
+                }
+
+              });
+
+            if (deliveryBoys.length == 0) {
+              return res.status(400).json({
+                success: false,
+                message: "No available delivery boys in the selected area"
+              });
+            }
+
+          }
+
+        }
+
+
       }
 
       /// check if deliievry bot avaibale or not in the area of customer and store area
@@ -695,68 +787,21 @@ router.post(
       // if not available then return error message aaccordingly
       // CUSTOMER CITY ID
 
-      const customerCityId =
-        order?.selectedaddress?.city;
 
-      // STORE CITY NAME
-      const storeCityName =
-        subOrder?.storeInfo?.city
-          ?.trim();
 
-      if (
-        customerCityId &&
-        storeCityName
-      ) {
 
-        // STORE CITY DOCUMENT
-        const storeCity =
-          await DeliveryArea.findOne({
-
-            cityName: {
-              $regex: new RegExp(
-                `^${storeCityName}$`,
-                "i"
-              )
-            }
-
-          });
-
-        if (storeCity?._id) {
-
-          // FIND MATCHING DELIVERY BOYS
-          const deliveryBoys =
-            await DeliveryBoy.find({
-
-              isAvailable: true,
-
-              activeStatus: true,
-
-              deliveryAreas: {
-                $in: [customerCityId]
-              },
-
-              pickupAreas: {
-                $in: [storeCity._id]
-              }
-
-            });
-
-          if (deliveryBoys.length == 0) {
-            return res.status(400).json({
-              success: false,
-              message: "No available delivery boys in the selected area"
-            });
-          }
-
-        }
-
-      }
       ////end
 
       // ==========================================
       // CREATE MAIN ORDER
       // ==========================================
-
+      let adminId_backup_for_online_pay = adminId;
+      if (paymentMethod == 'online' && paymentStatus == 'pending') {
+        // that mean payment failed
+        adminIddb = '-1';
+      } else {
+        adminIddb = adminId;
+      }
       const mainorderid =
 
         'ORD-' +
@@ -770,8 +815,8 @@ router.post(
 
           customerId,
 
-          adminId,
-
+          adminId: adminIddb == "-1" ? null : adminIddb,
+          adminId_backup_for_online_pay,
           date:
             new Date()
               .toLocaleDateString(),
@@ -808,26 +853,10 @@ router.post(
       // SAVE MAIN ORDER LOG
       // ==========================================
 
-
-      await saveLog(
-
-        order._id,
-
-        'orderplacedbycustomer',
-
-        objectstatusjson
-          .orderplacedbycustomer
-          .orderlogmessage,
-
-        customerId,
-
-        'Customer'
-
-      );
-
-      if (amountfromwallet > 0) {
-        await subtractamountfromwalletfromwallet(amountfromwallet, customerId, mainorderid, order._id);
+      if (adminIddb != "-1") {
+        await thingstodowhenorderplaced(order._id, objectstatusjson, false, false)
       }
+
 
 
       // ==========================================
@@ -858,8 +887,8 @@ router.post(
 
             customerId,
 
-            adminId,
-
+            adminId: adminIddb == "-1" ? null : adminIddb,
+            adminId_backup_for_online_pay,
             storeId:
               storeBlock.storeId,
 
@@ -904,36 +933,9 @@ router.post(
         // SAVE SUB ORDER LOG
         // ======================================
 
-        await saveLog(
-
-          subOrder._id,
-
-          'orderplacedbycustomer',
-
-          objectstatusjson
-            .orderplacedbycustomer
-            .orderlogmessage,
-
-          customerId,
-
-          'Customer'
-
-        );
-
-        // ======================================
-        // SEND NOTIFICATION
-        // ======================================
-
-        await sendNotifications({
-
-          statuskey:
-            'orderplacedbycustomer',
-
-          order,
-
-          subOrder
-
-        });
+        if (adminIddb != '-1') {
+          await thingstodowhenorderplacedSuborder(order, subOrder, objectstatusjson, customerId)
+        }
 
       }
 
@@ -1123,6 +1125,9 @@ async function sendNotifications({
 
 }) {
 
+  console.log("i m in send n" + statuskey)
+  console.log(order);
+  console.log(subOrder)
   const statusData =
     objectstatusjson[statuskey];
 
@@ -1273,7 +1278,7 @@ async function sendNotifications({
           await DeliveryBoy.find({
 
             isAvailable: true,
-
+            addedBy: order.adminId,
             activeStatus: true,
 
             deliveryAreas: {
@@ -1354,6 +1359,68 @@ async function sendNotifications({
   }
 
 }
+
+
+// change payment method start
+// change payment method start
+router.post('/change-payment-method-to-cod', async (req, res) => {
+
+  try {
+
+    const { _id } = req.body;
+
+    if (!_id) {
+      return res.status(400).json({
+        success: false,
+        message: "Order id required"
+      });
+    }
+
+
+    const order = await Order.findByIdAndUpdate(
+      _id,
+      {
+        paymentMethod: 'cod',
+
+      },
+      {
+        new: true
+      }
+    );
+
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
+    }
+
+    await thingstodowhenorderplaced(_id, objectstatusjson, true, true)
+
+    res.json({
+      success: true,
+      message: "Payment method changed to COD",
+      data: order
+    });
+
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+
+  }
+
+});
+// change payment method end
+
+// change payment method end
+
 
 // ======================================================
 // CHANGE SUB ORDER STATUS
@@ -1491,6 +1558,108 @@ router.post(
 // ==========================================
 // FUNCTION
 // ==========================================
+
+async function thingstodowhenorderplacedSuborder(order, subOrder, objectstatusjson, customerId) {
+
+  await saveLog(
+
+    subOrder._id,
+
+    'orderplacedbycustomer',
+
+    objectstatusjson
+      .orderplacedbycustomer
+      .orderlogmessage,
+
+    customerId,
+
+    'Customer'
+
+  );
+
+  // ======================================
+  // SEND NOTIFICATION
+  // ======================================
+
+  await sendNotifications({
+
+    statuskey:
+      'orderplacedbycustomer',
+
+    order,
+
+    subOrder
+
+  });
+}
+async function thingstodowhenorderplaced(_id, objectstatusjson, commingfromrazorpay = false, completesuborderprocess = false) {
+  //_id  =  ordermain ki _id
+
+  //use _id to fetch order from Ordermain
+  let order = await Order.findById(_id);
+
+  if (!order) {
+    throw new Error('Order not found');
+  }
+
+  const { customerId, mainorderid, amountfromwallet, adminId_backup_for_online_pay, adminId } = order;
+
+  if (commingfromrazorpay) {
+
+    if (adminId) {
+      //iska matlab pahle cod tha bad me online pay kar diya
+      return;
+
+    }
+    // Update adminId in Ordermain with backup adminId for online payment
+    await Order.updateOne(
+      { _id },
+      { $set: { adminId: order.adminId_backup_for_online_pay } }
+    );
+
+    await SubOrder.updateMany(
+      { orderId: _id },
+      { $set: { adminId: order.adminId_backup_for_online_pay } }
+    );
+  }
+
+
+
+  await saveLog(
+
+    order._id,
+
+    'orderplacedbycustomer',
+
+    objectstatusjson
+      .orderplacedbycustomer
+      .orderlogmessage,
+
+    customerId,
+
+    'Customer'
+
+  );
+
+  if (amountfromwallet > 0) {
+    await subtractamountfromwalletfromwallet(amountfromwallet, customerId, mainorderid, order._id);
+  }
+  if (completesuborderprocess) {
+    //fetch data from suborder where orderId = _id and result will be array..and loop through that array
+    const subOrders = await SubOrder.find({ orderId: _id });
+    order = await Order.findById(_id);
+    for (const subOrder of subOrders) {
+
+      await thingstodowhenorderplacedSuborder(order, subOrder, objectstatusjson, customerId)
+
+    }
+
+
+  }
+
+
+}
+
 
 async function subtractamountfromwalletfromwallet(amountfromwallet, customerId, mainorderid, _id) {
 
@@ -2225,7 +2394,214 @@ router.get(
   }
 
 );
+router.get(
+  '/role-orders-delivered/:usertype/:userId/:storeId',
+  async (req, res) => {
 
+    try {
+      const {
+        fromDate,
+        toDate
+      } = req.query;
+      const { usertype, userId, storeId } = req.params;
+
+      let newQuery = {};
+
+      // =====================================
+      // DELIVERY BOY
+      // =====================================
+
+      if (usertype === 'deliveryboy') {
+
+
+
+        newQuery = {
+
+          deliveryBoyId: userId,
+
+          suborderstatus: 'Delivered'
+
+        };
+
+
+
+      }
+
+      // =====================================
+      // STORE
+      // =====================================
+
+      else if (usertype === 'store') {
+
+
+        newQuery = {
+
+          storeId: storeId,
+
+          finalstoreId: storeId,
+
+          suborderstatus: 'Delivered'
+
+        };
+
+
+
+      }
+
+      // =====================================
+      // ADMIN
+      // =====================================
+
+      else if (usertype === 'admin') {
+
+        // NEW
+        // finalstoreId ya deliveryBoyId me se
+        // koi bhi null ho
+
+        newQuery = {
+
+          adminId: userId,
+
+          suborderstatus: 'Delivered',
+
+
+        };
+
+
+      }
+
+      else {
+
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid usertype'
+        });
+
+      }
+
+      // =====================================
+      // FETCH SUB ORDERS
+      // =====================================
+      if (fromDate && toDate) {
+
+        const startDate = new Date(fromDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+
+        newQuery.suborderdatetime = {
+          $gte: startDate,
+          $lte: endDate
+        };
+      }
+      const [
+        newSubOrders
+      ] = await Promise.all([
+
+        SubOrder.find(newQuery)
+          .sort({ createdAt: -1 })
+          .lean(),
+
+
+
+      ]);
+      console.log(newSubOrders);
+      // =====================================
+      // UNIQUE MAIN ORDER IDS
+      // =====================================
+
+      const allOrderIds = [
+
+        ...new Set([
+
+          ...newSubOrders.map(
+            x => x.orderId?.toString()
+          ),
+
+
+
+        ])
+
+      ];
+
+      // =====================================
+      // FETCH MAIN ORDERS
+      // =====================================
+
+      const mainOrders = await Order.find({
+        _id: { $in: allOrderIds }
+      }).lean();
+
+      // =====================================
+      // CREATE MAP
+      // =====================================
+
+      const orderMap = {};
+
+      mainOrders.forEach(order => {
+
+        orderMap[
+          order._id.toString()
+        ] = order;
+
+      });
+
+      // =====================================
+      // FORMAT FUNCTION
+      // =====================================
+
+      const formatOrders = (subOrders = []) => {
+
+        return subOrders.map(subOrder => ({
+
+          mainOrder:
+            orderMap[
+            subOrder.orderId?.toString()
+            ] || null,
+
+          subOrder
+
+        }));
+
+      };
+
+      // =====================================
+      // RESPONSE
+      // =====================================
+
+      return res.status(200).json({
+
+        success: true,
+
+        orders: {
+          delivered: formatOrders(newSubOrders)
+
+        }
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(
+        'role-orders-delivered error',
+        error
+      );
+
+      return res.status(500).json({
+
+        success: false,
+
+        message: error.message
+
+      });
+
+    }
+
+  }
+);
 router.get(
   '/role-orders/:usertype/:userId/:storeId',
   async (req, res) => {
@@ -2955,14 +3331,74 @@ router.post(
       // ASSIGN DELIVERY BOY
       // ==========================================
 
+
+      // below get delivery boy data from table
+
+
+      let settlementtransactionidfordeliveryboy = '';
+      let settlementmethodfordeliveryboy = '';
+      let settlementdatetimefordeliveryboy = null;
+      let settlementamountfordeliveryboy = 0;
+
+      let settlementdonefordeliveryboy = false;
+
+
+      const deliveryBoyData = await DeliveryBoy.find({
+
+        _id: deliveryBoyId
+
+      });
+
+      if (!deliveryBoyData.length) {
+        return res.status(404).json({
+
+          success: false,
+          message: 'Delivery boy not found'
+
+        });
+
+      } else {
+        if (deliveryBoyData[0].onsalaryorcommission == 'salary') {
+          // Do something
+
+          settlementtransactionidfordeliveryboy = 'Salary';
+          settlementmethodfordeliveryboy = 'Salary';
+          settlementdatetimefordeliveryboy = new Date();
+          settlementamountfordeliveryboy = 0;
+          settlementdonefordeliveryboy = true;
+
+
+        } else {
+          if (deliveryBoyData[0].comissionType == 'fixed') {
+            settlementamountfordeliveryboy = parseFloat(deliveryBoyData[0].commission).toFixed(2);
+
+          }
+          else if (deliveryBoyData[0].comissionType == 'percent') {
+            settlementamountfordeliveryboy = (mainOrder.deliveryCharge * parseFloat(deliveryBoyData[0].commission) / 100) / subOrders.length;
+          }
+
+        }
+      }
+
+
+
+      //
+
+
+
       for (const subOrder of subOrders) {
         if (subOrder.suborderstatus != 'Cancelled') {
 
           subOrder.deliveryBoyId = deliveryBoyId;
 
           subOrder.deliveryBoyName = deliveryBoyName;
-          subOrder.deliveryBoyName = deliveryBoyMobile;
+          subOrder.deliveryBoyMobile = deliveryBoyMobile;
 
+          subOrder.settlementdonefordeliveryboy = settlementdonefordeliveryboy;
+          subOrder.settlementamountfordeliveryboy = settlementamountfordeliveryboy;
+          subOrder.settlementmethodfordeliveryboy = settlementmethodfordeliveryboy;
+          subOrder.settlementdatetimefordeliveryboy = settlementdatetimefordeliveryboy;
+          subOrder.settlementtransactionidfordeliveryboy = settlementtransactionidfordeliveryboy;
 
           await updateSubOrderStatus({
 
@@ -3014,8 +3450,1586 @@ router.post(
   }
 );
 
+router.post('/set-settlement-amount-for-deliveryboy', async (req, res, next) => {
+
+  try {
+    var subOrderId = req.body.subOrderId;
+    var settlementAmount = req.body.settlementamountfordeliveryboy;
+    // write upate query to update settlement amount for delivery boy  
+    const result = await SubOrder.updateOne({ _id: subOrderId }, { $set: { settlementamountfordeliveryboy: settlementAmount } });
 
 
+    res.json({ message: "Worked Successfully !", result, success: "true" });
+  } catch (error) {
+    console.error(error);
+    res.json({ message: "Something went wrong ! ", error: error.message, success: "false" });
+  }
+});
+router.post('/markAsUnsettledForDeliveryBoy_or_store', async (req, res, next) => {
+
+  try {
+    var subOrderId = req.body.subOrderId;
+    var type = req.body.type;
+    if (type == 'store') {
+      const result = await SubOrder.updateOne({ _id: subOrderId }, {
+        $set: {
+          settlementdoneforstore: false, settlementamountforstore: 0,
+          settlementmethodforstore: '', settlementtransactionidforstore: ''
+        }
+      });
+    } else if (type == 'deliveryboy') {
+      const result = await SubOrder.updateOne({ _id: subOrderId }, {
+        $set: {
+          settlementdonefordeliveryboy: false,
+          settlementmethodfordeliveryboy: '', settlementtransactionidfordeliveryboy: ''
+        }
+      });
+
+    }
+
+
+
+    res.json({ message: "Worked Successfully !", success: "true" });
+  } catch (error) {
+    console.error(error);
+    res.json({ message: "Something went wrong ! ", error: error.message, success: "false" });
+  }
+});
+
+router.post('/settle-store-payments', async (req, res) => {
+
+  try {
+
+    const {
+      storeId,
+      paymentMethod,
+      settlementDateTime,
+      transactionId, fromDate, toDate, commissiontotakefromstore_percent
+    } = req.body;
+
+    console.log("storeId", storeId);
+
+    const rowsBefore = await SubOrder.find({
+      storeId
+    });
+
+    console.log("Found Rows:", rowsBefore.length);
+    let startDate = new Date(0);
+    let endDate = new Date();
+
+    if (fromDate && toDate) {
+      startDate = new Date(fromDate);
+      startDate.setHours(0, 0, 0, 0);
+
+      endDate = new Date(toDate);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    const updateResult = await SubOrder.updateMany(
+      {
+        storeId,
+        suborderstatus: 'Delivered',
+        settlementdoneforstore: false, suborderdatetime: {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        }
+      },
+      {
+        $set: {
+          settlementdoneforstore: true,
+          settlementdatetimeforstore: new Date(settlementDateTime),
+          settlementmethodforstore: paymentMethod,
+          settlementtransactionidforstore: transactionId || ''
+        }
+      }
+    );
+    const rows = await SubOrder.find({
+      storeId
+    });
+    let remainingforstore = 0;
+    for (const row of rows) {
+      remainingforstore = row.storeTotaltoshowtostore - (row.storeTotaltoshowtostore * commissiontotakefromstore_percent / 100);
+
+      row.settlementamountforstore =
+        remainingforstore || 0;
+
+      await row.save();
+
+    }
+    console.log("Update Result", updateResult);
+
+    return res.json({
+      success: true,
+      updateResult
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    return res.json({
+      success: false,
+      error: err.message
+    });
+
+  }
+
+});
+router.post('/settle-deliveryboy-payments', async (req, res) => {
+
+  try {
+
+    const {
+      deliveryBoyId,
+      paymentMethod,
+      settlementDateTime,
+      transactionId, fromDate, toDate
+    } = req.body;
+
+    let startDate = new Date(0);
+    let endDate = new Date();
+
+    if (fromDate && toDate) {
+      startDate = new Date(fromDate);
+      startDate.setHours(0, 0, 0, 0);
+
+      endDate = new Date(toDate);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    await SubOrder.updateMany(
+      {
+        deliveryBoyId,
+        suborderstatus: 'Delivered',
+        $or: [
+          { settlementdonefordeliveryboy: false },
+          { settlementdonefordeliveryboy: { $exists: false } }
+        ],
+        ...(fromDate && toDate && {
+          suborderdatetime: {
+            $gte: startDate,
+            $lte: endDate
+          }
+        })
+      },
+      {
+        $set: {
+          settlementdonefordeliveryboy: true,
+          settlementdatetimefordeliveryboy: settlementDateTime,
+          settlementmethodfordeliveryboy: paymentMethod,
+          settlementtransactionidfordeliveryboy: transactionId || ''
+        }
+      }
+    );
+
+    return res.json({
+      success: true
+    });
+
+  } catch (err) {
+
+    console.log(err);
+
+    return res.json({
+      success: false
+    });
+
+  }
+
+});
+
+
+
+//dashbard start
+
+async function getDashboardStats({
+  startDate = null,
+  endDate = null,
+  usertype,
+  userId,
+  storeId
+}) {
+
+  let query = {
+    suborderstatus: 'Delivered'
+  };
+
+  // =========================
+  // ROLE FILTER
+  // =========================
+
+  if (usertype === 'admin') {
+
+    query.adminId = userId;
+
+  }
+
+  else if (usertype === 'store') {
+
+    query.storeId = storeId;
+    query.finalstoreId = storeId;
+
+  }
+
+  // =========================
+  // DATE FILTER
+  // =========================
+
+  if (startDate && endDate) {
+
+    query.suborderdatetime = {
+      $gte: startDate,
+      $lte: endDate
+    };
+
+  }
+
+  // =========================
+  // SUBORDERS FETCH
+  // =========================
+
+  const subOrders =
+    await SubOrder.find(query).lean();
+
+  // =========================
+  // UNIQUE ORDERS
+  // =========================
+
+  const orderIds = [
+    ...new Set(
+      subOrders.map(x =>
+        x.orderId?.toString()
+      )
+    )
+  ];
+
+  const orders =
+    await Order.find({
+      _id: { $in: orderIds }
+    }).lean();
+
+  const orderMap = {};
+
+  orders.forEach(order => {
+    orderMap[
+      order._id.toString()
+    ] = order;
+  });
+
+  // =========================
+  // STORE DASHBOARD
+  // =========================
+
+  if (usertype === 'store') {
+
+    const deliveredCount =
+      subOrders.length;
+
+    const deliveredAmount =
+      subOrders.reduce(
+        (sum, x) =>
+          sum +
+          Number(
+            x.storeTotaltoshowtostore || 0
+          ),
+        0
+      );
+
+    const settledRows =
+      subOrders.filter(
+        x => x.settlementdoneforstore
+      );
+
+    const nonSettledRows =
+      subOrders.filter(
+        x => !x.settlementdoneforstore
+      );
+
+    // UNIQUE CUSTOMERS (STORE)
+    const customerSet = new Set();
+
+    subOrders.forEach(sub => {
+      if (sub.customerId) {
+        customerSet.add(
+          sub.customerId.toString()
+        );
+      }
+    });
+
+    return {
+
+      deliveredCount,
+
+      deliveredAmount,
+
+      settledCount:
+        settledRows.length,
+
+      settledAmount:
+        settledRows.reduce(
+          (sum, x) =>
+            sum +
+            Number(
+              x.settlementamountforstore || 0
+            ),
+          0
+        ),
+
+      nonSettledCount:
+        nonSettledRows.length,
+
+      nonSettledAmount:
+        nonSettledRows.reduce(
+          (sum, x) =>
+            sum +
+            Number(
+              x.storeTotaltoshowtostore || 0
+            ),
+          0
+        ),
+
+      customerCount:
+        customerSet.size
+
+    };
+  }
+
+  // =========================
+  // ADMIN DASHBOARD
+  // =========================
+
+  const uniqueMainOrders = {};
+
+  orders.forEach(order => {
+    uniqueMainOrders[
+      order._id.toString()
+    ] = order;
+  });
+
+let deliveredAmount = 0;
+
+let deliveredAmount_cod = 0;
+
+let deliveredAmount_online = 0;
+
+
+Object.values(uniqueMainOrders)
+.forEach(order => {
+
+
+ 
+  let amount =
+    Number(order.totalamount || 0);
+
+
+  deliveredAmount += amount;
+
+
+
+  if(
+    order.paymentMethod &&
+    order.paymentMethod.toLowerCase() === "cod"
+  ){
+
+    deliveredAmount_cod += amount;
+
+  }
+
+
+  else if(
+
+    order.paymentMethod &&
+
+    order.paymentMethod.toLowerCase() !== "cod"
+
+  ){
+
+    deliveredAmount_online += amount;
+
+  }
+
+
+});
+
+  let settledCount = 0;
+  let settledAmount = 0;
+
+  let nonSettledCount = 0;
+  let nonSettledAmount = 0;
+
+  let dbSettledCount = 0;
+  let dbSettledAmount = 0;
+
+  let dbNonSettledCount = 0;
+  let dbNonSettledAmount = 0;
+
+  let storeSettledCount = 0;
+  let storeSettledAmount = 0;
+
+  let storeNonSettledCount = 0;
+  let storeNonSettledAmount = 0;
+
+  // =========================
+  // SUBORDER LOOP
+  // =========================
+
+  subOrders.forEach(sub => {
+
+    if (
+      sub.settlementdoneforstore &&
+      sub.settlementdonefordeliveryboy
+    ) {
+
+      settledCount++;
+
+      settledAmount +=
+        Number(
+          sub.settlementamountforstore || 0
+        ) +
+        Number(
+          sub.settlementamountfordeliveryboy || 0
+        );
+
+    } else {
+
+      nonSettledCount++;
+
+      if (!sub.settlementdoneforstore) {
+
+        nonSettledAmount +=
+          Number(
+            sub.storeTotaltoshowtostore || 0
+          );
+      }
+
+      if (!sub.settlementdonefordeliveryboy) {
+
+        nonSettledAmount +=
+          Number(
+            sub.settlementamountfordeliveryboy || 0
+          );
+      }
+
+    }
+
+    // DELIVERY BOY
+
+    if (sub.settlementdonefordeliveryboy) {
+
+      dbSettledCount++;
+
+      dbSettledAmount +=
+        Number(
+          sub.settlementamountfordeliveryboy || 0
+        );
+
+    } else {
+
+      dbNonSettledCount++;
+
+      dbNonSettledAmount +=
+        Number(
+          sub.settlementamountfordeliveryboy || 0
+        );
+    }
+
+    // STORE
+
+    if (sub.settlementdoneforstore) {
+
+      storeSettledCount++;
+
+      storeSettledAmount +=
+        Number(
+          sub.settlementamountforstore || 0
+        );
+
+    } else {
+
+      storeNonSettledCount++;
+
+      storeNonSettledAmount +=
+        Number(
+          sub.storeTotaltoshowtostore || 0
+        );
+    }
+
+  });
+
+  // =========================
+  // PROFIT CALCULATION
+  // =========================
+
+  let profit = 0;
+
+  Object.values(uniqueMainOrders)
+    .forEach(order => {
+
+      const relatedSubs =
+        subOrders.filter(
+          x =>
+            String(x.orderId) ===
+            String(order._id)
+        );
+
+      const fullySettled =
+        relatedSubs.every(
+          x =>
+            x.settlementdoneforstore &&
+            x.settlementdonefordeliveryboy
+        );
+
+      if (!fullySettled) return;
+
+      let storeTotal = 0;
+      let dbTotal = 0;
+
+      relatedSubs.forEach(sub => {
+
+        storeTotal +=
+          Number(
+            sub.settlementamountforstore || 0
+          );
+
+        dbTotal +=
+          Number(
+            sub.settlementamountfordeliveryboy || 0
+          );
+
+      });
+
+      profit +=
+        Number(order.totalamount || 0)
+        - storeTotal
+        - dbTotal;
+
+    });
+
+  // =========================
+  // UNIQUE CUSTOMER COUNT (ADMIN)
+  // =========================
+
+  const customerSet = new Set();
+
+  subOrders.forEach(sub => {
+    if (sub.customerId) {
+      customerSet.add(
+        sub.customerId.toString()
+      );
+    }
+  });
+
+  // =========================
+  // RETURN
+  // =========================
+
+  return {
+
+    deliveredCount:
+      subOrders.length,
+
+    deliveredAmount,
+
+    profit,
+
+  deliveredAmount_cod,
+
+
+  deliveredAmount_online,
+    settledCount,
+    settledAmount,
+
+    nonSettledCount,
+    nonSettledAmount,
+
+    dbSettledCount,
+    dbSettledAmount,
+
+    dbNonSettledCount,
+    dbNonSettledAmount,
+
+    storeSettledCount,
+    storeSettledAmount,
+
+    storeNonSettledCount,
+    storeNonSettledAmount,
+
+    customerCount:
+      customerSet.size
+
+  };
+}
+router.get(
+  '/dashboard/:usertype/:userId/:storeId',
+  async (req, res) => {
+
+    try {
+
+      const {
+        usertype,
+        userId,
+        storeId
+      } = req.params;
+
+      const now = new Date();
+
+      const todayStart =
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+
+      const todayEnd =
+        new Date();
+
+      const yesterdayStart =
+        new Date(todayStart);
+
+      yesterdayStart.setDate(
+        yesterdayStart.getDate() - 1
+      );
+
+      const yesterdayEnd =
+        new Date(todayStart);
+
+      yesterdayEnd.setMilliseconds(-1);
+
+      const currentMonthStart =
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1
+        );
+
+      const lastMonthStart =
+        new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1
+        );
+
+      const lastMonthEnd =
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          0,
+          23,
+          59,
+          59
+        );
+
+      const last7Days =
+        new Date();
+
+      last7Days.setDate(
+        last7Days.getDate() - 6
+      );
+
+      const last30Days =
+        new Date();
+
+      last30Days.setDate(
+        last30Days.getDate() - 29
+      );
+
+      const currentWeekStart =
+        new Date(now);
+
+      currentWeekStart.setDate(
+        now.getDate() - now.getDay()
+      );
+
+      const lastWeekStart =
+        new Date(currentWeekStart);
+
+      lastWeekStart.setDate(
+        lastWeekStart.getDate() - 7
+      );
+
+      const lastWeekEnd =
+        new Date(currentWeekStart);
+
+      lastWeekEnd.setMilliseconds(-1);
+
+      return res.json({
+
+        success: true,
+
+        today:
+          await getDashboardStats({
+            startDate: todayStart,
+            endDate: todayEnd,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        yesterday:
+          await getDashboardStats({
+            startDate: yesterdayStart,
+            endDate: yesterdayEnd,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        currentWeek:
+          await getDashboardStats({
+            startDate: currentWeekStart,
+            endDate: now,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        lastWeek:
+          await getDashboardStats({
+            startDate: lastWeekStart,
+            endDate: lastWeekEnd,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        last7Days:
+          await getDashboardStats({
+            startDate: last7Days,
+            endDate: now,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        currentMonth:
+          await getDashboardStats({
+            startDate: currentMonthStart,
+            endDate: now,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        lastMonth:
+          await getDashboardStats({
+            startDate: lastMonthStart,
+            endDate: lastMonthEnd,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        last30Days:
+          await getDashboardStats({
+            startDate: last30Days,
+            endDate: now,
+            usertype,
+            userId,
+            storeId
+          }),
+
+        overall:
+          await getDashboardStats({
+            usertype,
+            userId,
+            storeId
+          })
+
+      });
+
+    }
+
+    catch (error) {
+
+      console.log(error);
+
+      return res.status(500).json({
+
+        success: false,
+
+        message: error.message
+
+      });
+
+    }
+
+  }
+);
+// dashboard end
+
+
+
+///custom order
+
+
+router.post(
+
+  "/createcustomorder",
+
+
+  uploadMultipleFields([
+
+    {
+      name: "images",
+      maxCount: 5
+    },
+
+    {
+      name: "pdf",
+      maxCount: 1
+    }
+
+  ]),
+
+  async (req, res) => {
+
+
+    try {
+
+
+      let body = req.body;
+
+
+
+      let order =
+        new CustomOrder({
+
+
+
+          adminId:
+
+            body.adminId
+          ,
+
+
+
+          customerId:
+
+            body.customerId
+          ,
+
+
+
+
+          type:
+            body.type,
+
+
+
+
+          images:
+            body.images || [],
+
+
+
+          pdf:
+            body.pdf || "",
+
+
+
+
+          cake:
+
+            body.cake ?
+              JSON.parse(body.cake)
+              : null,
+
+
+
+
+          medical:
+
+            body.medical ?
+              JSON.parse(body.medical)
+              : [],
+
+
+
+
+
+          other:
+
+            body.other ?
+              JSON.parse(body.other)
+              : null,
+
+
+
+
+          extraDetail:
+
+            body.extraDetail || ""
+
+
+        });
+
+
+
+
+      let saved =
+        await order.save();
+
+
+
+
+
+      // ADMIN NOTIFICATION
+
+
+      await Notification.create({
+
+        userId: body.adminId,
+
+        title: "New Custom Order",
+
+        message:
+          `New ${body.type} order received`,
+
+
+        type: "custom_order",
+
+        referenceId: saved._id
+
+
+      });
+
+
+
+
+
+      res.json({
+
+        success: true,
+
+        message: "Custom Order Created",
+
+        data: saved
+
+
+      });
+
+
+
+    }
+    catch (err) {
+
+
+      console.log(err);
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message: err.message
+
+      });
+
+
+    }
+
+
+
+  });
+
+
+
+
+
+
+
+
+router.post(
+  "/createnewitemwhencustomapprovecustoorder",
+
+  async (req, res) => {
+
+
+    try {
+
+
+      let {
+
+        _id,
+        type,
+        cake, categories
+        , extraDetail, estimateAmount, estimateAmount_store,
+        images, adminId, storeId, storeName, medical, itemName
+
+
+
+
+      } = req.body;
+
+      let finalitemid;
+      let objtosave = {};
+      objtosave.itemType = "single";
+      objtosave.description = extraDetail;
+      objtosave.message_on_cake_for_customorder = '';
+
+      objtosave.isitfromcustom = true;
+      objtosave.ratingCount = 1;
+      objtosave.rating = 5;
+      objtosave.appPrice = estimateAmount;
+      objtosave.storePrice = estimateAmount_store;
+      objtosave.variant_or_addon = "";
+      objtosave.categories = categories;
+      objtosave.itemQuestions = [];
+      objtosave.size = '1';
+
+
+      objtosave.filterKeys = [];
+      objtosave.images = images;
+      objtosave.useThisItemAsChild = false;
+      objtosave.parentId = [];
+      objtosave.variantItems = [];
+      objtosave.addons = [];
+      objtosave.original_item_id = null;
+      objtosave.addedBy = adminId;
+
+      objtosave.addedByString = 'store';
+      objtosave.storeId = storeId;
+      objtosave.showOnFront = false; //note 
+
+      objtosave.storeName = storeName; //note  
+
+      if (type == 'cake') {
+
+        if (cake.egglesstype == 'With Egg') {
+
+          objtosave.vegtype = "nonveg";
+        }
+        else {
+
+          objtosave.vegtype = "veg";
+        }
+        objtosave.itemName = "Cake " + cake.flavour + " - " + cake.weight;
+        objtosave.itemSubName = cake.flavour + " - " + cake.weight;
+
+        objtosave.message_on_cake_for_customorder = cake.message;
+
+
+        objtosave.unit = 'kg';
+
+
+
+      } else if (type == 'medical') {
+        objtosave.vegtype = "na";
+
+        let mstr = '';
+        medical.forEach((item) => {
+          mstr += "Medicine - " + item.name + ", Quantity - " + item.quantity
+        })
+        if (mstr == '') {
+          mstr = "Medicines "
+        }
+        objtosave.itemName = mstr;
+        objtosave.itemSubName = mstr;
+
+      }
+      else if (type == 'other') {
+        objtosave.vegtype = "na";
+        objtosave.itemName = itemName;
+        objtosave.itemSubName = itemName;
+
+      }
+
+
+
+      let item =
+        new Item(objtosave);
+
+
+
+
+      let savedItem =
+        await item.save();
+
+      let update = {};
+
+      update = {
+
+        finalitemid: savedItem._id
+      };
+
+
+
+
+      let data = await CustomOrder.findByIdAndUpdate(
+
+        _id,
+
+        update,
+
+        {
+          new: true
+        }
+
+      );
+
+
+
+      res.json({
+
+        success: true,
+        finalitemid: savedItem._id,
+
+
+      });
+
+
+
+    }
+    catch (e) {
+
+      res.json({
+
+        success: false,
+
+        message: e.message
+
+      });
+
+
+    }
+
+  });
+
+
+
+// CUSTOMER ORDER LIST
+
+
+router.post(
+  "/actionbycustomerforcustomorder",
+
+  async (req, res) => {
+
+
+    try {
+
+
+      let {
+
+        _id,
+
+        action,
+
+
+
+
+      } = req.body;
+
+
+
+      let update = {};
+
+      update = {
+
+        statusByCustomer: action,
+        finalitemid: "pending"
+      };
+
+
+
+
+      let data = await CustomOrder.findByIdAndUpdate(
+
+        _id,
+
+        update,
+
+        {
+          new: true
+        }
+
+      );
+
+
+
+      res.json({
+
+        success: true,
+
+        data
+
+      });
+
+
+
+    }
+    catch (e) {
+
+      res.json({
+
+        success: false,
+
+        message: e.message
+
+      });
+
+
+    }
+
+  });
+
+
+
+router.post(
+  "/saveAdminreplyforcustomorder",
+
+  async (req, res) => {
+
+
+    try {
+
+
+      let {
+        customerId,
+        orderId,
+
+        action,
+
+        storeId,
+
+        categories,
+
+        estimateAmount,
+        estimateAmount_store,
+        estimatemessage,
+
+        cancelReason
+
+
+      } = req.body;
+
+
+
+      let update = {};
+
+
+
+      if (action == "Approve") {
+
+
+        update = {
+
+          statusByAdmin: "approved",
+
+          storeId,
+
+          categories,
+
+          estimateAmount,
+          estimateAmount_store,
+          estimatemessage
+
+        };
+
+
+      }
+
+      else {
+
+
+        update = {
+
+          statusByAdmin: "rejected",
+
+          cancelReason
+
+        };
+
+
+      }
+
+
+
+
+      let data = await CustomOrder.findByIdAndUpdate(
+
+        orderId,
+
+        update,
+
+        {
+          new: true
+        }
+
+      );
+
+
+      // ADMIN NOTIFICATION
+
+
+      await Notification.create({
+
+        userId: customerId,
+
+        title: "Status update for Custom Order",
+
+        message:
+          `Custom Order has been ${action}. Please check fastBite app for more info `,
+
+
+        type: "custom_order",
+
+        referenceId: orderId
+
+
+      });
+
+      res.json({
+
+        success: true,
+
+        data
+
+      });
+
+
+
+    }
+    catch (e) {
+
+      res.json({
+
+        success: false,
+
+        message: e.message
+
+      });
+
+
+    }
+
+
+
+  });
+
+router.post(
+
+  "/customorderlist",
+
+  async (req, res) => {
+
+
+    try {
+
+
+      let {
+        adminId,
+        customerId,
+        usertype
+      } = req.body;
+
+
+
+      let orders;
+
+
+
+      if (usertype == 'admin') {
+
+
+        orders = await CustomOrder.find({
+
+          adminId: adminId
+
+        })
+
+          .populate({
+
+            path: "customerId",
+
+            select: "name mobile"
+
+          })
+
+          .populate({
+
+            path: "storeId",
+
+            select: "storeName"
+
+          })
+
+          .sort({
+
+            createdAt: -1
+
+          });
+
+
+
+
+
+        // category names
+
+        let Category = mongoose.model("Category");
+
+
+
+        orders = await Promise.all(
+
+          orders.map(async (order) => {
+
+
+            let newCategories = [];
+
+
+
+            if (order.categories?.length) {
+
+
+
+              for (let cat of order.categories) {
+
+
+
+                let level1 =
+                  await Category.findById(cat.level1)
+                    .select("categoryName");
+
+
+
+                let level2 =
+                  await Category.findById(cat.level2)
+                    .select("categoryName");
+
+
+
+                let level3 =
+                  await Category.findById(cat.level3)
+                    .select("categoryName");
+
+
+
+
+                newCategories.push({
+
+                  level1: {
+                    id: cat.level1,
+                    name: level1?.categoryName || ''
+                  },
+
+
+                  level2: {
+                    id: cat.level2,
+                    name: level2?.categoryName || ''
+                  },
+
+
+                  level3: {
+                    id: cat.level3,
+                    name: level3?.categoryName || ''
+                  }
+
+
+                });
+
+
+
+              }
+
+
+
+            }
+
+
+
+
+            return {
+
+              ...order.toObject(),
+
+
+              storeName:
+                order.storeId?.storeName || '',
+
+
+              categories: newCategories
+
+
+
+            }
+
+
+
+
+
+          })
+
+        );
+
+
+
+      }
+
+      else {
+
+
+        orders =
+          await CustomOrder.find({
+
+            customerId: customerId
+
+          })
+            .populate({
+
+              path: "storeId",
+
+              select: "storeName"
+
+            })
+            .sort({
+
+              createdAt: -1
+
+            });
+
+
+      }
+
+
+
+
+      res.json({
+
+        success: true,
+
+        data: orders
+
+
+      });
+
+
+
+    }
+
+    catch (err) {
+
+
+      res.status(500).json({
+
+        success: false,
+
+        message: err.message
+
+      });
+
+
+    }
+
+
+  });
+
+
+
+
+
+
+//custom order end
 
 //razorpay
 
@@ -3079,6 +5093,7 @@ router.post('/completeorderforrazorpay', async (req, res, next) => {
       paymentStatus: 'paid', transaction_details: transaction_details, transactionId: transaction_details.razorpay_order_id
     }
   });
+  await thingstodowhenorderplaced(order_id, objectstatusjson, true, true)
   return res.json({ success: true, message: "Payment completed successfully." });
 });
 

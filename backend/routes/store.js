@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Store = require("../models/Store");
 const Category = require("../models/Category");
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
 
 const Item = require("../models/Item");
 const moment = require("moment"); // install if not
@@ -348,162 +348,733 @@ router.put("/status/:id", async (req, res) => {
 STORE DETAIL
 --------------------------------
 */
+ router.get("/detail/:id", async (req,res)=>{
 
- router.get("/detail/:id", async (req, res) => {
-  try {
+
+  try{
+
+
     const storeId = req.params.id;
 
-    // ✅ STORE
+
+
+
+
+    // =====================================
+    // STORE
+    // =====================================
+
+
     const store = await Store.findById(storeId)
+
+
       .populate({
-        path: "ownerid",
-        match: { status: true },
-        select: "name mobile email"
+
+        path:"ownerid",
+
+        match:{
+          status:true
+        },
+
+        select:"name mobile email"
+
+
       });
 
-    if (!store || !store.ownerid) {
+
+
+
+
+    if(!store || !store.ownerid){
+
+
       return res.json({
-        success: false,
-        message: "Store or Owner not found ❌"
+
+
+        success:false,
+
+
+        message:"Store or Owner not found ❌"
+
+
+
       });
+
+
     }
 
-    // ✅ ITEMS WITH VARIANTS + ADDONS
+
+
+
+
+
+
+
+    // =====================================
+    // ITEMS
+    // =====================================
+
+
     const items = await Item.find({
+
+
       storeId,
-      status: true,
-      showOnFront: true,
-      useThisItemAsChild: false
+
+
+      status:true,
+
+
+      showOnFront:true,
+
+
+      useThisItemAsChild:false
+
+
+
     })
-      .populate({
-        path: "variantItems",
-        match: { status: true },
-        select: "itemName storePrice appPrice addons images"
-      })
-      .populate({
-        path: "addons",
-        match: { status: true },
-        select: "itemName storePrice appPrice images"
-      })
-      .populate({
-        path: "variantItems",
-        populate: {
-          path: "addons",
-          match: { status: true },
-          select: "itemName storePrice appPrice images"
-        }
-      })
-      .lean();
 
-    // ✅ CATEGORY MAP
-    const categories = await Category.find({ status: true }).lean();
 
-    const catMap = {};
-    categories.forEach(c => {
+    .populate({
+
+
+      path:"variantItems",
+
+
+      match:{
+        status:true
+      },
+
+
+      select:
+
+      "itemName storePrice appPrice itemQuestions addons images"
+
+
+
+    })
+
+
+
+    .populate({
+
+
+      path:"addons",
+
+
+      match:{
+        status:true
+      },
+
+
+      select:
+
+      "itemName storePrice appPrice images"
+
+
+
+    })
+
+
+
+    .populate({
+
+
+      path:"variantItems",
+
+
+      populate:{
+
+
+        path:"addons",
+
+
+        match:{
+          status:true
+        },
+
+
+        select:
+
+        "itemName storePrice appPrice images"
+
+
+
+      }
+
+
+    })
+
+
+    .lean();
+
+
+
+
+
+
+
+
+
+    // =====================================
+    // CATEGORY MAP
+    // =====================================
+
+
+    const categories = await Category.find({
+
+      status:true
+
+    }).lean();
+
+
+
+
+    const catMap={};
+
+
+
+    categories.forEach(c=>{
+
+
       catMap[c._id.toString()] = c.categoryName;
+
+
+
     });
 
-    // ===============================
-    // 🔥 MAIN LOGIC (PRICE RANGE FIX)
-    // ===============================
-    const formattedItems = items.map(item => {
-      const cat = item.categories?.[0] || {};
 
-      let minPrice = 0;
-      let maxPrice = 0;
 
-      // 🔥 CASE 1: HAS VARIANTS
-      if (item.variantItems && item.variantItems.length > 0) {
 
-        const prices = item.variantItems.map(v =>
-          v.appPrice || v.storePrice || 0
-        );
 
-        minPrice = Math.min(...prices);
-        maxPrice = Math.max(...prices);
+
+
+
+
+    // =====================================
+    // PRICE FUNCTION
+    // =====================================
+
+
+    const getPriceRange=(item)=>{
+
+
+
+      let prices=[];
+
+
+
+
+
+      // ===============================
+      // VARIANT EXIST
+      // ===============================
+
+
+      if(item.variantItems && item.variantItems.length){
+
+
+
+
+
+        item.variantItems.forEach(v=>{
+
+
+
+          // option exist
+
+
+          if(
+
+
+            v.itemQuestions &&
+
+            v.itemQuestions.length
+
+
+
+          ){
+
+
+
+            v.itemQuestions.forEach(q=>{
+
+
+
+              if(q.options){
+
+
+
+                q.options.forEach(op=>{
+
+
+
+                  prices.push(
+
+
+
+                    op.appPrice > 0
+
+                    ? op.appPrice
+
+                    : op.storePrice
+
+
+
+                  );
+
+
+                });
+
+
+              }
+
+
+
+            });
+
+
+
+          }
+
+
+
+
+
+
+          // no option
+
+
+          else {
+
+
+
+            prices.push(
+
+
+              v.appPrice > 0
+
+              ? v.appPrice
+
+              : v.storePrice
+
+
+
+            );
+
+
+          }
+
+
+
+        });
+
+
+
       }
 
-      // 🔥 CASE 2: SINGLE ITEM
+
+
+
+
+
+      // ===============================
+      // SINGLE ITEM
+      // ===============================
+
+
       else {
-        const price = item.appPrice || item.storePrice || 0;
-        minPrice = price;
-        maxPrice = price;
+
+
+
+        if(
+
+
+          item.itemQuestions &&
+
+          item.itemQuestions.length
+
+
+
+        ){
+
+
+
+          item.itemQuestions.forEach(q=>{
+
+
+
+            if(q.options){
+
+
+
+              q.options.forEach(op=>{
+
+
+
+                prices.push(
+
+
+
+                  op.appPrice > 0
+
+                  ? op.appPrice
+
+                  : op.storePrice
+
+
+
+                );
+
+
+
+              });
+
+
+
+            }
+
+
+
+          });
+
+
+
+        }
+
+
+
+        else {
+
+
+
+          prices.push(
+
+
+            item.appPrice > 0
+
+            ? item.appPrice
+
+            : item.storePrice
+
+
+
+          );
+
+
+
+        }
+
+
+
       }
 
-      const priceRange =
-        minPrice === maxPrice
-          ? `₹${minPrice}`
-          : `₹${minPrice} - ₹${maxPrice}`;
+
+
+
+
+
+
+      const minPrice=Math.min(...prices);
+
+
+      const maxPrice=Math.max(...prices);
+
+
+
 
       return {
-        ...item,
+
+
+
         minPrice,
+
+
         maxPrice,
-        priceRange,
 
-        level1Name: catMap[cat.level1] || "Others",
-        level2Name: catMap[cat.level2] || "Others",
-        level3Name: catMap[cat.level3] || "Others",
-        level3Id: cat.level3 || "no-cat"
+
+
+        priceRange:
+
+
+
+          minPrice===maxPrice
+
+
+          ? `₹${minPrice}`
+
+
+          : `₹${minPrice} - ₹${maxPrice}`
+
+
+
       };
-    });
 
-    // ===============================
-    // GROUPING
-    // ===============================
-    const grouped = {};
 
-    formattedItems.forEach(item => {
-      const l2 = item.level2Name;
-      const l3 = item.level3Id;
 
-      if (!grouped[l2]) grouped[l2] = {};
-
-      if (!grouped[l2][l3]) {
-        grouped[l2][l3] = {
-          level3Id: l3,
-          categoryName: item.level3Name,
-          items: []
-        };
-      }
-
-      grouped[l2][l3].items.push(item);
-    });
-
-    const groupedArray = Object.keys(grouped).map(level2Name => ({
-      level2Name,
-      level3: Object.values(grouped[level2Name])
-    }));
-
-    // ===============================
-    // STORE OPEN STATUS
-    // ===============================
-    let finalopenstatus = getfinalopenstatus(store);
-
-    // ===============================
-    // FINAL RESPONSE
-    // ===============================
-    const finalData = {
-      ...store._doc,
-      finalopenstatus,
-      ownerName: store.ownerid.name,
-      ownerMobile: store.ownerid.mobile,
-      ownerEmail: store.ownerid.email,
-      groupedItems: groupedArray
     };
 
-    res.json({
-      success: true,
-      data: finalData
+
+
+
+
+
+
+
+
+    // =====================================
+    // FORMAT ITEMS
+    // =====================================
+
+
+    const formattedItems = items.map(item=>{
+
+
+      const cat=item.categories?.[0] || {};
+
+
+
+      const priceData=getPriceRange(item);
+
+
+
+
+      return {
+
+
+        ...item,
+
+
+        ...priceData,
+
+
+
+        level1Name:
+
+          catMap[cat.level1] || "Others",
+
+
+
+        level2Name:
+
+          catMap[cat.level2] || "Others",
+
+
+
+        level3Name:
+
+          catMap[cat.level3] || "Others",
+
+
+
+        level3Id:
+
+          cat.level3 || "no-cat"
+
+
+
+      };
+
+
+
     });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: err.message
+
+
+
+
+
+
+
+
+    // =====================================
+    // GROUPING
+    // =====================================
+
+
+    const grouped={};
+
+
+
+
+
+    formattedItems.forEach(item=>{
+
+
+      const l2=item.level2Name;
+
+
+      const l3=item.level3Id;
+
+
+
+
+
+      if(!grouped[l2])
+
+        grouped[l2]={};
+
+
+
+
+
+      if(!grouped[l2][l3]){
+
+
+        grouped[l2][l3]={
+
+
+          level3Id:l3,
+
+
+          categoryName:item.level3Name,
+
+
+          items:[]
+
+
+
+        };
+
+
+      }
+
+
+
+
+
+
+      grouped[l2][l3].items.push(item);
+
+
+
     });
+
+
+
+
+
+
+    const groupedArray = Object.keys(grouped).map(level2Name=>({
+
+
+      level2Name,
+
+
+      level3:Object.values(grouped[level2Name])
+
+
+    }));
+
+
+
+
+
+
+
+
+
+
+
+    // =====================================
+    // OPEN STATUS
+    // =====================================
+
+
+    const finalopenstatus =
+
+      getfinalopenstatus(store);
+
+
+
+
+
+
+
+
+
+
+    // =====================================
+    // RESPONSE
+    // =====================================
+
+
+    const finalData={
+
+
+
+      ...store._doc,
+
+
+      finalopenstatus,
+
+
+      ownerName:store.ownerid.name,
+
+
+      ownerMobile:store.ownerid.mobile,
+
+
+      ownerEmail:store.ownerid.email,
+
+
+      groupedItems:groupedArray
+
+
+
+    };
+
+
+
+
+
+
+
+    res.json({
+
+
+
+      success:true,
+
+
+      data:finalData
+
+
+
+    });
+
+
+
+
+
   }
+
+  catch(err){
+
+
+
+    console.error(err);
+
+
+
+    res.status(500).json({
+
+
+
+      success:false,
+
+
+      message:err.message
+
+
+
+    });
+
+
+
+  }
+
+
+
 });
 
 /*

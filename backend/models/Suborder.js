@@ -14,6 +14,10 @@ const subOrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminUser"
     },
+    adminId_backup_for_online_pay: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AdminUser"
+    },
     mainorderid: {
       type: String,
       required: true,
@@ -56,7 +60,7 @@ const subOrderSchema = new mongoose.Schema(
       type: String,
       default: null
     },
-     deliveryBoyMobile: {
+    deliveryBoyMobile: {
       type: String,
       default: null
     },
@@ -105,16 +109,18 @@ const subOrderSchema = new mongoose.Schema(
     ,
 
     settlementdonefordeliveryboy: {
-      type: Boolean
+      type: Boolean,
+      default: false
     },
     settlementdoneforstore: {
-      type: Boolean
+      type: Boolean,
+       default: false
     },
     settlementamountfordeliveryboy: {
-      type: Number
+      type: Number,default: 0
     },
     settlementamountforstore: {
-      type: Number
+      type: Number,default: 0
     }
     , settlementdatetimefordeliveryboy: {
       type: Date,

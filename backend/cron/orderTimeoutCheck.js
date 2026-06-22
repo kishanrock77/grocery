@@ -58,3 +58,28 @@ task.stop();  // ← Abhi ye cron job run nahi karega
 
 // Agar dubara start karna ho
 // task.start();
+
+
+
+
+
+
+
+
+
+
+
+
+
+// git add  backend/routes/auth.js
+//        git add   backend/routes/category.js
+//         git add    backend/routes/customer.js
+//        git add   backend/routes/deliveryArea.js
+//       git add    backend/routes/deliveryboy.js
+//         git add    backend/routes/home.js
+//         git add    backend/routes/item.js
+//         git add    backend/routes/notification.js
+//         git add    backend/routes/order.js
+//         git add    backend/routes/product.js
+//         git add    backend/routes/store.js
+//         git add    backend/routes/wallet.js

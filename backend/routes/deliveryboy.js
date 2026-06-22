@@ -3,7 +3,8 @@ const router = express.Router();
 const DeliveryBoy = require("../models/DeliveryBoy");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
+;
 
 const { S3Client } = require("@aws-sdk/client-s3");
 
@@ -26,12 +27,39 @@ const deleteFromS3 = async (url) => {
     console.error("S3 delete error:", err);
   }
 };
+
+router.put("/status/:id", async (req, res) => {
+
+  try {
+
+    const id = req.params.id;
+    const status = req.body.status;
+    const col = req.body.col;
+
+    await DeliveryBoy.findByIdAndUpdate(id, {
+      [col]: status
+    });
+
+    res.json({
+      success: true,
+      message: "Status Updated"
+    })
+
+  } catch (err) {
+
+    res.status(500).json({
+      success: false,
+      message: err.message
+    })
+
+  }
+
+});
 /*
 --------------------------------
 ADD DELIVERY BOY
 --------------------------------
 */
-
  router.post("/add", uploadSingleImage("profilePic"), async (req, res) => {
   try {
     const body = req.body;
@@ -145,7 +173,41 @@ router.get("/detail/:id", async (req, res) => {
     res.status(500).send(err);
   }
 });
+router.post('/update-location', async (req, res) => {
 
+  try {
+
+    const { boyid, latitude, longitude } = req.body;
+
+    await DeliveryBoy.findByIdAndUpdate(
+      boyid,
+      {
+        location: {
+          type: 'Point',
+          coordinates: [
+            Number(longitude),
+            Number(latitude)
+          ]
+        }
+      }
+    );
+
+    res.json({
+      success: true
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+
+  }
+
+});
 
 /*
 --------------------------------

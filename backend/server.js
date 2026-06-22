@@ -39,6 +39,7 @@ mongoose.connection.on('error', (err) => {
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/store", require("./routes/store"));
 app.use("/api/order", require("./routes/order")); 
+app.use("/api/banner", require("./routes/banner")); 
 
 app.use("/api/notification", require("./routes/notification"));
 app.use("/api/deliveryboy", require("./routes/deliveryboy"));

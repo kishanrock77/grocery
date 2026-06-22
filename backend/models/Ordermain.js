@@ -18,6 +18,11 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "AdminUser"
     },
+adminId_backup_for_online_pay: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AdminUser"
+    },
+
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',

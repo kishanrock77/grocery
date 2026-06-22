@@ -3,7 +3,10 @@ const router = express.Router();
 const Category = require("../models/Category");
 const { uploadSingleImage, uploadMultipleImages } = require("../middleware/uploadAWSS3");
 const Wallet = require("../models/Wallet");
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
+
+const CustomOrder =
+  require("../models/CustomOrder");
 
 const Store = require("../models/Store");
 const Otp = require("../models/Otp");
@@ -278,10 +281,13 @@ router.delete('/emptydb/:table', async (req, res, next) => {
   let modelsArray = [];
   if (req.params.table == 'All') {
     modelsArray = [AdminUser, Category,
-      Customer, DeliveryArea, DeliveryBoy, Item, Wallet,
+      Customer, DeliveryArea, DeliveryBoy, Item, Wallet,CustomOrder,
       Notification, Order, Suborder, OrderLog, Otp, Store, storeOwner];
 
-  } else if (req.params.table == 'DelieveryBoy') {
+  } else if (req.params.table == 'CustomOrder') {
+    modelsArray = [CustomOrder];
+
+  }else if (req.params.table == 'DelieveryBoy') {
     modelsArray = [DelieveryBoy];
 
   } else if (req.params.table == 'Category') {

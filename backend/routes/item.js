@@ -7,7 +7,8 @@ const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const Store = require("../models/Store");
 const moment = require('moment');
 const { S3Client } = require("@aws-sdk/client-s3");
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
+ 
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -138,129 +139,430 @@ router.get("/detail/:id", async (req, res) => {
 });
 router.get("/customeritemdetail/:id", async (req, res) => {
 
+
   try {
+
 
     let item = await Item.findOne({
 
-      _id: req.params.id,
-      status: true
+
+      _id:req.params.id,
+
+      status:true
+
 
     })
 
-      .populate({
-        path: "variantItems",
-        match: { status: true }
-      })
 
-      .populate({
-        path: "addons",
-        match: { status: true }
-      })
+    .populate({
 
-      .populate({
-        path: "storeId"
-      })
+      path:"variantItems",
 
-      .lean();
+      match:{
+        status:true
+      }
 
-    if (!item) {
+    })
+
+
+    .populate({
+
+      path:"addons",
+
+      match:{
+        status:true
+      }
+
+    })
+
+
+    .populate({
+
+      path:"storeId"
+
+    })
+
+
+    .lean();
+
+
+
+
+
+    if(!item){
+
 
       return res.status(404).json({
-        success: false,
-        message: "Item not found"
+
+
+        success:false,
+
+
+        message:"Item not found"
+
+
       });
+
 
     }
 
+
+
+
+
+
+
     // =====================================
-    // ✅ RENAME storeId -> storedetails
+    // STORE RENAME
     // =====================================
+
 
     item.storedetails = item.storeId;
 
+
     delete item.storeId;
 
+
+
+
+
+
+
+
+
     // =====================================
-    // ✅ PRICE RANGE
+    // PRICE RANGE FINAL LOGIC
     // =====================================
 
-    let priceArray = [];
 
-    // ✅ variant item prices
-    if (
+
+    let priceArray=[];
+
+
+
+
+
+    // =====================================
+    // VARIANTS EXIST
+    // =====================================
+
+
+    if(
+
+
       item.variantItems &&
+
       item.variantItems.length > 0
-    ) {
 
-      priceArray = item.variantItems.map(v => {
 
-        return v.appPrice > 0
-          ? v.appPrice
-          : v.storePrice;
+    ){
+
+
+
+      item.variantItems.forEach(v=>{
+
+
+
+        // variant has options
+
+
+        if(
+
+
+          v.itemQuestions &&
+
+          v.itemQuestions.length > 0
+
+
+        ){
+
+
+
+          v.itemQuestions.forEach(q=>{
+
+
+
+            if(q.options){
+
+
+
+              q.options.forEach(op=>{
+
+
+
+                priceArray.push(
+
+
+                  op.appPrice > 0
+
+                  ? op.appPrice
+
+                  : op.storePrice
+
+
+                );
+
+
+
+              });
+
+
+            }
+
+
+
+          });
+
+
+
+        }
+
+
+
+
+
+        // variant without option
+
+
+        else {
+
+
+
+          priceArray.push(
+
+
+
+            v.appPrice > 0
+
+            ? v.appPrice
+
+            : v.storePrice
+
+
+
+          );
+
+
+        }
+
+
 
       });
 
+
+
     }
 
-    // ✅ single item price
+
+
+
+
+
+    // =====================================
+    // SINGLE ITEM
+    // =====================================
+
+
     else {
 
-      priceArray = [
 
-        item.appPrice > 0
+
+      if(
+
+
+        item.itemQuestions &&
+
+        item.itemQuestions.length > 0
+
+
+      ){
+
+
+
+        item.itemQuestions.forEach(q=>{
+
+
+
+          if(q.options){
+
+
+
+            q.options.forEach(op=>{
+
+
+              priceArray.push(
+
+
+                op.appPrice > 0
+
+                ? op.appPrice
+
+                : op.storePrice
+
+
+              );
+
+
+            });
+
+
+
+          }
+
+
+
+        });
+
+
+
+      }
+
+
+
+
+
+      else {
+
+
+
+        priceArray.push(
+
+
+          item.appPrice > 0
+
           ? item.appPrice
+
           : item.storePrice
 
-      ];
+
+
+        );
+
+      }
+
+
 
     }
+
+
+
+
+
+
+
+
+    // =====================================
+    // MIN MAX
+    // =====================================
+
 
     const minPrice = Math.min(...priceArray);
 
+
     const maxPrice = Math.max(...priceArray);
+
+
+
+
 
     item.minPrice = minPrice;
 
+
     item.maxPrice = maxPrice;
 
+
+
     item.priceRange =
+
       minPrice === maxPrice
-        ? `₹${minPrice}`
-        : `₹${minPrice} - ₹${maxPrice}`;
+
+      ? `₹${minPrice}`
+
+      : `₹${minPrice} - ₹${maxPrice}`;
+
+
+
+
+
+
+
+
 
     // =====================================
-    // ✅ STORE OPEN STATUS
+    // STORE OPEN STATUS
     // =====================================
- 
-    const store = item.storedetails;
 
-      item.storedetails.finalopenstatus = getfinalopenstatus(store);
+
+    if(item.storedetails){
+
+
+      item.storedetails.finalopenstatus =
+
+        getfinalopenstatus(
+
+          item.storedetails
+
+        );
+
+
+    }
+
+
+
+
+
+
+
 
     // =====================================
-    // ✅ RESPONSE
+    // RESPONSE
     // =====================================
+
 
     res.json({
 
-      success: true,
-      data: item,
+
+      success:true,
+
+
+      data:item
+
+
 
     });
 
+
+
   }
 
-  catch (err) {
+
+
+  catch(err){
+
+
 
     console.error(err);
 
+
+
     res.status(500).json({
 
-      success: false,
-      message: err.message
+
+
+      success:false,
+
+
+      message:err.message
+
+
 
     });
 
+
+
   }
+
+
 
 });
 router.post("/multi-details", async (req, res) => {
@@ -1321,7 +1623,7 @@ router.post("/map-items", async (req, res) => {
 
           status: true,
 
-          showOnFront: true
+           
 
         })
 

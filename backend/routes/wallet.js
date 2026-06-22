@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
+;
 
 const Wallet = require("../models/Wallet");
 

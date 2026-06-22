@@ -157,7 +157,15 @@ const ItemSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-
+    isitfromcustom: {
+      type: Boolean,
+      default: false,
+    },
+    message_on_cake_for_customorder: {
+      type: String,
+      default: '',
+    },
+ 
     // ✅ Show on Frontend
     showOnFront: {
       type: Boolean,

@@ -12,7 +12,8 @@ const DeliveryArea = require("../models/DeliveryArea");
 const Store = require("../models/Store");
 const Category = require("../models/Category");
 const moment = require('moment');
-const getfinalopenstatus =   require('../utils/checkstoreopenstatus.js');
+const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
+ 
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
@@ -21,6 +22,8 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
   //verify register forgot
   let otp;
   if (mobile == '8802010213') {
+    otp = "1111"; // 🔥 static for now
+  }  if (mobile == '7827382317') {
     otp = "1111"; // 🔥 static for now
   } else {
     otp = Math.floor(
@@ -364,14 +367,16 @@ router.get("/areas", async (req, res) => {
 // ===============================
 // 🏬 SELECT AREA
 // ===============================
-router.post("/getcategoryandstoreandadminid", async (req, res) => {
+ router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
   try {
 
+
     const { areaId } = req.body;
 
+
     // =========================================
-    // ✅ AREA
+    // AREA
     // =========================================
 
     const area = await DeliveryArea.findOne({
@@ -382,108 +387,127 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
     });
 
+
     if (!area) {
 
       return res.json({
 
-        success: false,
+        success:false,
 
-        message: "Area not found"
+        message:"Area not found"
 
       });
 
     }
 
+
     const adminId = area.adminId;
 
+
+
     // =========================================
-    // ✅ STORES
+    // STORES
     // =========================================
 
     const stores = await Store.find({
 
-      addedBy: adminId,
+      addedBy:adminId,
 
-      activeStatus: true,
+      activeStatus:true,
 
-      status: true
+      status:true
 
     }).limit(10);
 
+
+
     // =========================================
-    // ✅ CATEGORIES
+    // CATEGORIES
     // =========================================
+
 
     const categories = await Category.find({
 
-      addedBy: adminId,
+      addedBy:adminId,
 
-      status: true
+      status:true
 
     });
 
-    const level1Categories =
-      categories.filter(c => c.level_no === 1);
 
-    const itemArr = [];
+
+    const level1Categories = categories.filter(
+
+      c=>c.level_no===1
+
+    );
+
+
+
+    const itemArr=[];
+
+
 
     // =========================================
-    // ✅ LOOP LEVEL 1
+    // CATEGORY LOOP
     // =========================================
 
-    for (let cat of level1Categories) {
+
+    for(let cat of level1Categories){
+
 
       const items = await Item.aggregate([
 
-        // =====================================
-        // ✅ MATCH
-        // =====================================
+
 
         {
-          $match: {
+          $match:{
 
-            addedBy: adminId,
+            addedBy:adminId,
 
-            status: true,
+            status:true,
 
-            showOnFront: true,
+            showOnFront:true,
 
-            useThisItemAsChild: false,
+            useThisItemAsChild:false,
 
-            storeId: {
-              $ne: null
+
+            storeId:{
+              $ne:null
             },
 
+
             "categories.level1":
+
               cat._id.toString()
 
-          }
-        },
-
-        // =====================================
-        // ✅ LATEST FIRST
-        // =====================================
-
-        {
-          $sort: {
-
-            createdAt: -1,
-
-            _id: -1
 
           }
         },
 
-        // =====================================
-        // ✅ REMOVE DUPLICATES
-        // =====================================
+
 
         {
-          $group: {
+          $sort:{
 
-            _id: {
+            createdAt:-1,
 
-              $ifNull: [
+            _id:-1
+
+          }
+        },
+
+
+
+        // remove duplicate admin/store copy
+
+        {
+          $group:{
+
+
+            _id:{
+
+              $ifNull:[
 
                 "$original_item_id",
 
@@ -493,47 +517,58 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
             },
 
-            doc: {
-              $first: "$$ROOT"
+
+            doc:{
+
+              $first:"$$ROOT"
+
             }
 
-          }
-        },
-
-        {
-          $replaceRoot: {
-            newRoot: "$doc"
-          }
-        },
-
-        // =====================================
-        // ✅ STORE DETAILS
-        // =====================================
-
-        {
-          $lookup: {
-
-            from: "stores",
-
-            localField: "storeId",
-
-            foreignField: "_id",
-
-            as: "storedetails"
 
           }
+
         },
 
-        // =====================================
-        // ✅ SINGLE STORE OBJECT
-        // =====================================
+
 
         {
-          $addFields: {
+          $replaceRoot:{
 
-            storedetails: {
+            newRoot:"$doc"
 
-              $arrayElemAt: [
+          }
+
+        },
+
+
+
+        // store
+
+        {
+
+          $lookup:{
+
+            from:"stores",
+
+            localField:"storeId",
+
+            foreignField:"_id",
+
+            as:"storedetails"
+
+
+          }
+
+        },
+
+
+        {
+
+          $addFields:{
+
+            storedetails:{
+
+              $arrayElemAt:[
 
                 "$storedetails",
 
@@ -544,72 +579,62 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
             }
 
           }
+
         },
 
-        // =====================================
-        // ✅ REMOVE DELETED STORE ITEMS
-        // =====================================
 
         {
-          $match: {
 
-            "storedetails.status": true,
+          $match:{
 
-            "storedetails.activeStatus": true
+            "storedetails.status":true,
+
+            "storedetails.activeStatus":true
 
           }
+
         },
 
-        // =====================================
-        // ✅ FINAL SORT AGAIN
-        // =====================================
+
+
+
+        // variants
 
         {
-          $sort: {
 
-            createdAt: -1,
+          $lookup:{
 
-            _id: -1
+            from:"items",
+
+            localField:"variantItems",
+
+            foreignField:"_id",
+
+            as:"variants"
+
 
           }
+
         },
 
-        // =====================================
-        // ✅ LOOKUP VARIANTS
-        // =====================================
+
 
         {
-          $lookup: {
 
-            from: "items",
+          $addFields:{
 
-            localField: "variantItems",
+            variants:{
 
-            foreignField: "_id",
 
-            as: "variants"
+              $filter:{
 
-          }
-        },
+                input:"$variants",
 
-        // =====================================
-        // ✅ FILTER ACTIVE VARIANTS
-        // =====================================
+                as:"v",
 
-        {
-          $addFields: {
+                cond:{
 
-            variants: {
-
-              $filter: {
-
-                input: "$variants",
-
-                as: "v",
-
-                cond: {
-
-                  $eq: [
+                  $eq:[
 
                     "$$v.status",
 
@@ -624,249 +649,647 @@ router.post("/getcategoryandstoreandadminid", async (req, res) => {
             }
 
           }
+
         },
 
-        // =====================================
-        // ✅ PRICE ARRAY
-        // =====================================
+
+
+        // =================================
+        // PRICE ARRAY FINAL LOGIC
+        // =================================
+
 
         {
-          $addFields: {
 
-            priceArray: {
+          $addFields:{
 
-              $cond: [
 
-                // ===========================
-                // ✅ VARIANTS EXIST
-                // ===========================
+            priceArray:{
+
+
+
+              $cond:[
+
+
+
+                // =========================
+                // VARIANT EXIST
+                // =========================
+
 
                 {
-                  $gt: [
+
+                  $gt:[
 
                     {
-                      $size: "$variants"
+
+                      $size:"$variants"
+
                     },
 
                     0
 
                   ]
+
                 },
 
-                // ===========================
-                // ✅ VARIANT PRICES
-                // ===========================
+
+
+                // VARIANT PRICES
 
                 {
-                  $map: {
 
-                    input: "$variants",
 
-                    as: "v",
+                  $reduce:{
 
-                    in: {
 
-                      $cond: [
+                    input:"$variants",
+
+
+                    initialValue:[],
+
+
+                    in:{
+
+
+
+                      $concatArrays:[
+
+
+                        "$$value",
+
+
 
                         {
-                          $gt: [
 
-                            "$$v.appPrice",
 
-                            0
+                          $cond:[
+
+
+
+                            // variant option exist
+
+                            {
+
+                              $gt:[
+
+
+                                {
+
+                                  $size:{
+
+                                    $ifNull:[
+
+                                      "$$this.itemQuestions",
+
+                                      []
+
+                                    ]
+
+                                  }
+
+                                },
+
+
+                                0
+
+                              ]
+
+                            },
+
+
+
+                            // options price
+
+                            {
+
+
+                              $map:{
+
+
+                                input:{
+
+
+                                  $reduce:{
+
+
+                                    input:"$$this.itemQuestions",
+
+                                    initialValue:[],
+
+
+                                    in:{
+
+
+                                      $concatArrays:[
+
+
+                                        "$$value",
+
+
+                                        "$$this.options"
+
+                                      ]
+
+                                    }
+
+
+                                  }
+
+
+                                },
+
+
+                                as:"op",
+
+
+                                in:{
+
+
+                                  $cond:[
+
+
+                                    {
+
+                                      $gt:[
+
+                                        "$$op.appPrice",
+
+                                        0
+
+                                      ]
+
+                                    },
+
+
+                                    "$$op.appPrice",
+
+
+                                    "$$op.storePrice"
+
+
+                                  ]
+
+
+                                }
+
+
+
+                              }
+
+
+
+                            },
+
+
+
+                            // variant price
+
+                            [
+
+                              {
+
+                                $cond:[
+
+
+                                  {
+
+                                    $gt:[
+
+                                      "$$this.appPrice",
+
+                                      0
+
+                                    ]
+
+                                  },
+
+
+                                  "$$this.appPrice",
+
+
+                                  "$$this.storePrice"
+
+
+                                ]
+
+                              }
+
+
+                            ]
+
+
 
                           ]
-                        },
 
-                        "$$v.appPrice",
+                        }
 
-                        "$$v.storePrice"
 
                       ]
 
                     }
 
+
                   }
+
+
                 },
 
-                // ===========================
-                // ✅ SINGLE PRICE
-                // ===========================
 
-                [
-                  {
-                    $cond: [
+
+
+                // =========================
+                // SINGLE ITEM
+                // =========================
+
+
+
+                {
+
+
+                  $cond:[
+
+
+                    {
+
+
+                      $gt:[
+
+
+                        {
+
+                          $size:{
+
+                            $ifNull:[
+
+                              "$itemQuestions",
+
+                              []
+
+                            ]
+
+                          }
+
+                        },
+
+
+                        0
+
+                      ]
+
+                    },
+
+
+
+                    // options
+
+
+                    {
+
+
+                      $map:{
+
+
+
+                        input:{
+
+
+                          $reduce:{
+
+
+                            input:"$itemQuestions",
+
+
+                            initialValue:[],
+
+
+                            in:{
+
+
+                              $concatArrays:[
+
+
+                                "$$value",
+
+
+                                "$$this.options"
+
+
+                              ]
+
+                            }
+
+
+                          }
+
+                        },
+
+
+
+                        as:"op",
+
+
+
+                        in:{
+
+
+                          $cond:[
+
+
+
+                            {
+
+                              $gt:[
+
+                                "$$op.appPrice",
+
+                                0
+
+                              ]
+
+                            },
+
+
+                            "$$op.appPrice",
+
+
+                            "$$op.storePrice"
+
+
+
+                          ]
+
+                        }
+
+
+
+                      }
+
+
+
+                    },
+
+
+
+                    // normal price
+
+
+                    [
+
 
                       {
-                        $gt: [
+
+
+                        $cond:[
+
+
+                          {
+
+                            $gt:[
+
+                              "$appPrice",
+
+                              0
+
+                            ]
+
+                          },
+
 
                           "$appPrice",
 
-                          0
+
+                          "$storePrice"
+
+
 
                         ]
-                      },
 
-                      "$appPrice",
+                      }
 
-                      "$storePrice"
 
                     ]
-                  }
-                ]
+
+
+
+                  ]
+
+                }
+
+
 
               ]
 
             }
 
           }
+
         },
 
-        // =====================================
-        // ✅ MIN MAX PRICE
-        // =====================================
+
+
+
+        // min max
+
 
         {
-          $addFields: {
 
-            minPrice: {
-              $min: "$priceArray"
+          $addFields:{
+
+
+            minPrice:{
+
+              $min:"$priceArray"
+
             },
 
-            maxPrice: {
-              $max: "$priceArray"
+
+            maxPrice:{
+
+              $max:"$priceArray"
+
             }
 
+
           }
+
         },
 
-        // =====================================
-        // ✅ PRICE RANGE
-        // =====================================
+
+
 
         {
-          $addFields: {
 
-            priceRange: {
+          $addFields:{
 
-              $cond: [
+
+            priceRange:{
+
+
+              $cond:[
+
 
                 {
-                  $eq: [
+
+                  $eq:[
 
                     "$minPrice",
 
                     "$maxPrice"
 
                   ]
+
                 },
 
+
                 {
-                  $concat: [
+
+                  $concat:[
 
                     "₹",
 
                     {
-                      $toString: "$minPrice"
+
+                      $toString:"$minPrice"
+
                     }
 
                   ]
+
                 },
 
+
                 {
-                  $concat: [
+
+                  $concat:[
+
 
                     "₹",
 
                     {
-                      $toString: "$minPrice"
+
+                      $toString:"$minPrice"
+
                     },
+
 
                     " - ₹",
 
+
                     {
-                      $toString: "$maxPrice"
+
+                      $toString:"$maxPrice"
+
                     }
 
+
                   ]
+
                 }
+
 
               ]
 
             }
 
           }
+
         },
 
-        // =====================================
-        // ✅ REMOVE EXTRA FIELDS
-        // =====================================
+
 
         {
-          $project: {
 
-            variants: 0,
+          $project:{
 
-            priceArray: 0
+
+            variants:0,
+
+            priceArray:0
+
 
           }
+
         },
 
-        // =====================================
-        // ✅ ALWAYS FIRST 10
-        // =====================================
+
 
         {
-          $limit: 10
+
+          $limit:10
+
         }
+
+
 
       ]);
 
+
+
+
       itemArr.push({
 
-        level1Id: cat._id,
 
-        level1Name: cat.categoryName,
+        level1Id:cat._id,
+
+        level1Name:cat.categoryName,
 
         items
 
+
       });
+
 
     }
 
-    // =========================================
-    // ✅ RESPONSE
-    // =========================================
+
+
 
     res.json({
 
-      success: true,
+
+      success:true,
+
 
       stores,
 
+
       categories,
+
 
       adminId,
 
+
       itemArr
+
+
 
     });
 
+
+
   }
 
-  catch (err) {
 
-    console.error("Error:", err);
+  catch(err){
+
+
+    console.log(err);
+
 
     res.status(500).json({
 
-      success: false,
 
-      message: err.message
+      success:false,
+
+      message:err.message
+
 
     });
 
+
   }
+
 
 });
 router.post("/getcategoryyselectedara", async (req, res) => {
@@ -1039,7 +1462,7 @@ router.post("/selectareasubmit", async (req, res) => {
 // ✅ BACKEND API
 // ===============================================
 
-router.post(
+ router.post(
   "/getLevel3CategoryItems",
   async (req, res) => {
 
@@ -1053,269 +1476,618 @@ router.post(
 
       } = req.body;
 
-      let items =
-        await Item.aggregate([
 
-          // =====================================
-          // ✅ MATCH
-          // =====================================
+      let items = await Item.aggregate([
 
-          {
 
-            $match: {
+        // =====================================
+        // MATCH
+        // =====================================
 
-              addedBy:
-                new mongoose.Types
-                  .ObjectId(adminId),
+        {
 
-              status: true,
+          $match: {
 
-              showOnFront: true,
 
-              useThisItemAsChild:
-                false,
+            addedBy:
+              new mongoose.Types.ObjectId(adminId),
 
-              storeId: {
-                $ne: null
-              },
 
-              categories: {
+            status:true,
 
-                $elemMatch: {
 
-                  level2:
-                    String(level2Id),
+            showOnFront:true,
 
-                  level3:
-                    String(level3Id)
+
+            useThisItemAsChild:false,
+
+
+            storeId:{
+              $ne:null
+            },
+
+
+            categories:{
+
+              $elemMatch:{
+
+                level2:String(level2Id),
+
+                level3:String(level3Id)
+
+              }
+
+            }
+
+
+          }
+
+        },
+
+
+
+        {
+          $sort:{
+
+            createdAt:-1
+
+          }
+
+        },
+
+
+
+        // =====================================
+        // DUPLICATE REMOVE
+        // =====================================
+
+        {
+
+          $group:{
+
+            _id:{
+
+              $ifNull:[
+
+                "$original_item_id",
+
+                "$_id"
+
+              ]
+
+            },
+
+
+            doc:{
+
+              $first:"$$ROOT"
+
+            }
+
+          }
+
+        },
+
+
+
+        {
+
+          $replaceRoot:{
+
+            newRoot:"$doc"
+
+          }
+
+        },
+
+
+
+        // =====================================
+        // STORE
+        // =====================================
+
+
+        {
+
+          $lookup:{
+
+            from:"stores",
+
+            localField:"storeId",
+
+            foreignField:"_id",
+
+            as:"storedetails"
+
+          }
+
+        },
+
+
+
+        {
+
+          $addFields:{
+
+            storedetails:{
+
+              $arrayElemAt:[
+
+                "$storedetails",
+
+                0
+
+              ]
+
+            }
+
+          }
+
+        },
+
+
+
+        {
+
+          $match:{
+
+            "storedetails.status":true,
+
+            "storedetails.activeStatus":true
+
+          }
+
+        },
+
+
+
+        // =====================================
+        // VARIANTS
+        // =====================================
+
+
+        {
+
+          $lookup:{
+
+            from:"items",
+
+            localField:"variantItems",
+
+            foreignField:"_id",
+
+            as:"variants"
+
+          }
+
+        },
+
+
+
+        {
+
+          $addFields:{
+
+            variants:{
+
+
+              $filter:{
+
+
+                input:"$variants",
+
+                as:"v",
+
+                cond:{
+
+
+                  $eq:[
+
+                    "$$v.status",
+
+                    true
+
+                  ]
 
                 }
 
-              }
-
-            }
-
-          },
-
-          // =====================================
-          // ✅ LATEST
-          // =====================================
-
-          {
-
-            $sort: {
-
-              createdAt: -1
-
-            }
-
-          },
-
-          // =====================================
-          // ✅ REMOVE DUPLICATE
-          // =====================================
-
-          {
-
-            $group: {
-
-              _id: {
-
-                $ifNull: [
-
-                  "$original_item_id",
-
-                  "$_id"
-
-                ]
-
-              },
-
-              doc: {
-
-                $first:
-                  "$$ROOT"
 
               }
 
             }
 
-          },
+          }
 
-          {
+        },
 
-            $replaceRoot: {
 
-              newRoot: "$doc"
 
-            }
 
-          },
+        // =====================================
+        // FINAL PRICE LOGIC
+        // =====================================
 
-          // =====================================
-          // ✅ STORE
-          // =====================================
 
-          {
+        {
 
-            $lookup: {
+          $addFields:{
 
-              from: "stores",
 
-              localField:
-                "storeId",
+            priceArray:{
 
-              foreignField:
-                "_id",
 
-              as: "storedetails"
 
-            }
+              $cond:[
 
-          },
 
-          {
 
-            $addFields: {
+                // ---------------------------
+                // VARIANT EXIST
+                // ---------------------------
 
-              storedetails: {
 
-                $arrayElemAt: [
+                {
 
-                  "$storedetails",
+                  $gt:[
 
-                  0
+                    {
 
-                ]
+                      $size:"$variants"
 
-              }
+                    },
 
-            }
 
-          },
+                    0
 
-          // =====================================
-          // ✅ ACTIVE STORE
-          // =====================================
+                  ]
 
-          {
+                },
 
-            $match: {
 
-              "storedetails.status":
-                true,
 
-              "storedetails.activeStatus":
-                true
+                {
 
-            }
 
-          },
+                  $reduce:{
 
-          // =====================================
-          // ✅ VARIANTS
-          // =====================================
 
-          {
+                    input:"$variants",
 
-            $lookup: {
 
-              from: "items",
+                    initialValue:[],
 
-              localField:
-                "variantItems",
 
-              foreignField:
-                "_id",
+                    in:{
 
-              as: "variants"
 
-            }
 
-          },
+                      $concatArrays:[
 
-          // =====================================
-          // ✅ ACTIVE VARIANTS
-          // =====================================
 
-          {
+                        "$$value",
 
-            $addFields: {
 
-              variants: {
 
-                $filter: {
+                        {
 
-                  input:
-                    "$variants",
 
-                  as: "v",
+                          $cond:[
 
-                  cond: {
 
-                    $eq: [
 
-                      "$$v.status",
+                            // variant has option
 
-                      true
+                            {
 
-                    ]
+                              $gt:[
+
+
+                                {
+
+                                  $size:{
+
+                                    $ifNull:[
+
+                                      "$$this.itemQuestions",
+
+                                      []
+
+                                    ]
+
+                                  }
+
+                                },
+
+
+                                0
+
+                              ]
+
+                            },
+
+
+
+                            // option prices
+
+                            {
+
+
+                              $map:{
+
+
+                                input:{
+
+
+                                  $reduce:{
+
+
+                                    input:"$$this.itemQuestions",
+
+                                    initialValue:[],
+
+
+                                    in:{
+
+
+                                      $concatArrays:[
+
+
+                                        "$$value",
+
+                                        "$$this.options"
+
+                                      ]
+
+                                    }
+
+
+                                  }
+
+
+                                },
+
+
+                                as:"op",
+
+
+                                in:{
+
+
+                                  $cond:[
+
+
+                                    {
+
+                                      $gt:[
+
+                                        "$$op.appPrice",
+
+                                        0
+
+                                      ]
+
+                                    },
+
+
+                                    "$$op.appPrice",
+
+
+                                    "$$op.storePrice"
+
+
+                                  ]
+
+                                }
+
+
+                              }
+
+
+                            },
+
+
+
+
+                            // no option variant price
+
+
+                            [
+
+                              {
+
+                                $cond:[
+
+
+                                  {
+
+                                    $gt:[
+
+                                      "$$this.appPrice",
+
+                                      0
+
+                                    ]
+
+                                  },
+
+
+                                  "$$this.appPrice",
+
+
+                                  "$$this.storePrice"
+
+
+                                ]
+
+                              }
+
+                            ]
+
+
+                          ]
+
+                        }
+
+
+                      ]
+
+                    }
+
 
                   }
 
-                }
 
-              }
+                },
 
-            }
 
-          },
 
-          // =====================================
-          // ✅ PRICE ARRAY
-          // =====================================
 
-          {
 
-            $addFields: {
+                // ---------------------------
+                // SINGLE ITEM
+                // ---------------------------
 
-              priceArray: {
 
-                $cond: [
 
-                  // variants exist
-                  {
+                {
 
-                    $gt: [
+
+                  $cond:[
+
+
+
+                    {
+
+                      $gt:[
+
+
+                        {
+
+                          $size:{
+
+                            $ifNull:[
+
+                              "$itemQuestions",
+
+                              []
+
+                            ]
+
+                          }
+
+                        },
+
+
+                        0
+
+
+                      ]
+
+                    },
+
+
+
+
+                    // item options
+
+
+                    {
+
+
+                      $map:{
+
+
+                        input:{
+
+
+                          $reduce:{
+
+
+                            input:"$itemQuestions",
+
+
+                            initialValue:[],
+
+
+                            in:{
+
+
+                              $concatArrays:[
+
+
+                                "$$value",
+
+                                "$$this.options"
+
+
+                              ]
+
+                            }
+
+
+                          }
+
+
+                        },
+
+
+                        as:"op",
+
+
+                        in:{
+
+
+                          $cond:[
+
+
+                            {
+
+                              $gt:[
+
+                                "$$op.appPrice",
+
+                                0
+
+                              ]
+
+                            },
+
+
+                            "$$op.appPrice",
+
+
+                            "$$op.storePrice"
+
+
+                          ]
+
+                        }
+
+
+
+                      }
+
+
+                    },
+
+
+
+
+                    // simple item
+
+
+                    [
 
                       {
-                        $size: "$variants"
-                      },
 
-                      0
+                        $cond:[
 
-                    ]
-
-                  },
-
-                  // variant prices
-                  {
-
-                    $map: {
-
-                      input: "$variants",
-
-                      as: "v",
-
-                      in: {
-
-                        $cond: [
 
                           {
 
-                            $gt: [
+                            $gt:[
 
-                              "$$v.appPrice",
+                              "$appPrice",
 
                               0
 
@@ -1323,213 +2095,237 @@ router.post(
 
                           },
 
-                          "$$v.appPrice",
 
-                          "$$v.storePrice"
+                          "$appPrice",
+
+
+                          "$storePrice"
+
 
                         ]
 
                       }
 
-                    }
 
-                  },
+                    ]
 
-                  // single item price
-                  [
+
+
+                  ]
+
+                }
+
+
+
+              ]
+
+
+            }
+
+
+          }
+
+        },
+
+
+
+        // =====================================
+        // MIN MAX
+        // =====================================
+
+
+        {
+
+          $addFields:{
+
+
+            minPrice:{
+
+              $min:"$priceArray"
+
+            },
+
+
+            maxPrice:{
+
+              $max:"$priceArray"
+
+            }
+
+
+          }
+
+        },
+
+
+
+
+        {
+
+          $addFields:{
+
+
+            priceRange:{
+
+
+              $cond:[
+
+
+
+                {
+
+                  $eq:[
+
+                    "$minPrice",
+
+                    "$maxPrice"
+
+                  ]
+
+                },
+
+
+                {
+
+                  $concat:[
+
+                    "₹",
 
                     {
 
-                      $cond: [
-
-                        {
-
-                          $gt: [
-
-                            "$appPrice",
-
-                            0
-
-                          ]
-
-                        },
-
-                        "$appPrice",
-
-                        "$storePrice"
-
-                      ]
+                      $toString:"$minPrice"
 
                     }
 
                   ]
 
-                ]
+                },
 
-              }
 
-            }
 
-          },
+                {
 
-          // =====================================
-          // ✅ MIN MAX PRICE
-          // =====================================
+                  $concat:[
 
-          {
 
-            $addFields: {
+                    "₹",
 
-              minPrice: {
+                    {
 
-                $min: "$priceArray"
+                      $toString:"$minPrice"
 
-              },
+                    },
 
-              maxPrice: {
 
-                $max: "$priceArray"
+                    " - ₹",
 
-              }
 
-            }
+                    {
 
-          },
+                      $toString:"$maxPrice"
 
-          // =====================================
-          // ✅ PRICE RANGE
-          // =====================================
+                    }
 
-          {
 
-            $addFields: {
+                  ]
 
-              priceRange: {
+                }
 
-                $cond: [
 
-                  {
 
-                    $eq: [
-
-                      "$minPrice",
-
-                      "$maxPrice"
-
-                    ]
-
-                  },
-
-                  {
-
-                    $concat: [
-
-                      "₹",
-
-                      {
-
-                        $toString:
-                          "$minPrice"
-
-                      }
-
-                    ]
-
-                  },
-
-                  {
-
-                    $concat: [
-
-                      "₹",
-
-                      {
-
-                        $toString:
-                          "$minPrice"
-
-                      },
-
-                      " - ₹",
-
-                      {
-
-                        $toString:
-                          "$maxPrice"
-
-                      }
-
-                    ]
-
-                  }
-
-                ]
-
-              }
+              ]
 
             }
 
-          },
-
-          // =====================================
-          // ✅ REMOVE EXTRA FIELDS
-          // =====================================
-
-          {
-
-            $project: {
-
-              variants: 0,
-              priceArray: 0
-
-            }
 
           }
 
-        ]);
+        },
 
-      // ===============================
-      // ✅ FINAL OPEN STATUS
-      // ===============================
 
-      items = items.map(item => {
 
-       
-        const store =
-          item.storedetails;
 
-         item.storedetails.finalopenstatus = getfinalopenstatus(store);
+        {
+
+          $project:{
+
+
+            variants:0,
+
+            priceArray:0
+
+
+          }
+
+        }
+
+
+      ]);
+
+
+
+
+
+      // =====================================
+      // OPEN STATUS
+      // =====================================
+
+
+      items = items.map(item=>{
+
+
+        const store=item.storedetails;
+
+
+        item.storedetails.finalopenstatus =
+
+          getfinalopenstatus(store);
+
+
 
         return item;
 
+
       });
 
-      // ===============================
-      // ✅ RESPONSE
-      // ===============================
+
+
+
 
       res.json({
 
-        success: true,
+
+        success:true,
 
         items
 
+
       });
+
+
 
     }
 
-    catch (err) {
+
+    catch(err){
+
 
       console.log(err);
 
+
       res.status(500).json({
 
-        success: false,
-        message: err.message
+
+        success:false,
+
+        message:err.message
+
 
       });
 
+
     }
+
 
   }
 );
@@ -1598,608 +2394,1228 @@ router.post(
 
   }
 );
-router.post(
+ router.post(
   "/searchItems",
   async (req, res) => {
 
     try {
 
+
       const {
 
         keyword,
+
         adminId,
+
         categoryId,
+
         categoryLevel,
+
         searchfromUrl
 
+
       } = req.body;
+
+
 
       // =====================================
       // COMMON MATCH
       // =====================================
 
+
       const commonMatch = {
 
+
         addedBy:
-          new mongoose.Types
-            .ObjectId(adminId),
 
-        status: true,
+          new mongoose.Types.ObjectId(adminId),
 
-        showOnFront: true,
 
-        useThisItemAsChild:
-          false,
+        status:true,
 
-        storeId: {
-          $ne: null
+
+        showOnFront:true,
+
+
+        useThisItemAsChild:false,
+
+
+        storeId:{
+
+          $ne:null
+
         },
 
-        itemName: {
 
-          $regex: keyword,
+        itemName:{
 
-          $options: "i"
+          $regex:keyword,
+
+          $options:"i"
 
         }
 
+
       };
 
+
+
+
+
       // =====================================
-      // PIPELINE FUNCTION
+      // PIPELINE
       // =====================================
 
-      const createPipeline =
-        (matchObj) => [
 
-          // =========================
-          // MATCH
-          // =========================
+      const createPipeline = (matchObj)=>[
 
-          {
-            $match: matchObj
-          },
 
-          // =========================
-          // LATEST
-          // =========================
 
-          {
-            $sort: {
-              createdAt: -1
-            }
-          },
+        {
 
-          // =========================
-          // REMOVE DUPLICATE
-          // =========================
+          $match:matchObj
 
-          {
-            $group: {
+        },
 
-              _id: {
 
-                $ifNull: [
 
-                  "$original_item_id",
+        {
 
-                  "$_id"
+          $sort:{
 
-                ]
+            createdAt:-1
 
-              },
+          }
 
-              doc: {
+        },
 
-                $first:
-                  "$$ROOT"
 
-              }
 
-            }
+        // =====================================
+        // DUPLICATE REMOVE
+        // =====================================
 
-          },
 
-          {
-            $replaceRoot: {
+        {
 
-              newRoot: "$doc"
+          $group:{
 
-            }
 
-          },
+            _id:{
 
-          // =========================
-          // STORE DETAILS
-          // =========================
 
-          {
-            $lookup: {
+              $ifNull:[
 
-              from: "stores",
 
-              localField:
-                "storeId",
+                "$original_item_id",
 
-              foreignField:
-                "_id",
 
-              as: "storedetails"
+                "$_id"
+
+
+              ]
+
+            },
+
+
+            doc:{
+
+              $first:"$$ROOT"
 
             }
 
-          },
 
-          {
-            $addFields: {
+          }
 
-              storedetails: {
+        },
 
-                $arrayElemAt: [
 
-                  "$storedetails",
 
-                  0
+        {
 
-                ]
+          $replaceRoot:{
 
-              }
+
+            newRoot:"$doc"
+
+
+          }
+
+        },
+
+
+
+
+
+        // =====================================
+        // STORE DETAILS
+        // =====================================
+
+
+        {
+
+          $lookup:{
+
+
+            from:"stores",
+
+
+            localField:"storeId",
+
+
+            foreignField:"_id",
+
+
+            as:"storedetails"
+
+
+          }
+
+        },
+
+
+
+        {
+
+          $addFields:{
+
+
+            storedetails:{
+
+
+              $arrayElemAt:[
+
+
+                "$storedetails",
+
+
+                0
+
+
+              ]
+
 
             }
 
-          },
 
-          // =========================
-          // ACTIVE STORE
-          // =========================
+          }
 
-          {
-            $match: {
+        },
 
-              "storedetails.status":
-                true,
 
-              "storedetails.activeStatus":
-                true
 
-            }
 
-          },
 
-          // =========================
-          // VARIANTS
-          // =========================
+        {
 
-          {
-            $lookup: {
+          $match:{
 
-              from: "items",
 
-              localField:
-                "variantItems",
+            "storedetails.status":true,
 
-              foreignField:
-                "_id",
 
-              as: "variants"
+            "storedetails.activeStatus":true
 
-            }
 
-          },
+          }
 
-          // =========================
-          // ACTIVE VARIANTS
-          // =========================
+        },
 
-          {
-            $addFields: {
 
-              variants: {
 
-                $filter: {
 
-                  input:
-                    "$variants",
 
-                  as: "v",
+        // =====================================
+        // VARIANTS
+        // =====================================
 
-                  cond: {
 
-                    $eq: [
+        {
 
-                      "$$v.status",
+          $lookup:{
 
-                      true
 
-                    ]
+            from:"items",
 
-                  }
+
+            localField:"variantItems",
+
+
+            foreignField:"_id",
+
+
+            as:"variants"
+
+
+          }
+
+        },
+
+
+
+        {
+
+          $addFields:{
+
+
+            variants:{
+
+
+              $filter:{
+
+
+                input:"$variants",
+
+
+                as:"v",
+
+
+                cond:{
+
+
+                  $eq:[
+
+
+                    "$$v.status",
+
+
+                    true
+
+
+                  ]
 
                 }
 
+
               }
+
 
             }
 
-          },
 
-          // =========================
-          // PRICE ARRAY
-          // =========================
+          }
 
-          {
-            $addFields: {
+        },
 
-              priceArray: {
 
-                $cond: [
 
-                  // variants exist
 
-                  {
 
-                    $gt: [
 
-                      {
-                        $size: "$variants"
-                      },
 
-                      0
+        // =====================================
+        // PRICE ARRAY
+        // =====================================
 
-                    ]
 
-                  },
+        {
 
-                  // variant prices
+          $addFields:{
 
-                  {
 
-                    $map: {
+            priceArray:{
 
-                      input:
-                        "$variants",
 
-                      as: "v",
 
-                      in: {
+              $cond:[
 
-                        $cond: [
 
-                          {
 
-                            $gt: [
 
-                              "$$v.appPrice",
+                // -----------------------------
+                // VARIANT EXIST
+                // -----------------------------
 
-                              0
 
-                            ]
+                {
 
-                          },
 
-                          "$$v.appPrice",
+                  $gt:[
 
-                          "$$v.storePrice"
-
-                        ]
-
-                      }
-
-                    }
-
-                  },
-
-                  // single item price
-
-                  [
 
                     {
 
-                      $cond: [
+                      $size:"$variants"
+
+
+                    },
+
+
+                    0
+
+
+                  ]
+
+                },
+
+
+
+
+                // VARIANT PRICE
+
+
+                {
+
+
+                  $reduce:{
+
+
+                    input:"$variants",
+
+
+                    initialValue:[],
+
+
+                    in:{
+
+
+                      $concatArrays:[
+
+
+
+                        "$$value",
+
+
 
                         {
 
-                          $gt: [
 
-                            "$appPrice",
+                          $cond:[
 
-                            0
+
+
+                            // variant option check
+
+
+                            {
+
+
+                              $gt:[
+
+
+                                {
+
+                                  $size:{
+
+
+                                    $ifNull:[
+
+
+                                      "$$this.itemQuestions",
+
+
+                                      []
+
+
+                                    ]
+
+                                  }
+
+
+                                },
+
+
+                                0
+
+
+                              ]
+
+                            },
+
+
+
+
+
+                            // OPTION PRICE
+
+
+                            {
+
+
+                              $map:{
+
+
+
+                                input:{
+
+
+                                  $reduce:{
+
+
+                                    input:"$$this.itemQuestions",
+
+
+                                    initialValue:[],
+
+
+                                    in:{
+
+
+                                      $concatArrays:[
+
+
+                                        "$$value",
+
+
+                                        "$$this.options"
+
+
+                                      ]
+
+                                    }
+
+
+                                  }
+
+
+                                },
+
+
+
+                                as:"op",
+
+
+
+                                in:{
+
+
+
+                                  $cond:[
+
+
+                                    {
+
+
+                                      $gt:[
+
+
+                                        "$$op.appPrice",
+
+
+                                        0
+
+
+                                      ]
+
+                                    },
+
+
+
+                                    "$$op.appPrice",
+
+
+
+                                    "$$op.storePrice"
+
+
+
+                                  ]
+
+
+
+                                }
+
+
+
+                              }
+
+
+                            },
+
+
+
+
+
+                            // WITHOUT OPTION VARIANT PRICE
+
+
+
+                            [
+
+
+                              {
+
+
+                                $cond:[
+
+
+                                  {
+
+
+                                    $gt:[
+
+
+                                      "$$this.appPrice",
+
+
+                                      0
+
+
+                                    ]
+
+                                  },
+
+
+
+                                  "$$this.appPrice",
+
+
+
+                                  "$$this.storePrice"
+
+
+
+                                ]
+
+                              }
+
+
+                            ]
+
+
 
                           ]
 
-                        },
+                        }
 
-                        "$appPrice",
-
-                        "$storePrice"
 
                       ]
 
                     }
 
-                  ]
-
-                ]
-
-              }
-
-            }
-
-          },
-
-          // =========================
-          // MIN MAX
-          // =========================
-
-          {
-            $addFields: {
-
-              minPrice: {
-
-                $min:
-                  "$priceArray"
-
-              },
-
-              maxPrice: {
-
-                $max:
-                  "$priceArray"
-
-              }
-
-            }
-
-          },
-
-          // =========================
-          // PRICE RANGE
-          // =========================
-
-          {
-            $addFields: {
-
-              priceRange: {
-
-                $cond: [
-
-                  {
-
-                    $eq: [
-
-                      "$minPrice",
-
-                      "$maxPrice"
-
-                    ]
-
-                  },
-
-                  {
-
-                    $concat: [
-
-                      "₹",
-
-                      {
-
-                        $toString:
-                          "$minPrice"
-
-                      }
-
-                    ]
-
-                  },
-
-                  {
-
-                    $concat: [
-
-                      "₹",
-
-                      {
-
-                        $toString:
-                          "$minPrice"
-
-                      },
-
-                      " - ₹",
-
-                      {
-
-                        $toString:
-                          "$maxPrice"
-
-                      }
-
-                    ]
 
                   }
 
-                ]
 
-              }
+                },
+
+
+
+
+
+
+
+                // -----------------------------
+                // SINGLE ITEM
+                // -----------------------------
+
+
+
+                {
+
+
+                  $cond:[
+
+
+
+                    // option exist
+
+
+                    {
+
+
+                      $gt:[
+
+
+
+                        {
+
+
+                          $size:{
+
+
+                            $ifNull:[
+
+
+                              "$itemQuestions",
+
+
+                              []
+
+
+                            ]
+
+                          }
+
+
+                        },
+
+
+                        0
+
+
+                      ]
+
+                    },
+
+
+
+
+
+                    // item option price
+
+
+
+                    {
+
+
+                      $map:{
+
+
+                        input:{
+
+
+
+                          $reduce:{
+
+
+                            input:"$itemQuestions",
+
+
+                            initialValue:[],
+
+
+                            in:{
+
+
+
+                              $concatArrays:[
+
+
+
+                                "$$value",
+
+
+
+                                "$$this.options"
+
+
+
+                              ]
+
+                            }
+
+
+                          }
+
+
+                        },
+
+
+                        as:"op",
+
+
+
+                        in:{
+
+
+                          $cond:[
+
+
+                            {
+
+
+                              $gt:[
+
+
+                                "$$op.appPrice",
+
+
+                                0
+
+
+                              ]
+
+                            },
+
+
+                            "$$op.appPrice",
+
+
+
+                            "$$op.storePrice"
+
+
+
+                          ]
+
+                        }
+
+
+                      }
+
+
+                    },
+
+
+
+
+
+                    // normal item price
+
+
+                    [
+
+
+                      {
+
+
+                        $cond:[
+
+
+
+                          {
+
+
+                            $gt:[
+
+
+                              "$appPrice",
+
+
+                              0
+
+
+                            ]
+
+                          },
+
+
+
+                          "$appPrice",
+
+
+
+                          "$storePrice"
+
+
+
+                        ]
+
+                      }
+
+
+                    ]
+
+
+
+                  ]
+
+                }
+
+
+
+              ]
+
 
             }
 
-          },
-
-          // =========================
-          // REMOVE EXTRA
-          // =========================
-
-          {
-            $project: {
-
-              variants: 0,
-
-              priceArray: 0
-
-            }
 
           }
 
-        ];
+
+        },
+
+
+
+
+
+        // =====================================
+        // MIN MAX
+        // =====================================
+
+
+        {
+
+          $addFields:{
+
+
+
+            minPrice:{
+
+
+              $min:"$priceArray"
+
+
+            },
+
+
+            maxPrice:{
+
+
+              $max:"$priceArray"
+
+
+            }
+
+
+
+          }
+
+        },
+
+
+
+
+
+        // =====================================
+        // RANGE
+        // =====================================
+
+
+        {
+
+          $addFields:{
+
+
+            priceRange:{
+
+
+              $cond:[
+
+
+
+                {
+
+
+                  $eq:[
+
+
+                    "$minPrice",
+
+
+                    "$maxPrice"
+
+
+                  ]
+
+
+                },
+
+
+
+
+                {
+
+
+                  $concat:[
+
+
+                    "₹",
+
+
+                    {
+
+
+                      $toString:"$minPrice"
+
+
+                    }
+
+
+                  ]
+
+                },
+
+
+
+
+
+                {
+
+
+                  $concat:[
+
+
+                    "₹",
+
+
+                    {
+
+
+                      $toString:"$minPrice"
+
+
+                    },
+
+
+                    " - ₹",
+
+
+                    {
+
+
+                      $toString:"$maxPrice"
+
+
+                    }
+
+
+                  ]
+
+
+                }
+
+
+
+              ]
+
+            }
+
+
+          }
+
+        },
+
+
+
+
+        {
+
+          $project:{
+
+
+            variants:0,
+
+
+            priceArray:0
+
+
+
+          }
+
+        }
+
+
+
+      ];
+
+
+
+
+
+
 
       // =====================================
-      // GLOBAL ITEMS
+      // GLOBAL SEARCH
       // =====================================
 
-      let globalItems = [];
 
-      if (
-        searchfromUrl ===
-        "global"
-      ) {
 
-        globalItems =
-          await Item.aggregate(
+      let globalItems=[];
 
-            createPipeline(
-              commonMatch
-            )
 
-          );
+
+      if(searchfromUrl==="global"){
+
+
+
+        globalItems = await Item.aggregate(
+
+
+          createPipeline(commonMatch)
+
+
+        );
 
       }
 
+
+
+
+
       // =====================================
-      // CATEGORY ITEMS
+      // CATEGORY FILTER
       // =====================================
 
-      const categoryMatch = {
+
+      const categoryMatch={
 
         ...commonMatch
 
       };
 
-      // level1
 
-      if (
-        categoryLevel === "l1"
-      ) {
 
-        categoryMatch.categories = {
 
-          $elemMatch: {
 
-            level1:
-              String(categoryId)
+      if(categoryLevel==="l1"){
 
-          }
 
-        };
 
-      }
+        categoryMatch.categories={
 
-      // level2
 
-      if (
-        categoryLevel === "l2"
-      ) {
 
-        categoryMatch.categories = {
+          $elemMatch:{
 
-          $elemMatch: {
 
-            level2:
-              String(categoryId)
+            level1:String(categoryId)
+
 
           }
 
+
         };
+
 
       }
 
-      const categoryItems =
-        await Item.aggregate(
 
-          createPipeline(
-            categoryMatch
-          )
 
-        );
 
-      // =====================================
-      // FINAL OPEN STATUS
-      // =====================================
+      if(categoryLevel==="l2"){
 
-      const addOpenStatus =
-        (items) => {
 
-          return items.map(item => {
+        categoryMatch.categories={
 
-           
 
-            const store =
-              item.storedetails;
 
-               item.storedetails.finalopenstatus = getfinalopenstatus(store);
+          $elemMatch:{
 
-            return item;
 
-          });
+            level2:String(categoryId)
+
+
+          }
+
 
         };
 
-      globalItems =
-        addOpenStatus(
-          globalItems
-        );
 
-      // avoid duplicate api call
-      // in global mode category items not needed
+      }
 
-      let finalCategoryItems = [];
 
-      if (
-        searchfromUrl !==
-        "global"
-      ) {
+
+
+
+
+
+      let categoryItems = await Item.aggregate(
+
+
+        createPipeline(categoryMatch)
+
+
+      );
+
+
+
+
+
+
+
+      // =====================================
+      // OPEN STATUS
+      // =====================================
+
+
+      const addOpenStatus=(items)=>{
+
+
+        return items.map(item=>{
+
+
+          item.storedetails.finalopenstatus =
+
+            getfinalopenstatus(
+
+              item.storedetails
+
+            );
+
+
+
+          return item;
+
+
+        });
+
+
+
+      };
+
+
+
+
+
+      globalItems = addOpenStatus(globalItems);
+
+
+
+      let finalCategoryItems=[];
+
+
+
+      if(searchfromUrl!=="global"){
+
+
 
         finalCategoryItems =
-          addOpenStatus(
-            categoryItems
-          );
+
+          addOpenStatus(categoryItems);
+
+
 
       }
 
-      // =====================================
-      // RESPONSE
-      // =====================================
+
+
+
+
+
 
       res.json({
 
-        success: true,
+
+        success:true,
+
 
         globalItems,
 
-        categoryItems:
-          finalCategoryItems
+
+        categoryItems:finalCategoryItems
+
+
 
       });
 
+
+
+
     }
 
-    catch (err) {
+    catch(err){
+
+
 
       console.log(err);
 
+
+
       res.status(500).json({
 
-        success: false,
 
-        message: err.message,
 
-        globalItems: [],
+        success:false,
 
-        categoryItems: []
+
+        message:err.message,
+
+
+        globalItems:[],
+
+
+        categoryItems:[]
+
+
 
       });
 
+
+
     }
+
 
   }
 );
@@ -2767,469 +4183,1072 @@ router.post(
   }
 );
 
-router.post(
+ router.post(
   '/get-cart-items',
   async (req, res) => {
 
     try {
 
+
       const {
 
         cartItemIds = [],
+
         wishlistItemIds = [],
+
         adminId
+
 
       } = req.body;
 
+
+
+
+
       // =====================================
-      // ✅ COMMON FUNCTION
+      // COMMON FUNCTION
       // =====================================
 
-      const getItems = async (ids) => {
 
-        if (!ids?.length) {
+      const getItems = async(ids)=>{
+
+
+        if(!ids?.length){
 
           return [];
 
         }
 
-        let items =
-          await Item.aggregate([
 
-            // =====================================
-            // ✅ MATCH ITEMS
-            // =====================================
 
-            {
 
-              $match: {
 
-                _id: {
+        let items = await Item.aggregate([
 
-                  $in: ids.map(
-                    x =>
-                      new mongoose.Types.ObjectId(x)
-                  )
 
-                },
 
-                addedBy:
-                  new mongoose.Types.ObjectId(
-                    adminId
-                  ),
+          // =====================================
+          // MATCH
+          // =====================================
 
-                status: true,
 
-                showOnFront: true
+          {
 
-              }
+            $match:{
 
-            },
 
-            // =====================================
-            // ✅ STORE DETAILS
-            // =====================================
+              _id:{
 
-            {
 
-              $lookup: {
+                $in:
 
-                from: 'stores',
+                ids.map(
 
-                localField: 'storeId',
+                  x=>new mongoose.Types.ObjectId(x)
 
-                foreignField: '_id',
+                )
 
-                as: 'storedetails'
 
-              }
+              },
 
-            },
 
-            // =====================================
-            // ✅ SINGLE STORE OBJECT
-            // =====================================
+              addedBy:
 
-            {
+                new mongoose.Types.ObjectId(adminId),
 
-              $addFields: {
 
-                storedetails: {
+              status:true,
 
-                  $arrayElemAt: [
 
-                    '$storedetails',
+              showOnFront:true
 
-                    0
 
-                  ]
+            }
 
-                }
 
-              }
+          },
 
-            },
 
-            // =====================================
-            // ✅ ACTIVE STORE ONLY
-            // =====================================
 
-            {
 
-              $match: {
 
-                'storedetails.status': true,
+          // =====================================
+          // STORE
+          // =====================================
 
-                'storedetails.activeStatus': true
 
-              }
+          {
 
-            },
+            $lookup:{
 
-            // =====================================
-            // ✅ LOOKUP VARIANTS
-            // =====================================
 
-            {
+              from:"stores",
 
-              $lookup: {
 
-                from: "items",
+              localField:"storeId",
 
-                localField: "variantItems",
 
-                foreignField: "_id",
+              foreignField:"_id",
 
-                as: "variants"
+
+              as:"storedetails"
+
+
+            }
+
+
+          },
+
+
+
+          {
+
+            $addFields:{
+
+
+              storedetails:{
+
+
+                $arrayElemAt:[
+
+
+                  "$storedetails",
+
+
+                  0
+
+
+                ]
 
               }
 
-            },
 
-            // =====================================
-            // ✅ FILTER ACTIVE VARIANTS
-            // =====================================
+            }
 
-            {
 
-              $addFields: {
+          },
 
-                variants: {
 
-                  $filter: {
 
-                    input: "$variants",
 
-                    as: "v",
+          {
 
-                    cond: {
+            $match:{
 
-                      $eq: [
 
-                        "$$v.status",
+              "storedetails.status":true,
 
-                        true
 
-                      ]
+              "storedetails.activeStatus":true
 
-                    }
+
+            }
+
+
+          },
+
+
+
+
+
+
+          // =====================================
+          // VARIANTS
+          // =====================================
+
+
+          {
+
+            $lookup:{
+
+
+              from:"items",
+
+
+              localField:"variantItems",
+
+
+              foreignField:"_id",
+
+
+              as:"variants"
+
+
+            }
+
+
+          },
+
+
+
+
+
+          {
+
+            $addFields:{
+
+
+              variants:{
+
+
+                $filter:{
+
+
+                  input:"$variants",
+
+
+                  as:"v",
+
+
+                  cond:{
+
+
+                    $eq:[
+
+
+                      "$$v.status",
+
+
+                      true
+
+
+                    ]
+
 
                   }
 
+
                 }
+
 
               }
 
-            },
 
-            // =====================================
-            // ✅ PRICE ARRAY
-            // =====================================
+            }
 
-            {
 
-              $addFields: {
+          },
 
-                priceArray: {
 
-                  $cond: [
 
-                    // ===========================
-                    // ✅ VARIANTS EXIST
-                    // ===========================
 
-                    {
 
-                      $gt: [
+
+
+          // =====================================
+          // PRICE ARRAY FINAL
+          // =====================================
+
+
+          {
+
+            $addFields:{
+
+
+
+              priceArray:{
+
+
+
+                $cond:[
+
+
+
+
+                  // -----------------------------
+                  // VARIANT EXIST
+                  // -----------------------------
+
+
+                  {
+
+
+                    $gt:[
+
+
+                      {
+
+                        $size:"$variants"
+
+
+                      },
+
+
+                      0
+
+
+                    ]
+
+
+                  },
+
+
+
+
+
+                  // VARIANT PRICE
+
+
+                  {
+
+
+                    $reduce:{
+
+
+                      input:"$variants",
+
+
+                      initialValue:[],
+
+
+                      in:{
+
+
+                        $concatArrays:[
+
+
+                          "$$value",
+
+
+
+                          {
+
+
+                            $cond:[
+
+
+
+                              // variant options
+
+
+                              {
+
+
+                                $gt:[
+
+
+                                  {
+
+
+                                    $size:{
+
+
+                                      $ifNull:[
+
+
+                                        "$$this.itemQuestions",
+
+
+                                        []
+
+
+                                      ]
+
+                                    }
+
+
+                                  },
+
+
+                                  0
+
+
+                                ]
+
+                              },
+
+
+
+
+
+                              // OPTION PRICE
+
+
+                              {
+
+
+                                $map:{
+
+
+                                  input:{
+
+
+                                    $reduce:{
+
+
+                                      input:"$$this.itemQuestions",
+
+
+                                      initialValue:[],
+
+
+                                      in:{
+
+
+                                        $concatArrays:[
+
+
+                                          "$$value",
+
+
+                                          "$$this.options"
+
+
+                                        ]
+
+                                      }
+
+
+                                    }
+
+
+                                  },
+
+
+                                  as:"op",
+
+
+
+                                  in:{
+
+
+                                    $cond:[
+
+
+                                      {
+
+
+                                        $gt:[
+
+
+                                          "$$op.appPrice",
+
+
+                                          0
+
+
+                                        ]
+
+                                      },
+
+
+                                      "$$op.appPrice",
+
+
+
+                                      "$$op.storePrice"
+
+
+
+                                    ]
+
+
+                                  }
+
+
+                                }
+
+
+                              },
+
+
+
+
+
+
+                              // WITHOUT OPTION
+
+
+                              [
+
+
+                                {
+
+
+                                  $cond:[
+
+
+                                    {
+
+
+                                      $gt:[
+
+
+                                        "$$this.appPrice",
+
+
+                                        0
+
+
+                                      ]
+
+                                    },
+
+
+
+                                    "$$this.appPrice",
+
+
+
+                                    "$$this.storePrice"
+
+
+
+                                  ]
+
+                                }
+
+
+                              ]
+
+
+
+
+                            ]
+
+                          }
+
+
+                        ]
+
+
+                      }
+
+
+                    }
+
+
+                  },
+
+
+
+
+
+
+
+                  // -----------------------------
+                  // SINGLE ITEM
+                  // -----------------------------
+
+
+                  {
+
+
+                    $cond:[
+
+
+
+
+
+                      // option exist
+
+
+                      {
+
+
+                        $gt:[
+
+
+                          {
+
+
+                            $size:{
+
+
+                              $ifNull:[
+
+
+                                "$itemQuestions",
+
+
+                                []
+
+                              ]
+
+                            }
+
+
+                          },
+
+
+                          0
+
+
+                        ]
+
+                      },
+
+
+
+
+
+
+
+                      // OPTIONS PRICE
+
+
+
+                      {
+
+
+                        $map:{
+
+
+
+                          input:{
+
+
+                            $reduce:{
+
+
+                              input:"$itemQuestions",
+
+
+                              initialValue:[],
+
+
+                              in:{
+
+
+                                $concatArrays:[
+
+
+                                  "$$value",
+
+
+                                  "$$this.options"
+
+
+                                ]
+
+                              }
+
+
+                            }
+
+
+                          },
+
+
+
+                          as:"op",
+
+
+
+                          in:{
+
+
+
+                            $cond:[
+
+
+
+                              {
+
+
+                                $gt:[
+
+
+                                  "$$op.appPrice",
+
+
+                                  0
+
+
+                                ]
+
+                              },
+
+
+
+                              "$$op.appPrice",
+
+
+
+                              "$$op.storePrice"
+
+
+
+                            ]
+
+                          }
+
+
+
+                        }
+
+
+                      },
+
+
+
+
+
+
+                      // NORMAL PRICE
+
+
+                      [
+
 
                         {
 
-                          $size: "$variants"
 
-                        },
+                          $cond:[
 
-                        0
 
-                      ]
-
-                    },
-
-                    // ===========================
-                    // ✅ VARIANT PRICES
-                    // ===========================
-
-                    {
-
-                      $map: {
-
-                        input: "$variants",
-
-                        as: "v",
-
-                        in: {
-
-                          $cond: [
 
                             {
 
-                              $gt: [
 
-                                "$$v.appPrice",
+                              $gt:[
+
+
+                                "$appPrice",
+
 
                                 0
+
 
                               ]
 
                             },
 
-                            "$$v.appPrice",
 
-                            "$$v.storePrice"
+
+                            "$appPrice",
+
+
+
+                            "$storePrice"
+
+
 
                           ]
 
                         }
 
-                      }
 
-                    },
+                      ]
 
-                    // ===========================
-                    // ✅ SINGLE PRICE
-                    // ===========================
 
-                    [
 
-                      {
-
-                        $cond: [
-
-                          {
-
-                            $gt: [
-
-                              "$appPrice",
-
-                              0
-
-                            ]
-
-                          },
-
-                          "$appPrice",
-
-                          "$storePrice"
-
-                        ]
-
-                      }
 
                     ]
 
-                  ]
+                  }
 
-                }
 
-              }
 
-            },
 
-            // =====================================
-            // ✅ MIN MAX PRICE
-            // =====================================
+                ]
 
-            {
 
-              $addFields: {
-
-                minPrice: {
-
-                  $min: "$priceArray"
-
-                },
-
-                maxPrice: {
-
-                  $max: "$priceArray"
-
-                }
 
               }
 
-            },
-
-            // =====================================
-            // ✅ PRICE RANGE
-            // =====================================
-
-            {
-
-              $addFields: {
-
-                priceRange: {
-
-                  $cond: [
-
-                    {
-
-                      $eq: [
-
-                        "$minPrice",
-
-                        "$maxPrice"
-
-                      ]
-
-                    },
-
-                    {
-
-                      $concat: [
-
-                        "₹",
-
-                        {
-
-                          $toString: "$minPrice"
-
-                        }
-
-                      ]
-
-                    },
-
-                    {
-
-                      $concat: [
-
-                        "₹",
-
-                        {
-
-                          $toString: "$minPrice"
-
-                        },
-
-                        " - ₹",
-
-                        {
-
-                          $toString: "$maxPrice"
-
-                        }
-
-                      ]
-
-                    }
-
-                  ]
-
-                }
-
-              }
-
-            },
-
-            // =====================================
-            // ✅ REMOVE EXTRA FIELDS
-            // =====================================
-
-            {
-
-              $project: {
-
-                variants: 0,
-
-                priceArray: 0
-
-              }
 
             }
 
-          ]);
+
+          },
+
+
+
+
+
+
+
+
+          // =====================================
+          // MIN MAX
+          // =====================================
+
+
+          {
+
+            $addFields:{
+
+
+
+              minPrice:{
+
+
+                $min:"$priceArray"
+
+
+              },
+
+
+              maxPrice:{
+
+
+                $max:"$priceArray"
+
+
+              }
+
+
+
+            }
+
+          },
+
+
+
+
+
+
+
+          // =====================================
+          // RANGE
+          // =====================================
+
+
+
+          {
+
+            $addFields:{
+
+
+              priceRange:{
+
+
+
+                $cond:[
+
+
+
+                  {
+
+
+                    $eq:[
+
+
+                      "$minPrice",
+
+
+                      "$maxPrice"
+
+
+                    ]
+
+                  },
+
+
+
+                  {
+
+
+                    $concat:[
+
+
+                      "₹",
+
+
+                      {
+
+
+                        $toString:"$minPrice"
+
+
+                      }
+
+
+                    ]
+
+                  },
+
+
+
+
+
+
+                  {
+
+
+                    $concat:[
+
+
+                      "₹",
+
+
+                      {
+
+
+                        $toString:"$minPrice"
+
+
+                      },
+
+
+
+                      " - ₹",
+
+
+
+                      {
+
+
+                        $toString:"$maxPrice"
+
+
+                      }
+
+
+
+                    ]
+
+                  }
+
+
+
+
+                ]
+
+
+              }
+
+
+
+            }
+
+
+          },
+
+
+
+
+
+          {
+
+            $project:{
+
+
+              variants:0,
+
+
+              priceArray:0
+
+
+
+            }
+
+
+          }
+
+
+
+
+        ]);
+
+
+
+
+
 
         // =====================================
-        // ✅ FINAL OPEN STATUS
+        // OPEN STATUS
         // =====================================
 
-        items = items.map(item => {
 
-         
+        items = items.map(item=>{
 
-          const store =
-            item.storedetails;
 
-            item.storedetails.finalopenstatus = getfinalopenstatus(store);
+          item.storedetails.finalopenstatus =
+
+            getfinalopenstatus(
+
+              item.storedetails
+
+            );
+
+
 
           return item;
 
+
         });
+
+
 
         return items;
 
+
       };
 
+
+
+
+
+
+
       // =====================================
-      // ✅ GET DATA
+      // GET
       // =====================================
+
 
       const cartItems =
-        await getItems(
-          cartItemIds
-        );
+
+        await getItems(cartItemIds);
+
+
+
 
       const wishlistItems =
-        await getItems(
-          wishlistItemIds
-        );
 
-      // =====================================
-      // ✅ RESPONSE
-      // =====================================
+        await getItems(wishlistItemIds);
 
-      res.send({
 
-        success: true,
+
+
+
+
+
+      res.json({
+
+
+        success:true,
+
 
         cartItems,
 
+
         wishlistItems
 
-      });
 
-    }
-
-    catch (e) {
-
-      console.log(e);
-
-      res.send({
-
-        success: false
 
       });
 
+
+
     }
+
+    catch(err){
+
+
+
+      console.log(err);
+
+
+
+      res.json({
+
+
+        success:false,
+
+
+        message:err.message
+
+
+
+      });
+
+
+
+    }
+
+
 
   }
 );
@@ -3756,8 +5775,151 @@ router.post(
 
   }
 );
+ router.post('/customer-list', async (req, res) => {
 
+  try {
 
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      adminId,
+      adminemail
+    } = req.body;
 
+    const skip = (page - 1) * limit;
+
+    const matchStage = {};
+
+    // Search filter
+    if (search) {
+      matchStage.$or = [
+        {
+          name: {
+            $regex: search,
+            $options: 'i'
+          }
+        },
+        {
+          mobile: {
+            $regex: search,
+            $options: 'i'
+          }
+        }
+      ];
+    }
+
+    let pipeline = [];
+
+    // STEP 1: base match (customers)
+    if (Object.keys(matchStage).length) {
+      pipeline.push({
+        $match: matchStage
+      });
+    }
+
+    // STEP 2: join orders
+    pipeline.push({
+      $lookup: {
+        from: 'ordermains',
+        localField: '_id',
+        foreignField: 'customerId',
+        as: 'orders'
+      }
+    });
+
+    // STEP 3: admin filter for non-super admin
+    if (adminemail !== 'kishan@gmail.com') {
+      pipeline.push({
+        $addFields: {
+          orders: {
+            $filter: {
+              input: "$orders",
+              as: "o",
+              cond: {
+                $eq: [
+                  "$$o.adminId",
+                  new mongoose.Types.ObjectId(adminId)
+                ]
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // STEP 4: only valid orders (totalamount > 0)
+    pipeline.push({
+      $addFields: {
+        validOrders: {
+          $filter: {
+            input: "$orders",
+            as: "o",
+            cond: {
+              $gt: ["$$o.totalamount", 0]
+            }
+          }
+        }
+      }
+    });
+
+    // STEP 5: aggregations
+    pipeline.push({
+      $addFields: {
+        totalOrders: {
+          $size: "$validOrders"
+        },
+        totalSpend: {
+          $sum: "$validOrders.totalamount"
+        },
+        lastOrderDate: {
+          $max: "$validOrders.orderdatetime"
+        }
+      }
+    });
+
+    // STEP 6: remove heavy array
+    pipeline.push({
+      $project: {
+        validOrders: 0,
+        orders: 0
+      }
+    });
+
+    // STEP 7: sorting
+    pipeline.push({
+      $sort: {
+        created_on: -1
+      }
+    });
+
+    // STEP 8: pagination
+    pipeline.push({
+      $skip: skip
+    });
+
+    pipeline.push({
+      $limit: Number(limit)
+    });
+
+    const customers = await Customer.aggregate(pipeline);
+
+    res.json({
+      success: true,
+      page,
+      limit,
+      customers
+    });
+
+  } catch (err) {
+
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+
+  }
+
+});
 
 module.exports = router;
