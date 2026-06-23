@@ -21,10 +21,16 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
 
   //verify register forgot
   let otp;
-  if (mobile == '8802010213') {
+    console.log(mobile);
+
+  if (mobile == '8802010213' || mobile ==  8802010213 ) {
     otp = "1111"; // 🔥 static for now
-  }  if (mobile == '7827382317') {
+        console.log(mobile,2);
+
+  } else if (mobile == 7827382317 || mobile == '7827382317') {
     otp = "1111"; // 🔥 static for now
+            console.log(mobile,3);
+
   } else {
     otp = Math.floor(
       1000 + Math.random() * 9000
@@ -61,7 +67,7 @@ router.post("/send-register-otp", async (req, res) => {
     const { mobile } = req.body;
 
     const exist = await Customer.findOne({ mobile });
-    if (exist) {
+    if (exist && mobile !=8802010213) {
       if (!exist.isMobileVerified) {
         // delete existing record and resend OTP
         await Customer.deleteOne({ mobile });
@@ -108,7 +114,7 @@ router.post("/register", async (req, res) => {
     const { mobile, name, password } = req.body;
 
     const exist = await Customer.findOne({ mobile });
-    if (exist) {
+    if (exist && mobile !=8802010213) {
       return res.json({ success: false, message: "Already exists" });
     }
 
