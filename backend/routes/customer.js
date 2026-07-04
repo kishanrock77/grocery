@@ -57,20 +57,20 @@ const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, t
   //await sendOtp(mobile, otp, type);
   //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   if (apporbrowser == 'app') {
-    await sendFCMApp({ uniqueidofdevice: uniqueidofdevice, tokennotinuse: token, title: "OTP for FastBite " + type, body: txttowhatsapp });
+    await sendFCMApp(  uniqueidofdevice,  token,   "OTP for FastBite " + type,   txttowhatsapp );
   } else {
-    await sendFCM({ token: token, title: "OTP for FastBite " + type, body: txttowhatsapp });
+    await sendFCM({  token,   "OTP for FastBite " + type,   txttowhatsapp });
   }
   await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   console.log(`OTP ${otp} sent to ${mobile}`);
 };
-async function sendFCM({
+async function sendFCM( 
   token,
   title,
   body
 
-}) {
+ ) {
 
   try {
 
@@ -110,9 +110,9 @@ async function sendFCM({
   }
 
 }
-async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
+async function sendFCMApp( uniqueidofdevice, tokennotinuse, title, body
 
-}) {
+) {
 
   try {
 
