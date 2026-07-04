@@ -133,7 +133,11 @@ router.post("/tokenupdtaefordevice", async (req, res) => {
 router.post("/saveuniqueidofdevice", async (req, res) => {
   try {
     const { userType, userid, uniqueidofdevice } = req.body;
-
+ console.log({
+      success: true,
+      message: "uniqueidofdevice updated successful",
+      data: req.body
+    });
     if (!uniqueidofdevice || !userid || !userType) {
       return res.status(400).json({
         success: false,
