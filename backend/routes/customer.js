@@ -172,7 +172,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { mobile,uniquedevice,fcm,apporbrowser } = req.body;
+    const { mobile,uniqueidofdevice,fcm,apporbrowser } = req.body;
 
     const exist = await Customer.findOne({ mobile });
     if (exist && mobile != 8802010213) {
@@ -185,12 +185,12 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
 
-    await generateAndSaveOtp(mobile, "register",uniquedevice,fcm,apporbrowser);
+    await generateAndSaveOtp(mobile, "register",uniqueidofdevice,fcm,apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message ,body:req.body});
   }
 });
 
@@ -326,7 +326,7 @@ router.get("/customerfulllist", async (req, res) => {
 // ===============================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { mobile,uniquedevice,fcm,apporbrowser } = req.body;
+    const { mobile,uniqueidofdevice,fcm,apporbrowser } = req.body;
 
     const user = await Customer.findOne({ mobile, status: true });
 
@@ -334,7 +334,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    await generateAndSaveOtp(mobile, "forgot",uniquedevice,fcm,apporbrowser);
+    await generateAndSaveOtp(mobile, "forgot",uniqueidofdevice,fcm,apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -377,7 +377,7 @@ router.post("/reset-password", async (req, res) => {
 // ===============================
 router.post("/resend-otp", async (req, res) => {
   try {
-    const { mobile, type,uniquedevice,fcm,apporbrowser } = req.body;
+    const { mobile, type,uniqueidofdevice,fcm,apporbrowser } = req.body;
 
     if (!mobile || !type) {
       return res.json({
@@ -386,7 +386,7 @@ router.post("/resend-otp", async (req, res) => {
       });
     }
 
-    await generateAndSaveOtp(mobile, type,uniquedevice,fcm,apporbrowser);
+    await generateAndSaveOtp(mobile, type,uniqueidofdevice,fcm,apporbrowser);
 
     res.json({
       success: true,
