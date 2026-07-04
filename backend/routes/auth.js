@@ -175,6 +175,12 @@ router.post("/saveuniqueidofdevice", async (req, res) => {
     }
     user.uniqueidofdevice = uniqueidofdevice;
     await user.save();
+
+    console.log({
+      success: true,
+      message: "uniqueidofdevice updated successful",
+      data: req.body
+    });
     // 🔹 Response
     res.json({
       success: true,
