@@ -143,13 +143,13 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
       }
     });
     console.log(
-      'FCM Sent'
+      'FCM Sent app'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR');
+    console.log('FCM FULL ERROR app');
     console.log(err);
   }
 
@@ -189,13 +189,13 @@ async function sendFCM({
       }
     });
     console.log(
-      'FCM Sent'
+      'FCM Sent web'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR');
+    console.log('FCM FULL ERROR web');
     console.log(err);
   }
 
