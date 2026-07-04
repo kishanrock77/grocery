@@ -63,7 +63,7 @@ const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, t
   }
   await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
-  console.log(`OTP ${otp} sent to ${mobile}`);
+  console.log(`OTP ${otp} sent to ${mobile}`, uniqueidofdevice,  token,   "OTP for FastBite " + type,   txttowhatsapp);
 };
 async function sendFCM( 
   token,
@@ -99,13 +99,13 @@ async function sendFCM(
       }
     });
     console.log(
-      'FCM Sent'
+      'FCM Sent web customer'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR');
+    console.log('FCM FULL ERROR web customer');
     console.log(err);
   }
 
@@ -150,13 +150,13 @@ async function sendFCMApp( uniqueidofdevice, tokennotinuse, title, body
       }
     });
     console.log(
-      'FCM Sent'
+      'FCM Sent app customer'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR');
+    console.log('FCM FULL ERROR  app customer');
     console.log(err);
   }
 
