@@ -8,13 +8,31 @@ const customerSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-
-uniqueidofdevice: String,
-  password: {
+googleId: {
     type: String,
-    required: true
+    default: ""
+},
+
+email: {
+    type: String,
+    default: "",
+    lowercase: true
+},
+
+profilePic: {
+    type: String,
+    default: ""
+},
+
+loginType:{
+    type:String,
+    default:"google"
+},
+  uniqueidofdevice: String,
+  password: {
+    type: String, 
   },
-fcmToken: String,
+  fcmToken: String,
   name: {
     type: String,
     required: true,
@@ -44,7 +62,7 @@ fcmToken: String,
         type: Number,
         default: 0
       },
-       
+
       city: {
         type: String,
         default: ""
@@ -90,13 +108,13 @@ fcmToken: String,
     type: Date,
     default: Date.now
   }
-  ,dateofbirth:{
-      type: Date,
+  , dateofbirth: {
+    type: Date,
   }
 
 }, {
   timestamps: false
 });
 
- 
+
 module.exports = mongoose.model("Customer", customerSchema);

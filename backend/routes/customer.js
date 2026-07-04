@@ -13,7 +13,12 @@ const Store = require("../models/Store");
 const Category = require("../models/Category");
 const moment = require('moment');
 const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
- 
+const { OAuth2Client } = require("google-auth-library");
+
+const googleClient =
+  new OAuth2Client(
+    "53907603345-77b74cahufec62hap6odhsfiv6oa4rir.apps.googleusercontent.com"
+  );
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
@@ -21,15 +26,15 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
 
   //verify register forgot
   let otp;
-    console.log(mobile);
+  console.log(mobile);
 
-  if (mobile == '8802010213' || mobile ==  8802010213 ) {
+  if (mobile == '8802010213' || mobile == 8802010213) {
     otp = "1111"; // 🔥 static for now
-        console.log(mobile,2);
+    console.log(mobile, 2);
 
   } else if (mobile == 7827382317 || mobile == '7827382317') {
     otp = "1111"; // 🔥 static for now
-            console.log(mobile,3);
+    console.log(mobile, 3);
 
   } else {
     otp = Math.floor(
@@ -47,8 +52,9 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
   //verify forgot register
   let txttowhatsapp = "Use OTP -" + otp + " to " + type + " in FastBite App.";
 
-  //await sendOtp(mobile, otp);
-
+  //await sendOtp(mobile, otp, type);
+  await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
+  console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   console.log(`OTP ${otp} sent to ${mobile}`);
 };
 
@@ -67,7 +73,7 @@ router.post("/send-register-otp", async (req, res) => {
     const { mobile } = req.body;
 
     const exist = await Customer.findOne({ mobile });
-    if (exist && mobile !=8802010213) {
+    if (exist && mobile != 8802010213) {
       if (!exist.isMobileVerified) {
         // delete existing record and resend OTP
         await Customer.deleteOne({ mobile });
@@ -114,7 +120,7 @@ router.post("/register", async (req, res) => {
     const { mobile, name, password } = req.body;
 
     const exist = await Customer.findOne({ mobile });
-    if (exist && mobile !=8802010213) {
+    if (exist && mobile != 8802010213) {
       return res.json({ success: false, message: "Already exists" });
     }
 
@@ -373,7 +379,7 @@ router.get("/areas", async (req, res) => {
 // ===============================
 // 🏬 SELECT AREA
 // ===============================
- router.post("/getcategoryandstoreandadminid", async (req, res) => {
+router.post("/getcategoryandstoreandadminid", async (req, res) => {
 
   try {
 
@@ -398,9 +404,9 @@ router.get("/areas", async (req, res) => {
 
       return res.json({
 
-        success:false,
+        success: false,
 
-        message:"Area not found"
+        message: "Area not found"
 
       });
 
@@ -417,11 +423,11 @@ router.get("/areas", async (req, res) => {
 
     const stores = await Store.find({
 
-      addedBy:adminId,
+      addedBy: adminId,
 
-      activeStatus:true,
+      activeStatus: true,
 
-      status:true
+      status: true
 
     }).limit(10);
 
@@ -434,9 +440,9 @@ router.get("/areas", async (req, res) => {
 
     const categories = await Category.find({
 
-      addedBy:adminId,
+      addedBy: adminId,
 
-      status:true
+      status: true
 
     });
 
@@ -444,13 +450,13 @@ router.get("/areas", async (req, res) => {
 
     const level1Categories = categories.filter(
 
-      c=>c.level_no===1
+      c => c.level_no === 1
 
     );
 
 
 
-    const itemArr=[];
+    const itemArr = [];
 
 
 
@@ -459,7 +465,7 @@ router.get("/areas", async (req, res) => {
     // =========================================
 
 
-    for(let cat of level1Categories){
+    for (let cat of level1Categories) {
 
 
       const items = await Item.aggregate([
@@ -467,19 +473,19 @@ router.get("/areas", async (req, res) => {
 
 
         {
-          $match:{
+          $match: {
 
-            addedBy:adminId,
+            addedBy: adminId,
 
-            status:true,
+            status: true,
 
-            showOnFront:true,
+            showOnFront: true,
 
-            useThisItemAsChild:false,
+            useThisItemAsChild: false,
 
 
-            storeId:{
-              $ne:null
+            storeId: {
+              $ne: null
             },
 
 
@@ -494,11 +500,11 @@ router.get("/areas", async (req, res) => {
 
 
         {
-          $sort:{
+          $sort: {
 
-            createdAt:-1,
+            createdAt: -1,
 
-            _id:-1
+            _id: -1
 
           }
         },
@@ -508,12 +514,12 @@ router.get("/areas", async (req, res) => {
         // remove duplicate admin/store copy
 
         {
-          $group:{
+          $group: {
 
 
-            _id:{
+            _id: {
 
-              $ifNull:[
+              $ifNull: [
 
                 "$original_item_id",
 
@@ -524,9 +530,9 @@ router.get("/areas", async (req, res) => {
             },
 
 
-            doc:{
+            doc: {
 
-              $first:"$$ROOT"
+              $first: "$$ROOT"
 
             }
 
@@ -538,9 +544,9 @@ router.get("/areas", async (req, res) => {
 
 
         {
-          $replaceRoot:{
+          $replaceRoot: {
 
-            newRoot:"$doc"
+            newRoot: "$doc"
 
           }
 
@@ -552,15 +558,15 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $lookup:{
+          $lookup: {
 
-            from:"stores",
+            from: "stores",
 
-            localField:"storeId",
+            localField: "storeId",
 
-            foreignField:"_id",
+            foreignField: "_id",
 
-            as:"storedetails"
+            as: "storedetails"
 
 
           }
@@ -570,11 +576,11 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
-            storedetails:{
+            storedetails: {
 
-              $arrayElemAt:[
+              $arrayElemAt: [
 
                 "$storedetails",
 
@@ -591,11 +597,11 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $match:{
+          $match: {
 
-            "storedetails.status":true,
+            "storedetails.status": true,
 
-            "storedetails.activeStatus":true
+            "storedetails.activeStatus": true
 
           }
 
@@ -608,15 +614,15 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $lookup:{
+          $lookup: {
 
-            from:"items",
+            from: "items",
 
-            localField:"variantItems",
+            localField: "variantItems",
 
-            foreignField:"_id",
+            foreignField: "_id",
 
-            as:"variants"
+            as: "variants"
 
 
           }
@@ -627,20 +633,20 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
-            variants:{
+            variants: {
 
 
-              $filter:{
+              $filter: {
 
-                input:"$variants",
+                input: "$variants",
 
-                as:"v",
+                as: "v",
 
-                cond:{
+                cond: {
 
-                  $eq:[
+                  $eq: [
 
                     "$$v.status",
 
@@ -667,14 +673,14 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceArray:{
+            priceArray: {
 
 
 
-              $cond:[
+              $cond: [
 
 
 
@@ -685,11 +691,11 @@ router.get("/areas", async (req, res) => {
 
                 {
 
-                  $gt:[
+                  $gt: [
 
                     {
 
-                      $size:"$variants"
+                      $size: "$variants"
 
                     },
 
@@ -706,20 +712,20 @@ router.get("/areas", async (req, res) => {
                 {
 
 
-                  $reduce:{
+                  $reduce: {
 
 
-                    input:"$variants",
+                    input: "$variants",
 
 
-                    initialValue:[],
+                    initialValue: [],
 
 
-                    in:{
+                    in: {
 
 
 
-                      $concatArrays:[
+                      $concatArrays: [
 
 
                         "$$value",
@@ -729,7 +735,7 @@ router.get("/areas", async (req, res) => {
                         {
 
 
-                          $cond:[
+                          $cond: [
 
 
 
@@ -737,14 +743,14 @@ router.get("/areas", async (req, res) => {
 
                             {
 
-                              $gt:[
+                              $gt: [
 
 
                                 {
 
-                                  $size:{
+                                  $size: {
 
-                                    $ifNull:[
+                                    $ifNull: [
 
                                       "$$this.itemQuestions",
 
@@ -770,24 +776,24 @@ router.get("/areas", async (req, res) => {
                             {
 
 
-                              $map:{
+                              $map: {
 
 
-                                input:{
+                                input: {
 
 
-                                  $reduce:{
+                                  $reduce: {
 
 
-                                    input:"$$this.itemQuestions",
+                                    input: "$$this.itemQuestions",
 
-                                    initialValue:[],
-
-
-                                    in:{
+                                    initialValue: [],
 
 
-                                      $concatArrays:[
+                                    in: {
+
+
+                                      $concatArrays: [
 
 
                                         "$$value",
@@ -806,18 +812,18 @@ router.get("/areas", async (req, res) => {
                                 },
 
 
-                                as:"op",
+                                as: "op",
 
 
-                                in:{
+                                in: {
 
 
-                                  $cond:[
+                                  $cond: [
 
 
                                     {
 
-                                      $gt:[
+                                      $gt: [
 
                                         "$$op.appPrice",
 
@@ -855,12 +861,12 @@ router.get("/areas", async (req, res) => {
 
                               {
 
-                                $cond:[
+                                $cond: [
 
 
                                   {
 
-                                    $gt:[
+                                    $gt: [
 
                                       "$$this.appPrice",
 
@@ -913,20 +919,20 @@ router.get("/areas", async (req, res) => {
                 {
 
 
-                  $cond:[
+                  $cond: [
 
 
                     {
 
 
-                      $gt:[
+                      $gt: [
 
 
                         {
 
-                          $size:{
+                          $size: {
 
-                            $ifNull:[
+                            $ifNull: [
 
                               "$itemQuestions",
 
@@ -953,26 +959,26 @@ router.get("/areas", async (req, res) => {
                     {
 
 
-                      $map:{
+                      $map: {
 
 
 
-                        input:{
+                        input: {
 
 
-                          $reduce:{
+                          $reduce: {
 
 
-                            input:"$itemQuestions",
+                            input: "$itemQuestions",
 
 
-                            initialValue:[],
+                            initialValue: [],
 
 
-                            in:{
+                            in: {
 
 
-                              $concatArrays:[
+                              $concatArrays: [
 
 
                                 "$$value",
@@ -992,20 +998,20 @@ router.get("/areas", async (req, res) => {
 
 
 
-                        as:"op",
+                        as: "op",
 
 
 
-                        in:{
+                        in: {
 
 
-                          $cond:[
+                          $cond: [
 
 
 
                             {
 
-                              $gt:[
+                              $gt: [
 
                                 "$$op.appPrice",
 
@@ -1046,12 +1052,12 @@ router.get("/areas", async (req, res) => {
                       {
 
 
-                        $cond:[
+                        $cond: [
 
 
                           {
 
-                            $gt:[
+                            $gt: [
 
                               "$appPrice",
 
@@ -1100,19 +1106,19 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            minPrice:{
+            minPrice: {
 
-              $min:"$priceArray"
+              $min: "$priceArray"
 
             },
 
 
-            maxPrice:{
+            maxPrice: {
 
-              $max:"$priceArray"
+              $max: "$priceArray"
 
             }
 
@@ -1126,18 +1132,18 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceRange:{
+            priceRange: {
 
 
-              $cond:[
+              $cond: [
 
 
                 {
 
-                  $eq:[
+                  $eq: [
 
                     "$minPrice",
 
@@ -1150,13 +1156,13 @@ router.get("/areas", async (req, res) => {
 
                 {
 
-                  $concat:[
+                  $concat: [
 
                     "₹",
 
                     {
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
                     }
 
@@ -1167,14 +1173,14 @@ router.get("/areas", async (req, res) => {
 
                 {
 
-                  $concat:[
+                  $concat: [
 
 
                     "₹",
 
                     {
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
                     },
 
@@ -1184,7 +1190,7 @@ router.get("/areas", async (req, res) => {
 
                     {
 
-                      $toString:"$maxPrice"
+                      $toString: "$maxPrice"
 
                     }
 
@@ -1206,12 +1212,12 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $project:{
+          $project: {
 
 
-            variants:0,
+            variants: 0,
 
-            priceArray:0
+            priceArray: 0
 
 
           }
@@ -1222,7 +1228,7 @@ router.get("/areas", async (req, res) => {
 
         {
 
-          $limit:10
+          $limit: 10
 
         }
 
@@ -1236,9 +1242,9 @@ router.get("/areas", async (req, res) => {
       itemArr.push({
 
 
-        level1Id:cat._id,
+        level1Id: cat._id,
 
-        level1Name:cat.categoryName,
+        level1Name: cat.categoryName,
 
         items
 
@@ -1254,7 +1260,7 @@ router.get("/areas", async (req, res) => {
     res.json({
 
 
-      success:true,
+      success: true,
 
 
       stores,
@@ -1277,7 +1283,7 @@ router.get("/areas", async (req, res) => {
   }
 
 
-  catch(err){
+  catch (err) {
 
 
     console.log(err);
@@ -1286,9 +1292,9 @@ router.get("/areas", async (req, res) => {
     res.status(500).json({
 
 
-      success:false,
+      success: false,
 
-      message:err.message
+      message: err.message
 
 
     });
@@ -1468,7 +1474,7 @@ router.post("/selectareasubmit", async (req, res) => {
 // ✅ BACKEND API
 // ===============================================
 
- router.post(
+router.post(
   "/getLevel3CategoryItems",
   async (req, res) => {
 
@@ -1499,27 +1505,27 @@ router.post("/selectareasubmit", async (req, res) => {
               new mongoose.Types.ObjectId(adminId),
 
 
-            status:true,
+            status: true,
 
 
-            showOnFront:true,
+            showOnFront: true,
 
 
-            useThisItemAsChild:false,
+            useThisItemAsChild: false,
 
 
-            storeId:{
-              $ne:null
+            storeId: {
+              $ne: null
             },
 
 
-            categories:{
+            categories: {
 
-              $elemMatch:{
+              $elemMatch: {
 
-                level2:String(level2Id),
+                level2: String(level2Id),
 
-                level3:String(level3Id)
+                level3: String(level3Id)
 
               }
 
@@ -1533,9 +1539,9 @@ router.post("/selectareasubmit", async (req, res) => {
 
 
         {
-          $sort:{
+          $sort: {
 
-            createdAt:-1
+            createdAt: -1
 
           }
 
@@ -1549,11 +1555,11 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $group:{
+          $group: {
 
-            _id:{
+            _id: {
 
-              $ifNull:[
+              $ifNull: [
 
                 "$original_item_id",
 
@@ -1564,9 +1570,9 @@ router.post("/selectareasubmit", async (req, res) => {
             },
 
 
-            doc:{
+            doc: {
 
-              $first:"$$ROOT"
+              $first: "$$ROOT"
 
             }
 
@@ -1578,9 +1584,9 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $replaceRoot:{
+          $replaceRoot: {
 
-            newRoot:"$doc"
+            newRoot: "$doc"
 
           }
 
@@ -1595,15 +1601,15 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $lookup:{
+          $lookup: {
 
-            from:"stores",
+            from: "stores",
 
-            localField:"storeId",
+            localField: "storeId",
 
-            foreignField:"_id",
+            foreignField: "_id",
 
-            as:"storedetails"
+            as: "storedetails"
 
           }
 
@@ -1613,11 +1619,11 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
-            storedetails:{
+            storedetails: {
 
-              $arrayElemAt:[
+              $arrayElemAt: [
 
                 "$storedetails",
 
@@ -1635,11 +1641,11 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $match:{
+          $match: {
 
-            "storedetails.status":true,
+            "storedetails.status": true,
 
-            "storedetails.activeStatus":true
+            "storedetails.activeStatus": true
 
           }
 
@@ -1654,15 +1660,15 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $lookup:{
+          $lookup: {
 
-            from:"items",
+            from: "items",
 
-            localField:"variantItems",
+            localField: "variantItems",
 
-            foreignField:"_id",
+            foreignField: "_id",
 
-            as:"variants"
+            as: "variants"
 
           }
 
@@ -1672,22 +1678,22 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
-            variants:{
-
-
-              $filter:{
+            variants: {
 
 
-                input:"$variants",
-
-                as:"v",
-
-                cond:{
+              $filter: {
 
 
-                  $eq:[
+                input: "$variants",
+
+                as: "v",
+
+                cond: {
+
+
+                  $eq: [
 
                     "$$v.status",
 
@@ -1716,14 +1722,14 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceArray:{
+            priceArray: {
 
 
 
-              $cond:[
+              $cond: [
 
 
 
@@ -1734,11 +1740,11 @@ router.post("/selectareasubmit", async (req, res) => {
 
                 {
 
-                  $gt:[
+                  $gt: [
 
                     {
 
-                      $size:"$variants"
+                      $size: "$variants"
 
                     },
 
@@ -1754,20 +1760,20 @@ router.post("/selectareasubmit", async (req, res) => {
                 {
 
 
-                  $reduce:{
+                  $reduce: {
 
 
-                    input:"$variants",
+                    input: "$variants",
 
 
-                    initialValue:[],
+                    initialValue: [],
 
 
-                    in:{
+                    in: {
 
 
 
-                      $concatArrays:[
+                      $concatArrays: [
 
 
                         "$$value",
@@ -1777,7 +1783,7 @@ router.post("/selectareasubmit", async (req, res) => {
                         {
 
 
-                          $cond:[
+                          $cond: [
 
 
 
@@ -1785,14 +1791,14 @@ router.post("/selectareasubmit", async (req, res) => {
 
                             {
 
-                              $gt:[
+                              $gt: [
 
 
                                 {
 
-                                  $size:{
+                                  $size: {
 
-                                    $ifNull:[
+                                    $ifNull: [
 
                                       "$$this.itemQuestions",
 
@@ -1818,24 +1824,24 @@ router.post("/selectareasubmit", async (req, res) => {
                             {
 
 
-                              $map:{
+                              $map: {
 
 
-                                input:{
+                                input: {
 
 
-                                  $reduce:{
+                                  $reduce: {
 
 
-                                    input:"$$this.itemQuestions",
+                                    input: "$$this.itemQuestions",
 
-                                    initialValue:[],
-
-
-                                    in:{
+                                    initialValue: [],
 
 
-                                      $concatArrays:[
+                                    in: {
+
+
+                                      $concatArrays: [
 
 
                                         "$$value",
@@ -1853,18 +1859,18 @@ router.post("/selectareasubmit", async (req, res) => {
                                 },
 
 
-                                as:"op",
+                                as: "op",
 
 
-                                in:{
+                                in: {
 
 
-                                  $cond:[
+                                  $cond: [
 
 
                                     {
 
-                                      $gt:[
+                                      $gt: [
 
                                         "$$op.appPrice",
 
@@ -1901,12 +1907,12 @@ router.post("/selectareasubmit", async (req, res) => {
 
                               {
 
-                                $cond:[
+                                $cond: [
 
 
                                   {
 
-                                    $gt:[
+                                    $gt: [
 
                                       "$$this.appPrice",
 
@@ -1958,20 +1964,20 @@ router.post("/selectareasubmit", async (req, res) => {
                 {
 
 
-                  $cond:[
+                  $cond: [
 
 
 
                     {
 
-                      $gt:[
+                      $gt: [
 
 
                         {
 
-                          $size:{
+                          $size: {
 
-                            $ifNull:[
+                            $ifNull: [
 
                               "$itemQuestions",
 
@@ -2000,25 +2006,25 @@ router.post("/selectareasubmit", async (req, res) => {
                     {
 
 
-                      $map:{
+                      $map: {
 
 
-                        input:{
+                        input: {
 
 
-                          $reduce:{
+                          $reduce: {
 
 
-                            input:"$itemQuestions",
+                            input: "$itemQuestions",
 
 
-                            initialValue:[],
+                            initialValue: [],
 
 
-                            in:{
+                            in: {
 
 
-                              $concatArrays:[
+                              $concatArrays: [
 
 
                                 "$$value",
@@ -2037,18 +2043,18 @@ router.post("/selectareasubmit", async (req, res) => {
                         },
 
 
-                        as:"op",
+                        as: "op",
 
 
-                        in:{
+                        in: {
 
 
-                          $cond:[
+                          $cond: [
 
 
                             {
 
-                              $gt:[
+                              $gt: [
 
                                 "$$op.appPrice",
 
@@ -2086,12 +2092,12 @@ router.post("/selectareasubmit", async (req, res) => {
 
                       {
 
-                        $cond:[
+                        $cond: [
 
 
                           {
 
-                            $gt:[
+                            $gt: [
 
                               "$appPrice",
 
@@ -2142,19 +2148,19 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            minPrice:{
+            minPrice: {
 
-              $min:"$priceArray"
+              $min: "$priceArray"
 
             },
 
 
-            maxPrice:{
+            maxPrice: {
 
-              $max:"$priceArray"
+              $max: "$priceArray"
 
             }
 
@@ -2168,19 +2174,19 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceRange:{
+            priceRange: {
 
 
-              $cond:[
+              $cond: [
 
 
 
                 {
 
-                  $eq:[
+                  $eq: [
 
                     "$minPrice",
 
@@ -2193,13 +2199,13 @@ router.post("/selectareasubmit", async (req, res) => {
 
                 {
 
-                  $concat:[
+                  $concat: [
 
                     "₹",
 
                     {
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
                     }
 
@@ -2211,14 +2217,14 @@ router.post("/selectareasubmit", async (req, res) => {
 
                 {
 
-                  $concat:[
+                  $concat: [
 
 
                     "₹",
 
                     {
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
                     },
 
@@ -2228,7 +2234,7 @@ router.post("/selectareasubmit", async (req, res) => {
 
                     {
 
-                      $toString:"$maxPrice"
+                      $toString: "$maxPrice"
 
                     }
 
@@ -2253,12 +2259,12 @@ router.post("/selectareasubmit", async (req, res) => {
 
         {
 
-          $project:{
+          $project: {
 
 
-            variants:0,
+            variants: 0,
 
-            priceArray:0
+            priceArray: 0
 
 
           }
@@ -2277,10 +2283,10 @@ router.post("/selectareasubmit", async (req, res) => {
       // =====================================
 
 
-      items = items.map(item=>{
+      items = items.map(item => {
 
 
-        const store=item.storedetails;
+        const store = item.storedetails;
 
 
         item.storedetails.finalopenstatus =
@@ -2301,7 +2307,7 @@ router.post("/selectareasubmit", async (req, res) => {
       res.json({
 
 
-        success:true,
+        success: true,
 
         items
 
@@ -2313,7 +2319,7 @@ router.post("/selectareasubmit", async (req, res) => {
     }
 
 
-    catch(err){
+    catch (err) {
 
 
       console.log(err);
@@ -2322,9 +2328,9 @@ router.post("/selectareasubmit", async (req, res) => {
       res.status(500).json({
 
 
-        success:false,
+        success: false,
 
-        message:err.message
+        message: err.message
 
 
       });
@@ -2400,7 +2406,7 @@ router.post(
 
   }
 );
- router.post(
+router.post(
   "/searchItems",
   async (req, res) => {
 
@@ -2437,27 +2443,27 @@ router.post(
           new mongoose.Types.ObjectId(adminId),
 
 
-        status:true,
+        status: true,
 
 
-        showOnFront:true,
+        showOnFront: true,
 
 
-        useThisItemAsChild:false,
+        useThisItemAsChild: false,
 
 
-        storeId:{
+        storeId: {
 
-          $ne:null
+          $ne: null
 
         },
 
 
-        itemName:{
+        itemName: {
 
-          $regex:keyword,
+          $regex: keyword,
 
-          $options:"i"
+          $options: "i"
 
         }
 
@@ -2473,13 +2479,13 @@ router.post(
       // =====================================
 
 
-      const createPipeline = (matchObj)=>[
+      const createPipeline = (matchObj) => [
 
 
 
         {
 
-          $match:matchObj
+          $match: matchObj
 
         },
 
@@ -2487,9 +2493,9 @@ router.post(
 
         {
 
-          $sort:{
+          $sort: {
 
-            createdAt:-1
+            createdAt: -1
 
           }
 
@@ -2504,13 +2510,13 @@ router.post(
 
         {
 
-          $group:{
+          $group: {
 
 
-            _id:{
+            _id: {
 
 
-              $ifNull:[
+              $ifNull: [
 
 
                 "$original_item_id",
@@ -2524,9 +2530,9 @@ router.post(
             },
 
 
-            doc:{
+            doc: {
 
-              $first:"$$ROOT"
+              $first: "$$ROOT"
 
             }
 
@@ -2539,10 +2545,10 @@ router.post(
 
         {
 
-          $replaceRoot:{
+          $replaceRoot: {
 
 
-            newRoot:"$doc"
+            newRoot: "$doc"
 
 
           }
@@ -2560,19 +2566,19 @@ router.post(
 
         {
 
-          $lookup:{
+          $lookup: {
 
 
-            from:"stores",
+            from: "stores",
 
 
-            localField:"storeId",
+            localField: "storeId",
 
 
-            foreignField:"_id",
+            foreignField: "_id",
 
 
-            as:"storedetails"
+            as: "storedetails"
 
 
           }
@@ -2583,13 +2589,13 @@ router.post(
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            storedetails:{
+            storedetails: {
 
 
-              $arrayElemAt:[
+              $arrayElemAt: [
 
 
                 "$storedetails",
@@ -2614,13 +2620,13 @@ router.post(
 
         {
 
-          $match:{
+          $match: {
 
 
-            "storedetails.status":true,
+            "storedetails.status": true,
 
 
-            "storedetails.activeStatus":true
+            "storedetails.activeStatus": true
 
 
           }
@@ -2638,19 +2644,19 @@ router.post(
 
         {
 
-          $lookup:{
+          $lookup: {
 
 
-            from:"items",
+            from: "items",
 
 
-            localField:"variantItems",
+            localField: "variantItems",
 
 
-            foreignField:"_id",
+            foreignField: "_id",
 
 
-            as:"variants"
+            as: "variants"
 
 
           }
@@ -2661,25 +2667,25 @@ router.post(
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            variants:{
+            variants: {
 
 
-              $filter:{
+              $filter: {
 
 
-                input:"$variants",
+                input: "$variants",
 
 
-                as:"v",
+                as: "v",
 
 
-                cond:{
+                cond: {
 
 
-                  $eq:[
+                  $eq: [
 
 
                     "$$v.status",
@@ -2716,14 +2722,14 @@ router.post(
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceArray:{
+            priceArray: {
 
 
 
-              $cond:[
+              $cond: [
 
 
 
@@ -2736,12 +2742,12 @@ router.post(
                 {
 
 
-                  $gt:[
+                  $gt: [
 
 
                     {
 
-                      $size:"$variants"
+                      $size: "$variants"
 
 
                     },
@@ -2763,19 +2769,19 @@ router.post(
                 {
 
 
-                  $reduce:{
+                  $reduce: {
 
 
-                    input:"$variants",
+                    input: "$variants",
 
 
-                    initialValue:[],
+                    initialValue: [],
 
 
-                    in:{
+                    in: {
 
 
-                      $concatArrays:[
+                      $concatArrays: [
 
 
 
@@ -2786,7 +2792,7 @@ router.post(
                         {
 
 
-                          $cond:[
+                          $cond: [
 
 
 
@@ -2796,15 +2802,15 @@ router.post(
                             {
 
 
-                              $gt:[
+                              $gt: [
 
 
                                 {
 
-                                  $size:{
+                                  $size: {
 
 
-                                    $ifNull:[
+                                    $ifNull: [
 
 
                                       "$$this.itemQuestions",
@@ -2838,26 +2844,26 @@ router.post(
                             {
 
 
-                              $map:{
+                              $map: {
 
 
 
-                                input:{
+                                input: {
 
 
-                                  $reduce:{
+                                  $reduce: {
 
 
-                                    input:"$$this.itemQuestions",
+                                    input: "$$this.itemQuestions",
 
 
-                                    initialValue:[],
+                                    initialValue: [],
 
 
-                                    in:{
+                                    in: {
 
 
-                                      $concatArrays:[
+                                      $concatArrays: [
 
 
                                         "$$value",
@@ -2878,21 +2884,21 @@ router.post(
 
 
 
-                                as:"op",
+                                as: "op",
 
 
 
-                                in:{
+                                in: {
 
 
 
-                                  $cond:[
+                                  $cond: [
 
 
                                     {
 
 
-                                      $gt:[
+                                      $gt: [
 
 
                                         "$$op.appPrice",
@@ -2942,13 +2948,13 @@ router.post(
                               {
 
 
-                                $cond:[
+                                $cond: [
 
 
                                   {
 
 
-                                    $gt:[
+                                    $gt: [
 
 
                                       "$$this.appPrice",
@@ -3010,7 +3016,7 @@ router.post(
                 {
 
 
-                  $cond:[
+                  $cond: [
 
 
 
@@ -3020,17 +3026,17 @@ router.post(
                     {
 
 
-                      $gt:[
+                      $gt: [
 
 
 
                         {
 
 
-                          $size:{
+                          $size: {
 
 
-                            $ifNull:[
+                            $ifNull: [
 
 
                               "$itemQuestions",
@@ -3065,27 +3071,27 @@ router.post(
                     {
 
 
-                      $map:{
+                      $map: {
 
 
-                        input:{
-
-
-
-                          $reduce:{
-
-
-                            input:"$itemQuestions",
-
-
-                            initialValue:[],
-
-
-                            in:{
+                        input: {
 
 
 
-                              $concatArrays:[
+                          $reduce: {
+
+
+                            input: "$itemQuestions",
+
+
+                            initialValue: [],
+
+
+                            in: {
+
+
+
+                              $concatArrays: [
 
 
 
@@ -3108,20 +3114,20 @@ router.post(
                         },
 
 
-                        as:"op",
+                        as: "op",
 
 
 
-                        in:{
+                        in: {
 
 
-                          $cond:[
+                          $cond: [
 
 
                             {
 
 
-                              $gt:[
+                              $gt: [
 
 
                                 "$$op.appPrice",
@@ -3166,14 +3172,14 @@ router.post(
                       {
 
 
-                        $cond:[
+                        $cond: [
 
 
 
                           {
 
 
-                            $gt:[
+                            $gt: [
 
 
                               "$appPrice",
@@ -3233,23 +3239,23 @@ router.post(
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
 
-            minPrice:{
+            minPrice: {
 
 
-              $min:"$priceArray"
+              $min: "$priceArray"
 
 
             },
 
 
-            maxPrice:{
+            maxPrice: {
 
 
-              $max:"$priceArray"
+              $max: "$priceArray"
 
 
             }
@@ -3271,20 +3277,20 @@ router.post(
 
         {
 
-          $addFields:{
+          $addFields: {
 
 
-            priceRange:{
+            priceRange: {
 
 
-              $cond:[
+              $cond: [
 
 
 
                 {
 
 
-                  $eq:[
+                  $eq: [
 
 
                     "$minPrice",
@@ -3304,7 +3310,7 @@ router.post(
                 {
 
 
-                  $concat:[
+                  $concat: [
 
 
                     "₹",
@@ -3313,7 +3319,7 @@ router.post(
                     {
 
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
 
                     }
@@ -3330,7 +3336,7 @@ router.post(
                 {
 
 
-                  $concat:[
+                  $concat: [
 
 
                     "₹",
@@ -3339,7 +3345,7 @@ router.post(
                     {
 
 
-                      $toString:"$minPrice"
+                      $toString: "$minPrice"
 
 
                     },
@@ -3351,7 +3357,7 @@ router.post(
                     {
 
 
-                      $toString:"$maxPrice"
+                      $toString: "$maxPrice"
 
 
                     }
@@ -3378,13 +3384,13 @@ router.post(
 
         {
 
-          $project:{
+          $project: {
 
 
-            variants:0,
+            variants: 0,
 
 
-            priceArray:0
+            priceArray: 0
 
 
 
@@ -3408,11 +3414,11 @@ router.post(
 
 
 
-      let globalItems=[];
+      let globalItems = [];
 
 
 
-      if(searchfromUrl==="global"){
+      if (searchfromUrl === "global") {
 
 
 
@@ -3435,7 +3441,7 @@ router.post(
       // =====================================
 
 
-      const categoryMatch={
+      const categoryMatch = {
 
         ...commonMatch
 
@@ -3445,18 +3451,18 @@ router.post(
 
 
 
-      if(categoryLevel==="l1"){
+      if (categoryLevel === "l1") {
 
 
 
-        categoryMatch.categories={
+        categoryMatch.categories = {
 
 
 
-          $elemMatch:{
+          $elemMatch: {
 
 
-            level1:String(categoryId)
+            level1: String(categoryId)
 
 
           }
@@ -3470,17 +3476,17 @@ router.post(
 
 
 
-      if(categoryLevel==="l2"){
+      if (categoryLevel === "l2") {
 
 
-        categoryMatch.categories={
+        categoryMatch.categories = {
 
 
 
-          $elemMatch:{
+          $elemMatch: {
 
 
-            level2:String(categoryId)
+            level2: String(categoryId)
 
 
           }
@@ -3516,10 +3522,10 @@ router.post(
       // =====================================
 
 
-      const addOpenStatus=(items)=>{
+      const addOpenStatus = (items) => {
 
 
-        return items.map(item=>{
+        return items.map(item => {
 
 
           item.storedetails.finalopenstatus =
@@ -3549,11 +3555,11 @@ router.post(
 
 
 
-      let finalCategoryItems=[];
+      let finalCategoryItems = [];
 
 
 
-      if(searchfromUrl!=="global"){
+      if (searchfromUrl !== "global") {
 
 
 
@@ -3574,13 +3580,13 @@ router.post(
       res.json({
 
 
-        success:true,
+        success: true,
 
 
         globalItems,
 
 
-        categoryItems:finalCategoryItems
+        categoryItems: finalCategoryItems
 
 
 
@@ -3591,7 +3597,7 @@ router.post(
 
     }
 
-    catch(err){
+    catch (err) {
 
 
 
@@ -3603,16 +3609,16 @@ router.post(
 
 
 
-        success:false,
+        success: false,
 
 
-        message:err.message,
+        message: err.message,
 
 
-        globalItems:[],
+        globalItems: [],
 
 
-        categoryItems:[]
+        categoryItems: []
 
 
 
@@ -3745,12 +3751,12 @@ router.post(
 
       items = items.map(item => {
 
-        
+
 
         const store =
           item.storedetails;
 
-          item.storedetails.finalopenstatus = getfinalopenstatus(store);
+        item.storedetails.finalopenstatus = getfinalopenstatus(store);
 
         return item;
 
@@ -4189,7 +4195,7 @@ router.post(
   }
 );
 
- router.post(
+router.post(
   '/get-cart-items',
   async (req, res) => {
 
@@ -4216,10 +4222,10 @@ router.post(
       // =====================================
 
 
-      const getItems = async(ids)=>{
+      const getItems = async (ids) => {
 
 
-        if(!ids?.length){
+        if (!ids?.length) {
 
           return [];
 
@@ -4240,19 +4246,19 @@ router.post(
 
           {
 
-            $match:{
+            $match: {
 
 
-              _id:{
+              _id: {
 
 
                 $in:
 
-                ids.map(
+                  ids.map(
 
-                  x=>new mongoose.Types.ObjectId(x)
+                    x => new mongoose.Types.ObjectId(x)
 
-                )
+                  )
 
 
               },
@@ -4263,10 +4269,10 @@ router.post(
                 new mongoose.Types.ObjectId(adminId),
 
 
-              status:true,
+              status: true,
 
 
-              showOnFront:true
+              showOnFront: true
 
 
             }
@@ -4285,19 +4291,19 @@ router.post(
 
           {
 
-            $lookup:{
+            $lookup: {
 
 
-              from:"stores",
+              from: "stores",
 
 
-              localField:"storeId",
+              localField: "storeId",
 
 
-              foreignField:"_id",
+              foreignField: "_id",
 
 
-              as:"storedetails"
+              as: "storedetails"
 
 
             }
@@ -4309,13 +4315,13 @@ router.post(
 
           {
 
-            $addFields:{
+            $addFields: {
 
 
-              storedetails:{
+              storedetails: {
 
 
-                $arrayElemAt:[
+                $arrayElemAt: [
 
 
                   "$storedetails",
@@ -4339,13 +4345,13 @@ router.post(
 
           {
 
-            $match:{
+            $match: {
 
 
-              "storedetails.status":true,
+              "storedetails.status": true,
 
 
-              "storedetails.activeStatus":true
+              "storedetails.activeStatus": true
 
 
             }
@@ -4365,19 +4371,19 @@ router.post(
 
           {
 
-            $lookup:{
+            $lookup: {
 
 
-              from:"items",
+              from: "items",
 
 
-              localField:"variantItems",
+              localField: "variantItems",
 
 
-              foreignField:"_id",
+              foreignField: "_id",
 
 
-              as:"variants"
+              as: "variants"
 
 
             }
@@ -4391,25 +4397,25 @@ router.post(
 
           {
 
-            $addFields:{
+            $addFields: {
 
 
-              variants:{
+              variants: {
 
 
-                $filter:{
+                $filter: {
 
 
-                  input:"$variants",
+                  input: "$variants",
 
 
-                  as:"v",
+                  as: "v",
 
 
-                  cond:{
+                  cond: {
 
 
-                    $eq:[
+                    $eq: [
 
 
                       "$$v.status",
@@ -4448,15 +4454,15 @@ router.post(
 
           {
 
-            $addFields:{
+            $addFields: {
 
 
 
-              priceArray:{
+              priceArray: {
 
 
 
-                $cond:[
+                $cond: [
 
 
 
@@ -4469,12 +4475,12 @@ router.post(
                   {
 
 
-                    $gt:[
+                    $gt: [
 
 
                       {
 
-                        $size:"$variants"
+                        $size: "$variants"
 
 
                       },
@@ -4498,19 +4504,19 @@ router.post(
                   {
 
 
-                    $reduce:{
+                    $reduce: {
 
 
-                      input:"$variants",
+                      input: "$variants",
 
 
-                      initialValue:[],
+                      initialValue: [],
 
 
-                      in:{
+                      in: {
 
 
-                        $concatArrays:[
+                        $concatArrays: [
 
 
                           "$$value",
@@ -4520,7 +4526,7 @@ router.post(
                           {
 
 
-                            $cond:[
+                            $cond: [
 
 
 
@@ -4530,16 +4536,16 @@ router.post(
                               {
 
 
-                                $gt:[
+                                $gt: [
 
 
                                   {
 
 
-                                    $size:{
+                                    $size: {
 
 
-                                      $ifNull:[
+                                      $ifNull: [
 
 
                                         "$$this.itemQuestions",
@@ -4573,25 +4579,25 @@ router.post(
                               {
 
 
-                                $map:{
+                                $map: {
 
 
-                                  input:{
+                                  input: {
 
 
-                                    $reduce:{
+                                    $reduce: {
 
 
-                                      input:"$$this.itemQuestions",
+                                      input: "$$this.itemQuestions",
 
 
-                                      initialValue:[],
+                                      initialValue: [],
 
 
-                                      in:{
+                                      in: {
 
 
-                                        $concatArrays:[
+                                        $concatArrays: [
 
 
                                           "$$value",
@@ -4611,20 +4617,20 @@ router.post(
                                   },
 
 
-                                  as:"op",
+                                  as: "op",
 
 
 
-                                  in:{
+                                  in: {
 
 
-                                    $cond:[
+                                    $cond: [
 
 
                                       {
 
 
-                                        $gt:[
+                                        $gt: [
 
 
                                           "$$op.appPrice",
@@ -4671,13 +4677,13 @@ router.post(
                                 {
 
 
-                                  $cond:[
+                                  $cond: [
 
 
                                     {
 
 
-                                      $gt:[
+                                      $gt: [
 
 
                                         "$$this.appPrice",
@@ -4740,7 +4746,7 @@ router.post(
                   {
 
 
-                    $cond:[
+                    $cond: [
 
 
 
@@ -4752,16 +4758,16 @@ router.post(
                       {
 
 
-                        $gt:[
+                        $gt: [
 
 
                           {
 
 
-                            $size:{
+                            $size: {
 
 
-                              $ifNull:[
+                              $ifNull: [
 
 
                                 "$itemQuestions",
@@ -4797,26 +4803,26 @@ router.post(
                       {
 
 
-                        $map:{
+                        $map: {
 
 
 
-                          input:{
+                          input: {
 
 
-                            $reduce:{
+                            $reduce: {
 
 
-                              input:"$itemQuestions",
+                              input: "$itemQuestions",
 
 
-                              initialValue:[],
+                              initialValue: [],
 
 
-                              in:{
+                              in: {
 
 
-                                $concatArrays:[
+                                $concatArrays: [
 
 
                                   "$$value",
@@ -4837,22 +4843,22 @@ router.post(
 
 
 
-                          as:"op",
+                          as: "op",
 
 
 
-                          in:{
+                          in: {
 
 
 
-                            $cond:[
+                            $cond: [
 
 
 
                               {
 
 
-                                $gt:[
+                                $gt: [
 
 
                                   "$$op.appPrice",
@@ -4900,14 +4906,14 @@ router.post(
                         {
 
 
-                          $cond:[
+                          $cond: [
 
 
 
                             {
 
 
-                              $gt:[
+                              $gt: [
 
 
                                 "$appPrice",
@@ -4973,23 +4979,23 @@ router.post(
 
           {
 
-            $addFields:{
+            $addFields: {
 
 
 
-              minPrice:{
+              minPrice: {
 
 
-                $min:"$priceArray"
+                $min: "$priceArray"
 
 
               },
 
 
-              maxPrice:{
+              maxPrice: {
 
 
-                $max:"$priceArray"
+                $max: "$priceArray"
 
 
               }
@@ -5014,21 +5020,21 @@ router.post(
 
           {
 
-            $addFields:{
+            $addFields: {
 
 
-              priceRange:{
+              priceRange: {
 
 
 
-                $cond:[
+                $cond: [
 
 
 
                   {
 
 
-                    $eq:[
+                    $eq: [
 
 
                       "$minPrice",
@@ -5046,7 +5052,7 @@ router.post(
                   {
 
 
-                    $concat:[
+                    $concat: [
 
 
                       "₹",
@@ -5055,7 +5061,7 @@ router.post(
                       {
 
 
-                        $toString:"$minPrice"
+                        $toString: "$minPrice"
 
 
                       }
@@ -5073,7 +5079,7 @@ router.post(
                   {
 
 
-                    $concat:[
+                    $concat: [
 
 
                       "₹",
@@ -5082,7 +5088,7 @@ router.post(
                       {
 
 
-                        $toString:"$minPrice"
+                        $toString: "$minPrice"
 
 
                       },
@@ -5096,7 +5102,7 @@ router.post(
                       {
 
 
-                        $toString:"$maxPrice"
+                        $toString: "$maxPrice"
 
 
                       }
@@ -5128,13 +5134,13 @@ router.post(
 
           {
 
-            $project:{
+            $project: {
 
 
-              variants:0,
+              variants: 0,
 
 
-              priceArray:0
+              priceArray: 0
 
 
 
@@ -5158,7 +5164,7 @@ router.post(
         // =====================================
 
 
-        items = items.map(item=>{
+        items = items.map(item => {
 
 
           item.storedetails.finalopenstatus =
@@ -5214,7 +5220,7 @@ router.post(
       res.json({
 
 
-        success:true,
+        success: true,
 
 
         cartItems,
@@ -5230,7 +5236,7 @@ router.post(
 
     }
 
-    catch(err){
+    catch (err) {
 
 
 
@@ -5241,10 +5247,10 @@ router.post(
       res.json({
 
 
-        success:false,
+        success: false,
 
 
-        message:err.message
+        message: err.message
 
 
 
@@ -5781,7 +5787,7 @@ router.post(
 
   }
 );
- router.post('/customer-list', async (req, res) => {
+router.post('/customer-list', async (req, res) => {
 
   try {
 
@@ -5927,5 +5933,185 @@ router.post(
   }
 
 });
+router.post("/save-mobile", async (req, res) => {
 
+  try {
+
+    const {
+
+      userId,
+
+      mobile
+
+    } = req.body;
+
+    const exist =
+      await Customer.findOne({
+
+        mobile
+
+      });
+
+    if (exist) {
+
+      return res.json({
+
+        success: false,
+
+        message: "Mobile already registered"
+
+      });
+
+    }
+
+    await Customer.findByIdAndUpdate(
+
+      userId,
+
+      {
+
+        mobile,
+
+        isMobileVerified: true
+
+      }
+
+    );
+
+    res.json({
+
+      success: true
+
+    });
+
+  }
+
+  catch (e) {
+
+    res.status(500).json({
+
+      success: false,
+
+      message: "Server Error"
+
+    });
+
+  }
+
+});
+router.post("/google-login", async (req, res) => {
+
+  try {
+
+    const {
+
+      idToken,
+      fcmToken,
+      uniqueidofdevice
+
+    } = req.body;
+
+    const ticket =
+      await googleClient.verifyIdToken({
+
+        idToken,
+
+        audience:
+          "53907603345-77b74cahufec62hap6odhsfiv6oa4rir.apps.googleusercontent.com"
+
+      });
+
+    const payload =
+      ticket.getPayload();
+
+    const email = payload.email;
+
+    let user =
+      await Customer.findOne({
+
+        email
+
+      });
+
+    if (!user) {
+
+      user =
+        await Customer.create({
+
+          name: payload.name,
+
+          email,
+
+          googleId: payload.sub,
+
+          profilePic: payload.picture,
+
+          mobile: "",
+
+          password: "",
+
+          fcmToken,
+
+          uniqueidofdevice,
+
+          loginType: "google"
+
+        });
+
+    }
+
+    else {
+
+      user.googleId =
+        payload.sub;
+
+      user.profilePic =
+        payload.picture;
+
+      if (fcmToken) {
+
+        user.fcmToken =
+          fcmToken;
+
+      }
+
+      if (uniqueidofdevice) {
+
+        user.uniqueidofdevice =
+          uniqueidofdevice;
+
+      }
+
+      await user.save();
+
+    }
+
+    return res.json({
+
+      success: true,
+
+      needMobile:
+        !user.mobile,
+
+      user
+
+    });
+
+  }
+
+  catch (e) {
+
+    console.log(e);
+
+    res.status(400).json({
+
+      success: false,
+
+      message: "Google login failed"
+
+    });
+
+  }
+
+});
 module.exports = router;
