@@ -15,7 +15,8 @@ const moment = require('moment');
 const { getfinalopenstatus } = require('../utils/checkstoreopenstatus.js');
 const { OAuth2Client } = require("google-auth-library");
 const Notifytoken = require("../models/Notifytoken");
-
+const admin =
+  require('../firebase');
 const googleClient =
   new OAuth2Client(
     "53907603345-77b74cahufec62hap6odhsfiv6oa4rir.apps.googleusercontent.com"
@@ -174,23 +175,23 @@ router.post("/send-register-otp", async (req, res) => {
   try {
     const { mobile,uniqueidofdevice,fcm,apporbrowser } = req.body;
 
-    const exist = await Customer.findOne({ mobile });
-    if (exist && mobile != 8802010213) {
+    const exist = await Customer.findOne({ mobile: req.body.mobile });
+    if (exist && req.body.mobile != 8802010213) {
       if (!exist.isMobileVerified) {
         // delete existing record and resend OTP
-        await Customer.deleteOne({ mobile });
+        await Customer.deleteOne({ mobile: req.body.mobile });
       } else {
         return res.json({ success: false, message: "Mobile already exists" });
       }
 
     }
 
-    await generateAndSaveOtp(mobile, "register",uniqueidofdevice,fcm,apporbrowser);
+    await generateAndSaveOtp(req.body.mobile, "register",req.body.uniqueidofdevice,req.body.fcm,req.body.apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message ,body:req.body});
+    res.status(500).json({ success: false, message: err.message+ " ,body:" + JSON.stringify(req.body) });
   }
 });
 
