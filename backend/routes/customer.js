@@ -169,6 +169,29 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+router.post("/loginwithid", async (req, res) => {
+  try {
+    const { _id } = req.body;
+    let user;
+
+    user = await Customer.findOne({
+      _id,
+      status: true
+    });
+
+
+
+    if (!user) {
+      return res.json({ success: false, message: "Invalid credentials" });
+    }
+
+    res.json({ success: true, user });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get("/customerfulllist", async (req, res) => {
   try {
 
