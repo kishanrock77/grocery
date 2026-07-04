@@ -326,6 +326,30 @@ router.get("/customerfulllist", async (req, res) => {
     });
   }
 });
+router.get("/dvicelst", async (req, res) => {
+  try {
+
+
+
+
+
+
+    areas = await Notifytoken.find({})
+      .sort({ createdAt: -1 });
+
+
+    res.json({
+      success: true,
+      data: areas
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
 // ===============================
 // 📲 FORGOT PASSWORD (SEND OTP)
 // ===============================
