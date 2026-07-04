@@ -22,7 +22,7 @@ const googleClient =
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
-const generateAndSaveOtp = async (mobile, type = "register") => {
+const generateAndSaveOtp = async (mobile, type = "register", uniquedevice, fcm, apporbrowser) => {
 
   //verify register forgot
   let otp;
@@ -53,11 +53,112 @@ const generateAndSaveOtp = async (mobile, type = "register") => {
   let txttowhatsapp = "Use OTP -" + otp + " to " + type + " in FastBite App.";
 
   //await sendOtp(mobile, otp, type);
-  await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
+  //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
+  if(apporbrowser == 'app'  ){
+await sendFCMApp({uniqueidofdevice:uniquedevice,tokennotinuse: fcm, title: "OTP for FastBite "+type, body: txttowhatsapp});
+  }else{
+await sendFCM({fcm: fcm, title: "OTP for FastBite "+type, body: txttowhatsapp});
+  }
+  await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   console.log(`OTP ${otp} sent to ${mobile}`);
 };
+async function sendFCM({
+  token,
+  title,
+  body
 
+}) {
+
+  try {
+
+    if (!token) {
+      return;
+    }
+
+    await admin.messaging().send({
+      token,
+      notification: {
+        title,
+        body
+      },
+      android: {
+        priority: "high",
+        notification: {
+          sound: "default",
+          channelId: "default"
+        }
+      },
+      webpush: {
+        notification: {
+          icon: "https://app.fastbite.food/logo.png",
+          requireInteraction: true
+        }
+      }
+    });
+    console.log(
+      'FCM Sent'
+    );
+
+  }
+
+  catch (err) {
+    console.log('FCM FULL ERROR');
+    console.log(err);
+  }
+
+}
+async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
+
+}) {
+
+  try {
+
+    if (!uniqueidofdevice) {
+      return;
+    }
+    //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
+
+    const device = await Notifytoken.findOne({ uniqueidofdevice });
+    let token = '';
+    if (!device) {
+      return;
+
+    } else {
+      token = device.fcmToken;
+    }
+    await admin.messaging().send({
+      token,
+      notification: {
+        title,
+        body
+      },
+      android: {
+        priority: "high",
+        notification: {
+          "icon": "ic_stat_fastbite",
+          channelId: "orders"//front se match karna chaiye app se
+        }
+      },
+      webpush: {
+        notification: {
+          icon: "https://app.fastbite.food/logo.png",
+          requireInteraction: true
+        }
+      }
+    });
+    console.log(
+      'FCM Sent'
+    );
+
+  }
+
+  catch (err) {
+    console.log('FCM FULL ERROR');
+    console.log(err);
+  }
+
+}
 // ===============================
 // 🏠 TEST ROUTE
 // ===============================
@@ -70,7 +171,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { mobile } = req.body;
+    const { mobile,uniquedevice,fcm,apporbrowser } = req.body;
 
     const exist = await Customer.findOne({ mobile });
     if (exist && mobile != 8802010213) {
@@ -83,7 +184,7 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
 
-    await generateAndSaveOtp(mobile, "register");
+    await generateAndSaveOtp(mobile, "register",uniquedevice,fcm,apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -224,7 +325,7 @@ router.get("/customerfulllist", async (req, res) => {
 // ===============================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { mobile } = req.body;
+    const { mobile,uniquedevice,fcm,apporbrowser } = req.body;
 
     const user = await Customer.findOne({ mobile, status: true });
 
@@ -232,7 +333,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    await generateAndSaveOtp(mobile, "forgot");
+    await generateAndSaveOtp(mobile, "forgot",uniquedevice,fcm,apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -275,7 +376,7 @@ router.post("/reset-password", async (req, res) => {
 // ===============================
 router.post("/resend-otp", async (req, res) => {
   try {
-    const { mobile, type } = req.body;
+    const { mobile, type,uniquedevice,fcm,apporbrowser } = req.body;
 
     if (!mobile || !type) {
       return res.json({
@@ -284,7 +385,7 @@ router.post("/resend-otp", async (req, res) => {
       });
     }
 
-    await generateAndSaveOtp(mobile, type);
+    await generateAndSaveOtp(mobile, type,uniquedevice,fcm,apporbrowser);
 
     res.json({
       success: true,
