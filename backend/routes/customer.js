@@ -295,6 +295,7 @@ router.post("/updatUser", async (req, res) => {
 
     const {
       name,
+      mobile,
       dateofbirth,
       customerId
     } = req.body;
@@ -327,9 +328,20 @@ router.post("/updatUser", async (req, res) => {
       });
 
     }
+    const customerM = await Customer.findOne({ mobile, _id: { $ne: customerId } });
+
+    if (customerM) {
+
+      return res.json({
+        success: false,
+        message: "Mobile already exists !"
+      });
+
+    }
+
 
     customer.name = name.trim();
-
+    customer.mobile = mobile;
     customer.dateofbirth = dateofbirth;
 
     await customer.save();
