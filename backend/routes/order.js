@@ -110,6 +110,8 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
   try {
 
     if (!uniqueidofdevice) {
+
+      console.log('uniqueidofdevice not found');
       return;
     }
     //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
