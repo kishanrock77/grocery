@@ -63,6 +63,10 @@ const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, t
   }
   await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
+
+    console.log('apporbrowser', apporbrowser,  'token',   token);
+    console.log('uniqueidofdevice', uniqueidofdevice,  'token',   token);
+
   console.log(`OTP ${otp} sent to ${mobile}`, uniqueidofdevice,  token,   "OTP for FastBite " + type,   txttowhatsapp);
 };
 async function sendFCM( 
