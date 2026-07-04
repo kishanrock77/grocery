@@ -24,7 +24,7 @@ const googleClient =
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
-const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, tokennotinuse, apporbrowser) => {
+const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, token, apporbrowser) => {
 
   //verify register forgot
   let otp;
