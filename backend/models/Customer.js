@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const customerSchema = new mongoose.Schema({
 
   mobile: {
-    type: String,
-    required: true,
+    type: String, 
     unique: true,
     trim: true
   },
