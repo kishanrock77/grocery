@@ -24,7 +24,7 @@ const googleClient =
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
-const generateAndSaveOtp = async (mobile, type = "register", uniquedevice, fcm, apporbrowser) => {
+const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, tokennotinuse, apporbrowser) => {
 
   //verify register forgot
   let otp;
@@ -57,19 +57,11 @@ const generateAndSaveOtp = async (mobile, type = "register", uniquedevice, fcm, 
   //await sendOtp(mobile, otp, type);
   //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   if (apporbrowser == 'app') {
-    await sendFCMApp({
-      uniqueidofdevice: uniquedevice,
-      tokennotinuse: fcm,
-      title: "OTP for FastBite " + type,
-      body: txttowhatsapp
-    });
+    await sendFCMApp({ uniqueidofdevice: uniqueidofdevice, tokennotinuse: token, title: "OTP for FastBite " + type, body: txttowhatsapp });
   } else {
-    await sendFCM({
-      token: fcm,
-      title: "OTP for FastBite " + type,
-      body: txttowhatsapp
-    });
+    await sendFCM({ token: token, title: "OTP for FastBite " + type, body: txttowhatsapp });
   }
+  await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   console.log(`OTP ${otp} sent to ${mobile}`);
 };
@@ -181,7 +173,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { mobile,uniqueidofdevice,fcm,apporbrowser } = req.body;
+    const { mobile, uniqueidofdevice, fcm, apporbrowser } = req.body;
 
     const exist = await Customer.findOne({ mobile: req.body.mobile });
     if (exist && req.body.mobile != 8802010213) {
@@ -194,12 +186,12 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
 
-    await generateAndSaveOtp(req.body.mobile, "register",req.body.uniqueidofdevice,req.body.fcm,req.body.apporbrowser);
+    await generateAndSaveOtp(req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message+ " ,body:" + JSON.stringify(req.body) });
+    res.status(500).json({ success: false, message: err.message, body: req.body });
   }
 });
 
@@ -335,7 +327,7 @@ router.get("/customerfulllist", async (req, res) => {
 // ===============================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { mobile,uniqueidofdevice,fcm,apporbrowser } = req.body;
+    const { mobile, uniqueidofdevice, fcm, apporbrowser } = req.body;
 
     const user = await Customer.findOne({ mobile, status: true });
 
@@ -343,7 +335,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    await generateAndSaveOtp(mobile, "forgot",uniqueidofdevice,fcm,apporbrowser);
+    await generateAndSaveOtp(mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -386,7 +378,7 @@ router.post("/reset-password", async (req, res) => {
 // ===============================
 router.post("/resend-otp", async (req, res) => {
   try {
-    const { mobile, type,uniqueidofdevice,fcm,apporbrowser } = req.body;
+    const { mobile, type, uniqueidofdevice, fcm, apporbrowser } = req.body;
 
     if (!mobile || !type) {
       return res.json({
@@ -395,7 +387,7 @@ router.post("/resend-otp", async (req, res) => {
       });
     }
 
-    await generateAndSaveOtp(mobile, type,uniqueidofdevice,fcm,apporbrowser);
+    await generateAndSaveOtp(mobile, type, uniqueidofdevice, fcm, apporbrowser);
 
     res.json({
       success: true,
