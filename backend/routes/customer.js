@@ -57,11 +57,10 @@ const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, t
   //await sendOtp(mobile, otp, type);
   //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
   if (apporbrowser == 'app') {
-    await sendFCMApp(  uniqueidofdevice,  token,   "OTP for FastBite " + type,   txttowhatsapp );
+    await sendFCMApp(uniqueidofdevice, token, "OTP for FastBite " + type, txttowhatsapp);
   } else {
-    await sendFCM(  token,   "OTP for FastBite " + type,   txttowhatsapp );
+    await sendFCM(token, "OTP for FastBite " + type, txttowhatsapp);
   }
-  await sendFCMApp();
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
 
     console.log('apporbrowser', apporbrowser,  'token',   token);
@@ -119,6 +118,7 @@ async function sendFCMApp( uniqueidofdevice, tokennotinuse, title, body
 ) {
 
   try {
+    console.log('uniqueidofdevice', uniqueidofdevice,  'sendFCMApp',   title,   body);
 
     if (!uniqueidofdevice) {
       return;
@@ -139,15 +139,30 @@ async function sendFCMApp( uniqueidofdevice, tokennotinuse, title, body
         title,
         body
       },
+      data: {
+        type: "otp",
+        title,
+        body
+      },
       android: {
         priority: "high",
+        ttl: 60 * 60 * 1000,
         notification: {
-          "icon": "ic_stat_fastbite",
-          channelId: "orders"//front se match karna chaiye app se
+          title,
+          body,
+          icon: "ic_stat_fastbite",
+          color: "#FF5A5F",
+          channelId: "orders",
+          sound: "default",
+          defaultSound: true,
+          visibility: "public",
+          clickAction: "FLUTTER_NOTIFICATION_CLICK"
         }
       },
       webpush: {
         notification: {
+          title,
+          body,
           icon: "https://app.fastbite.food/logo.png",
           requireInteraction: true
         }
