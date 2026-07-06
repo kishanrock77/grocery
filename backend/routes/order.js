@@ -196,7 +196,7 @@ async function sendFCM({
         }
       }
     });
-    //console.log(
+     console.log(
       'FCM Sent web'
     );
 
