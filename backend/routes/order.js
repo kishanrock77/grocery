@@ -488,6 +488,8 @@ async function updateSubOrderStatus({
       subOrder.orderId
     );
   ///when chnaging status
+
+  console.log('when chnaging status');
   await sendNotifications({
 
     statuskey,
@@ -1338,11 +1340,11 @@ async function sendNotifications({
   // STORE
   // ==========================================
 
-  if (notifications.Store && subOrder.finalstoreId) {
+  if (notifications.Store && subOrder.storeId) {
 
     const store =
       await Store.findById(
-        subOrder.finalstoreId
+        subOrder.storeId
       );
 
     if (store?.ownerid) {
