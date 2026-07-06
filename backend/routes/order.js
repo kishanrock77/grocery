@@ -109,7 +109,7 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOw
 
   try {
 
-   console.log("storeOwnerDoc");
+   console.log("storeOwnerDoc "+title);
      console.log(storeOwnerDoc);
     
     if (!uniqueidofdevice) {
@@ -315,14 +315,14 @@ async function saveNotification({
     body: message,storeOwnerDoc
 
   });
-  // await sendFCM({
-  //   token,
+  await sendFCM({
+    token,
 
-  //   title,
+    title,
 
-  //   body: message
+    body: message
 
-  // });
+  });
 
   //fcm emnd
 
