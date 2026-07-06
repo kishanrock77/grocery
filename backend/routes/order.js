@@ -109,11 +109,12 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOw
 
   try {
 
-  console.log(storeOwnerDoc);
+   console.log("storeOwnerDoc");
+     console.log(storeOwnerDoc);
     
     if (!uniqueidofdevice) {
 
-      console.log('uniqueidofdevice not found'+title);
+       console.log('uniqueidofdevice not found - '+title);
       return;
     }
     //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
@@ -147,13 +148,13 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOw
       }
     });
     console.log(
-      'FCM Sent app'
+      'FCM Sent app 151'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR app');
+    console.log('FCM FULL ERROR app 157');
     console.log(err);
     console.log(err.code);
   console.log(err.message);
@@ -195,15 +196,15 @@ async function sendFCM({
         }
       }
     });
-    console.log(
+    //console.log(
       'FCM Sent web'
     );
 
   }
 
   catch (err) {
-    console.log('FCM FULL ERROR web');
-    console.log(err);
+    //console.log('FCM FULL ERROR web');
+    //console.log(err);
   }
 
 }
@@ -221,6 +222,8 @@ async function saveNotification({
   relatedOrderId
 
 }) {
+       console.log("userType " + userType);
+
   let storeOwnerDoc ;
   if (!userId) {
     return;
@@ -274,7 +277,7 @@ async function saveNotification({
     userType == 'Store'
   ) {
 
-    console.log("store owner id is " + userId);
+     console.log("store owner id is " + userId);
 
       storeOwnerDoc =
       await StoreOwner.findById(
@@ -312,14 +315,14 @@ async function saveNotification({
     body: message,storeOwnerDoc
 
   });
-  await sendFCM({
-    token,
+  // await sendFCM({
+  //   token,
 
-    title,
+  //   title,
 
-    body: message
+  //   body: message
 
-  });
+  // });
 
   //fcm emnd
 
@@ -347,7 +350,7 @@ async function saveNotification({
   // }
   // catch (err) {
 
-  //   console.log(
+  //   //console.log(
   //     "Socket notification error:",
   //     err.message
   //   );
@@ -970,7 +973,7 @@ router.post(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -1070,7 +1073,7 @@ router.post(
       //...agar paymentStatus pending nahi h to  storeTotal   amount uske waalet me save krado
       //ye pura code ek function me daalna.
 
-      console.log(subOrder)
+      //console.log(subOrder)
 
       await handleRejectedSubOrderAmount({
 
@@ -1106,7 +1109,7 @@ router.post(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -1134,9 +1137,9 @@ async function sendNotifications({
 
 }) {
 
-  console.log("i m in send n" + statuskey)
-  console.log(order);
-  console.log(subOrder)
+  //console.log("i m in send n" + statuskey)
+  //console.log(order);
+  //console.log(subOrder)
   const statusData =
     objectstatusjson[statuskey];
 
@@ -1416,7 +1419,7 @@ router.post('/change-payment-method-to-cod', async (req, res) => {
 
   } catch (error) {
 
-    console.log(error);
+    //console.log(error);
 
     res.status(500).json({
       success: false,
@@ -1548,7 +1551,7 @@ router.post(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -2223,7 +2226,7 @@ router.get(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -2387,7 +2390,7 @@ router.get(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -2515,7 +2518,7 @@ router.get(
 
 
       ]);
-      console.log(newSubOrders);
+      //console.log(newSubOrders);
       // =====================================
       // UNIQUE MAIN ORDER IDS
       // =====================================
@@ -2594,7 +2597,7 @@ router.get(
 
     catch (error) {
 
-      console.log(
+      //console.log(
         'role-orders-delivered error',
         error
       );
@@ -2771,7 +2774,7 @@ router.get(
           .lean()
 
       ]);
-      console.log(newSubOrders);
+      //console.log(newSubOrders);
       // =====================================
       // UNIQUE MAIN ORDER IDS
       // =====================================
@@ -2854,7 +2857,7 @@ router.get(
 
     catch (error) {
 
-      console.log(
+      //console.log(
         'role-orders error',
         error
       );
@@ -3036,7 +3039,7 @@ router.get(
 
     catch (error) {
 
-      console.log(
+      //console.log(
         'role-orders-cancelled error',
         error
       );
@@ -3138,7 +3141,7 @@ router.get(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -3217,7 +3220,7 @@ router.get(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -3445,7 +3448,7 @@ router.post(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -3516,13 +3519,13 @@ router.post('/settle-store-payments', async (req, res) => {
       transactionId, fromDate, toDate, commissiontotakefromstore_percent
     } = req.body;
 
-    console.log("storeId", storeId);
+    //console.log("storeId", storeId);
 
     const rowsBefore = await SubOrder.find({
       storeId
     });
 
-    console.log("Found Rows:", rowsBefore.length);
+    //console.log("Found Rows:", rowsBefore.length);
     let startDate = new Date(0);
     let endDate = new Date();
 
@@ -3565,7 +3568,7 @@ router.post('/settle-store-payments', async (req, res) => {
       await row.save();
 
     }
-    console.log("Update Result", updateResult);
+    //console.log("Update Result", updateResult);
 
     return res.json({
       success: true,
@@ -3574,7 +3577,7 @@ router.post('/settle-store-payments', async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    //console.log(err);
 
     return res.json({
       success: false,
@@ -3637,7 +3640,7 @@ router.post('/settle-deliveryboy-payments', async (req, res) => {
 
   } catch (err) {
 
-    console.log(err);
+    //console.log(err);
 
     return res.json({
       success: false
@@ -4250,7 +4253,7 @@ router.get(
 
     catch (error) {
 
-      console.log(error);
+      //console.log(error);
 
       return res.status(500).json({
 
@@ -4423,7 +4426,7 @@ router.post(
     catch (err) {
 
 
-      console.log(err);
+      //console.log(err);
 
 
       res.status(500).json({
