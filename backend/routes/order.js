@@ -103,15 +103,17 @@ async function saveLog(
 
 }
 
-async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
+async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOwnerDoc
 
 }) {
 
   try {
 
+  console.log(storeOwnerDoc);
+    
     if (!uniqueidofdevice) {
 
-      console.log('uniqueidofdevice not found');
+      console.log('uniqueidofdevice not found'+title);
       return;
     }
     //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
@@ -153,6 +155,9 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body
   catch (err) {
     console.log('FCM FULL ERROR app');
     console.log(err);
+    console.log(err.code);
+  console.log(err.message);
+  console.log(err.errorInfo);
   }
 
 }
@@ -216,7 +221,7 @@ async function saveNotification({
   relatedOrderId
 
 }) {
-
+  let storeOwnerDoc ;
   if (!userId) {
     return;
   }
@@ -269,7 +274,9 @@ async function saveNotification({
     userType == 'Store'
   ) {
 
-    const storeOwnerDoc =
+    console.log("store owner id is " + userId);
+
+      storeOwnerDoc =
       await StoreOwner.findById(
         userId
       );
@@ -302,7 +309,7 @@ async function saveNotification({
 
     title,
 
-    body: message
+    body: message,storeOwnerDoc
 
   });
   await sendFCM({
