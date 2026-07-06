@@ -2597,7 +2597,7 @@ router.get(
 
     catch (error) {
 
-      //console.log(
+       console.log(
         'role-orders-delivered error',
         error
       );
@@ -2857,7 +2857,7 @@ router.get(
 
     catch (error) {
 
-      //console.log(
+      console.log(
         'role-orders error',
         error
       );
@@ -3039,7 +3039,7 @@ router.get(
 
     catch (error) {
 
-      //console.log(
+   console.log(
         'role-orders-cancelled error',
         error
       );
