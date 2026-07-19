@@ -64,22 +64,30 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
   //   await sendFCM(token, "OTP for FastBite " + type, txttowhatsapp);
   // }
   try {
+    const notification =
+      await Notification.create({
 
+        userId,
+        userType: "Customer",
+        title: "OTP for FastBite " + type,
+        message: txttowhatsapp,
+        relatedOrderId: null,
+
+      });
     const io = getIO();
     console.log('io auth otp: userId ' + userId);
-    console.log(io)
+
     io.to(
       userId.toString()
     ).emit(
       "otp",
-      {
-        "userId": userId,
-        "userType": "Customer",
-        "title": "OTP for FastBite " + type,
-        "message": txttowhatsapp,
-
-      }
+      notification
     );
+console.log(
+      "Socket notification suuccess :",
+      notification
+    );
+
 
   }
   catch (err) {
