@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { getIO } =
   require("../socket");
-  
+  const Notification =
+    require('../models/Notification');
 const Item = require("../models/Item");
 const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
