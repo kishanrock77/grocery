@@ -1,0 +1,299 @@
+/* =========================
+PAGE
+========================= */
+ :host{
+  display:block; 
+ 
+  /* 💛 soft yellow luxury background */
+ overflow-x: hidden;
+  overflow-y: hidden; /* add only if you want NO scroll at all */
+  background:
+
+    radial-gradient(
+      circle at top left,
+      rgba(255, 214, 10, 0.18),
+      transparent 30%
+    ),
+
+    radial-gradient(
+      circle at top right,
+      rgba(255, 193, 7, 0.12),
+      transparent 26%
+    ),
+
+    radial-gradient(
+      circle at bottom left,
+      rgba(255, 235, 120, 0.16),
+      transparent 32%
+    ),
+
+    radial-gradient(
+      circle at bottom right,
+      rgba(255, 215, 0, 0.10),
+      transparent 28%
+    ),
+
+    linear-gradient(
+      180deg,
+      #fffdf5 0%,
+      #fff9e8 30%,
+      #fffef8 65%,
+      #ffffff 100%
+    );
+
+  padding-bottom:90px;
+
+  position:relative;
+
+  overflow-x:hidden;
+}
+
+/* glowing blobs */
+
+:host::before,
+:host::after{
+  content:"";
+
+  position:absolute;
+
+  border-radius:50%;
+
+  filter:blur(90px);
+
+  z-index:0;
+
+  pointer-events:none;
+}
+
+/* top glow */
+
+:host::before{
+
+  width:280px;
+  height:280px;
+
+  top:-100px;
+  left:-70px;
+
+  background:
+    rgba(255, 210, 0, 0.18);
+
+}
+
+/* bottom glow */
+
+:host::after{
+
+  width:340px;
+  height:340px;
+
+  bottom:-140px;
+  right:-120px;
+
+  background:
+    rgba(255, 235, 59, 0.14);
+
+}
+
+/* keep content above */
+
+.page,
+.items-header{
+  position:relative;
+  z-index:1;
+}
+
+/* =========================
+HEADING
+========================= */
+
+h2{
+  margin:18px 0 22px;
+
+  text-align:center;
+
+  font-size:26px;
+  font-weight:800;
+
+  color:#111827;
+
+  letter-spacing:.3px;
+}
+
+/* =========================
+GRID
+========================= */
+
+.account-grid{
+  display:grid;
+
+  grid-template-columns:repeat(2,1fr);
+
+  gap:14px;
+
+  padding:0 14px 20px;
+}
+
+/* =========================
+CARD
+========================= */
+
+ .account-card{
+  background:#fff;
+
+  border-radius:18px;
+
+  padding:12px 8px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  min-height:82px;
+
+  border:1px solid #f3f4f6;
+
+  box-shadow:
+    0 3px 10px rgba(0,0,0,0.04);
+
+  cursor:pointer;
+
+  transition:.22s ease;
+}
+
+/* SMALL ICON */
+.icon-wrap{
+  width:42px;
+  height:42px;
+
+  border-radius:14px;
+
+  margin-bottom:8px;
+}
+
+.icon-wrap i{
+  font-size:20px;
+}
+
+/* SMALL TEXT */
+.account-card p{
+  font-size:12px;
+  font-weight:700;
+}
+
+.account-card:hover{
+  transform:translateY(-3px);
+
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.08);
+}
+
+.account-card:active{
+  transform:scale(.96);
+}
+
+/* =========================
+ICON
+========================= */
+
+.icon-wrap{
+  width:54px;
+  height:54px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:18px;
+
+  background:
+    linear-gradient(135deg,#fff8db,#fde68a);
+
+  margin-bottom:10px;
+}
+
+.icon-wrap i{
+  font-size:24px;
+
+  color:#d4a106;
+}
+
+/* =========================
+TEXT
+========================= */
+
+.account-card p{
+  margin:0;
+
+  font-size:14px;
+  font-weight:700;
+
+  color:#1f2937;
+
+  text-align:center;
+}
+
+/* =========================
+LOGOUT
+========================= */
+
+.logout-card .icon-wrap{
+  background:
+    linear-gradient(135deg,#ffe5e5,#fecaca);
+}
+
+.logout-card .icon-wrap i{
+  color:#dc2626;
+}
+
+.items-header.fancy {
+  margin: 20px 0 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-avatar {
+  width: 74px;
+  height: 77px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.items-header.fancy h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+  position: relative;
+  display: inline-block;
+  padding: 0 10px;
+}
+
+/* left line */
+.items-header.fancy h2::before,
+.items-header.fancy h2::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 2px;
+  background: #ddd;
+}
+
+.items-header.fancy h2::before {
+  left: -50px;
+}
+
+.items-header.fancy h2::after {
+  right: -50px;
+}
+
+.wish{
+  background:
+    linear-gradient(135deg,#fff0f6,#ffccd5);
+}

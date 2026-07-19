@@ -1,0 +1,43 @@
+<div class="store-container">
+    
+  <div class="store-wrapper">
+
+    <!-- Header -->
+    <div class="header">
+      <h2>Select Store</h2>
+      <p>Please choose a store to continue</p>
+    </div>
+
+    <!-- Loader -->
+     
+
+    <!-- Store Cards -->
+    <div class="store-grid" *ngIf="!isLoading && stores.length > 0">
+      <div
+        class="store-card"
+        *ngFor="let store of stores"
+        [class.selected]="storeid === store._id"
+        (click)="callme(store)"
+      >
+        <i class="bi bi-shop"></i>
+        <span class="store-name">{{ store.storeName }}</span>
+      </div>
+    </div>
+
+    <!-- No Data -->
+    <div *ngIf="!isLoading && stores.length === 0" class="no-data">
+      No stores available
+    </div>
+
+    <!-- Button -->
+    <div class="btn-container">
+      <button class="select-btn" (click)="selectStore()">
+        Continue
+      </button>
+    </div>
+
+  </div>
+</div>
+ <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>

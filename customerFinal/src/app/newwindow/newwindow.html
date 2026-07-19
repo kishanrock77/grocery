@@ -1,0 +1,99 @@
+<div class="popup-wrapper" *ngIf="popupService.stack.length > 0">
+
+    <!-- 🔥 ALL POPUPS -->
+    <div class="popup-page" *ngFor="
+          let popup of popupService.stack;
+          let i = index;
+          trackBy: trackByIndex
+        " [class.active]="i === popupService.stack.length - 1">
+
+        <!-- STORE DETAIL -->
+        <ng-container *ngIf="popup.component == 'storedetails'">
+
+            <app-storedetail [idfromSelectero]="popup.data">
+            </app-storedetail>
+
+        </ng-container>
+        <ng-container *ngIf="popup.component == 'searchitem'">
+
+            <app-searchitem [searchfromUrl]="popup.data">
+            </app-searchitem>
+
+        </ng-container>
+
+        <!-- CATEGORY -->
+        <ng-container *ngIf="popup.component == 'productsoflvel2category'">
+
+            <app-productsoflvel2category [catidfromSelectero]="popup.data">
+            </app-productsoflvel2category>
+
+        </ng-container>
+
+        <!-- ITEM DETAILS -->
+        <ng-container *ngIf="popup.component == 'itemdetails'">
+
+            <app-itemdetails [idfromSelectero]="popup.data">
+            </app-itemdetails>
+
+        </ng-container>
+
+
+
+        <ng-container *ngIf="popup.component == 'cart'">
+
+            <app-cartpage>
+            </app-cartpage>
+
+
+        </ng-container>
+        <ng-container *ngIf="popup.component == 'addressaddselect'">
+
+            <app-address [comingfromwhichpage]="popup.data">
+            </app-address>
+        </ng-container>
+
+        <ng-container *ngIf="popup.component == 'whishitems'">
+
+            <app-whishitems>
+            </app-whishitems>
+        </ng-container>
+
+        <ng-container *ngIf="popup.component == 'orderdetails'">
+
+            <app-orderdetails [orderIdandtypeFrompopdata]="popup.data">
+            </app-orderdetails>
+        </ng-container>
+        <ng-container *ngIf="popup.component == 'wallet'">
+
+            <app-wallet>
+            </app-wallet>
+        </ng-container>
+
+
+        <ng-container *ngIf="popup.component == 'support'">
+
+            <app-support>
+            </app-support>
+        </ng-container>
+        <ng-container *ngIf="popup.component == 'deliveryboytrack'">
+
+            <app-deliveryboytrack [boyIdandtypeFrompopdata]="popup.data">
+            </app-deliveryboytrack>
+        </ng-container>
+
+
+        <ng-container *ngIf="popup.component == 'customorder'">
+
+            <app-customer-order [type]="popup.data">
+            </app-customer-order>
+        </ng-container>
+ <ng-container *ngIf="popup.component == 'customorderlist'">
+
+            <app-custom-order-list [data]="popup.data">
+            </app-custom-order-list>
+        </ng-container>
+
+
+    </div>
+
+</div>

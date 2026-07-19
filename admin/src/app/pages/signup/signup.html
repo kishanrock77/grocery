@@ -1,0 +1,85 @@
+<div class="signup-container">
+  <h2 class="signup-title">
+    <i class="bi bi-person-plus signup-icon"></i> Admin Signup
+ 
+
+ </h2>
+    
+  <form [formGroup]="signupForm" (ngSubmit)="signup()">
+  <div class="form-group">
+    <label for="name">Name 
+
+      <span style="color: red;">*</span>
+    </label>
+    <input id="name" type="text" class="form-input" formControlName="name" placeholder="Enter your name">
+    <div class="error" *ngIf="signupForm.get('name')?.touched && signupForm.get('name')?.invalid">
+      <small *ngIf="signupForm.get('name')?.errors?.['required']">Name is required.</small>
+      <small *ngIf="signupForm.get('name')?.errors?.['minlength']">Name must be at least 3 characters.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email <span style="color: red;">*</span></label>
+    <input id="email" type="email" class="form-input" formControlName="email" placeholder="Enter email">
+    <div class="error" *ngIf="signupForm.get('email')?.touched && signupForm.get('email')?.invalid">
+      <small *ngIf="signupForm.get('email')?.errors?.['required']">Email is required.</small>
+      <small *ngIf="signupForm.get('email')?.errors?.['email']">Email is not valid.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="password">Password <span style="color: red;">*</span></label>
+    <input id="password" type="password" class="form-input" formControlName="password" placeholder="Enter password">
+    <div class="error" *ngIf="signupForm.get('password')?.touched && signupForm.get('password')?.invalid">
+      <small *ngIf="signupForm.get('password')?.errors?.['required']">Password is required.</small>
+      <small *ngIf="signupForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="confirmPassword">Confirm Password <span style="color: red;">*</span></label>
+    <input id="confirmPassword" type="password" class="form-input" formControlName="confirmPassword" placeholder="Confirm password">
+    <div class="error" *ngIf="signupForm.get('confirmPassword')?.touched && signupForm.get('confirmPassword')?.invalid || signupForm.errors?.['passwordMismatch']">
+      <small *ngIf="signupForm.get('confirmPassword')?.errors?.['required']">Confirm Password is required.</small>
+      <small *ngIf="signupForm.errors?.['passwordMismatch']">Passwords do not match.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="phone">Phone <span style="color: red;">*</span></label>
+    <input id="phone" type="text" class="form-input" formControlName="phone" placeholder="Enter phone number">
+    <div class="error" *ngIf="signupForm.get('phone')?.touched && signupForm.get('phone')?.invalid">
+      <small *ngIf="signupForm.get('phone')?.errors?.['required']">Phone is required.</small>
+      <small *ngIf="signupForm.get('phone')?.errors?.['pattern']">Phone must be 10 digits.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="state">State <span style="color: red;">*</span></label>
+    <select id="state" class="form-input" formControlName="state" (change)="onStateChange($event)">
+      <option value="">Select State</option>
+      <option *ngFor="let state of states" [value]="state">{{ state }}</option>
+    </select>
+    <div class="error" *ngIf="signupForm.get('state')?.touched && signupForm.get('state')?.invalid">
+      <small *ngIf="signupForm.get('state')?.errors?.['required']">State is required.</small>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="city">City <span style="color: red;">*</span></label>
+    <select id="city" class="form-input" formControlName="city">
+      <option value="">Select City</option>
+      <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+    </select>
+    <div class="error" *ngIf="signupForm.get('city')?.touched && signupForm.get('city')?.invalid">
+      <small *ngIf="signupForm.get('city')?.errors?.['required']">City is required.</small>
+    </div>
+  </div>
+
+  <button type="submit" class="submit-btn">Signup</button>
+
+  <div class="login-link">
+    <a routerLink="/login">Already have an account? Login</a>
+  </div>
+</form>
+</div>

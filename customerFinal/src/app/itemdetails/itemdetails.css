@@ -1,0 +1,530 @@
+
+/* itemdetails.css */
+
+.details-page{
+  height:100vh;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.cake-message-box {
+
+ max-width:500px;
+ margin:20px auto;
+ padding:25px;
+
+ background:#fff;
+
+ border-radius:20px;
+
+ box-shadow:0 8px 30px rgba(0,0,0,.12);
+
+ border:1px solid #ffd6e0;
+
+}
+
+
+.cake-message-box h3{
+
+ text-align:center;
+ color:#d63384;
+ font-size:24px;
+
+}
+
+
+.cake-message-box p{
+
+ text-align:center;
+ color:#777;
+
+}
+
+
+textarea{
+
+ width:100%;
+ height:110px;
+
+ padding:15px;
+
+ border-radius:15px;
+
+ border:2px solid #ffd1dc;
+
+ outline:none;
+
+ font-size:16px;
+
+ resize:none;
+
+ box-sizing:border-box;
+
+}
+
+
+textarea:focus{
+
+ border-color:#d63384;
+
+}
+
+
+.bottom{
+
+ display:flex;
+
+ justify-content:space-between;
+
+ margin-top:12px;
+
+ color:#888;
+
+ font-size:14px;
+
+}
+
+
+.count{
+
+ color:#d63384;
+
+ font-weight:bold;
+
+}
+
+
+@media(max-width:600px){
+
+ .cake-message-box{
+
+   margin:15px;
+
+ }
+
+}
+.topbar{
+  height:58px;
+  padding:0 14px;
+  border-bottom:1px solid #f1f1f1;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  background:#fff;
+  z-index:20;
+}
+
+.top-right{
+  display:flex;
+  gap:10px;
+}
+
+.icon-btn{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#f5f5f5;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:19px;
+}
+
+.wishlist i.active{
+  color:#ef4444;
+}
+
+.content{
+  flex:1;
+  overflow-y:auto;
+  padding-bottom:120px;
+}
+
+.content::-webkit-scrollbar{
+  width:0;
+}
+
+.slider-section{
+  position:relative;
+}
+
+.main-slider{
+  width:100%;
+  height:280px;
+  overflow:hidden;
+}
+
+.slider-track{
+  display:flex;
+  height:100%;
+  transition:.35s ease;
+}
+
+.slider-track img{
+  width:100%;
+  flex-shrink:0;
+  object-fit:contain;
+  padding:10px;
+}
+
+.dots{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin:8px 0 12px;
+}
+
+.dots span{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#d1d5db;
+}
+
+.dots span.active{
+  background:#16a34a;
+}
+.see-more{
+  font-size: 14px;
+  color: #f7c948;
+  cursor: pointer;
+}
+.type{
+  position:absolute;
+  top:2px;
+  left:12px;
+z-index: 999;
+  width:16px;
+  height:16px;
+
+  border:2px solid;
+  border-radius:3px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#fff;
+}
+.typeunder{
+  
+  width:16px;
+  height:16px;
+
+  border:2px solid;
+  border-radius:3px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#fff;
+}
+
+.typeunder span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.typeunder.veg{
+  border-color:green;
+}
+.time-overlay {
+   
+  left: 50%;
+  
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.typeunder.veg span{
+  background:green;
+}
+
+.typeunder.nonveg{
+  border-color:red;
+}
+
+.typeunder.nonveg span{
+  background:red;
+}
+.type span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+}
+
+.type.veg{
+  border-color:green;
+}
+
+.type.veg span{
+  background:green;
+}
+
+.type.nonveg{
+  border-color:red;
+}
+
+.type.nonveg span{
+  background:red;
+}
+
+.details-box{
+  padding:16px;
+}
+
+.name{
+  font-size:24px;
+  font-weight:700;
+}
+
+.itemSubName{
+  margin-top:-17px;
+  color:#6b7280;
+}
+
+.price-row{
+  margin-top:14px;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.price{
+  font-size:26px;
+  font-weight:700;
+}
+
+.unit{
+  background:#f3f4f6;
+  padding:5px 11px;
+  border-radius:20px;
+  font-size:12px;
+}
+
+.main-cart-row{
+  margin-top:18px;
+}
+
+.add-btn-main{
+  height:42px;
+  width:100%;
+
+  border:1px solid #ffd000; 
+
+  background:white;
+  color:black;
+
+  font-weight:700; 
+}
+
+.qty-box{
+  height:38px;
+  min-width:100px;
+
+  padding:0 6px;
+  border: 1px solid green;
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:10px;
+
+  background:#fff;
+}
+
+.qty-box button{
+  width:28px;
+  height:28px;
+background: #f7c948;
+  border:none;
+  border-radius:8px;
+ 
+
+  color: #fff;
+  font-size:18px;
+  font-weight:700;
+}
+
+.qty-box span{
+  min-width:20px;
+  text-align:center;
+  font-weight:700;
+}
+
+.store-box{
+  margin:0 16px;
+  padding:14px;
+  border-radius:16px;
+  background:#fafafa;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.store-left{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.store-left img{
+  width:52px;
+  height:52px;
+  border-radius:12px;
+  object-fit:cover;
+}
+
+.section{
+  padding:18px 16px;
+  border-bottom:1px solid #f3f4f6;
+}
+
+.section h2{
+  margin-bottom:14px;
+}
+
+.option-list,
+.addon-list,
+.variant-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.option-card,
+.variant-option{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.option-card,
+.addon-card,
+.variant-card{
+  border:1px solid #eee;
+  border-radius:16px;
+  padding:12px;
+}
+
+.option-left{
+  flex:1;
+}
+
+.addon-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.addon-card img,
+.variant-top img{
+  width:68px;
+  height:68px;
+  border-radius:12px;
+  object-fit:cover;
+}
+
+.addon-info,
+.variant-info{
+  flex:1;
+}
+
+.variant-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.variant-options{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #eee;
+
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.related-grid{
+  margin-top:14px;
+
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+/* SHIMMER */
+
+.loading-page{
+  padding:16px;
+}
+
+.shimmer{
+  position:relative;
+  overflow:hidden;
+  background:#f1f1f1;
+  border-radius:12px;
+}
+
+.shimmer::after{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-150px;
+  width:120px;
+  height:100%;
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.7),
+    transparent
+  );
+
+  animation:shimmer 1.1s infinite;
+}
+
+.shimmer-banner{
+  width:100%;
+  height:280px;
+}
+
+.shimmer-line{
+  height:16px;
+  margin-top:14px;
+}
+
+.shimmer-line.big{
+  width:70%;
+  height:24px;
+}
+
+.shimmer-line.small{
+  width:40%;
+}
+
+.shimmer-card{
+  margin-top:18px;
+  height:90px;
+}
+
+@keyframes shimmer{
+  100%{
+    transform:translateX(420px);
+  }
+}
+

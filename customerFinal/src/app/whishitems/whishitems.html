@@ -1,0 +1,70 @@
+<app-subheader [showback]="true" [backurl]="''">
+</app-subheader>
+
+<div class="items-header fancy">
+  <h2>Wishlist Items</h2>
+</div>
+
+<div class="page">
+
+  <!-- EMPTY -->
+  <div
+    class="empty-box"
+    *ngIf="!loading && whishitems.length === 0">
+
+    <div class="empty-icon">♡</div>
+
+    <h3>No Wishlist Items</h3>
+
+    <p>
+      Save your favourite products here
+      and order them anytime.
+    </p>
+
+    <button
+      class="shop-btn"
+      routerLink="/">
+      Start Shopping
+    </button>
+
+  </div>
+
+  <!-- LOADER -->
+  <div
+    class="wishlist-grid shimmer-grid"
+    *ngIf="loading">
+
+    <div
+      class="shimmer-card"
+      *ngFor="let s of [1,2,3,4,5,6]">
+
+      <div class="shimmer-img"></div>
+
+      <div class="shimmer-line"></div>
+
+      <div class="shimmer-line small"></div>
+
+    </div>
+
+  </div>
+
+  <!-- ITEMS -->
+  <div
+    class="wishlist-grid"
+    *ngIf="!loading && whishitems.length > 0">
+
+    <app-item-card
+      *ngFor="
+        let item of whishitems
+      "
+      [item]="item">
+
+    </app-item-card>
+
+  </div>
+
+</div>
+
+<app-footer [alwayshide]="true">
+</app-footer><!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

@@ -1,0 +1,192 @@
+<span *ngIf="showappupdatemessage">
+
+  <div class="app-update-box">
+
+    <div class="update-icon">
+      <i class="ri-refresh-line"></i>
+    </div>
+
+    <h3>New Update Available</h3>
+
+    <p>
+
+      Better performance, bug fixes and new features are available.
+
+      Please update the app.
+
+    </p>
+
+    <div class="update-buttons">
+
+      <a href="https://play.google.com/store/apps/details?id=YOUR_APP_ID" target="_blank" class="playstore-btn">
+
+        <i class="ri-google-play-fill"></i>
+
+        Update
+
+      </a>
+
+    </div>
+
+  </div>
+
+</span>
+
+
+
+
+
+
+ff
+
+
+<div class="page" *ngIf="!showappupdatemessage && !isalreadyloggedin">
+
+
+
+  <div class="hero">
+
+    <img src="loginbanner.jpg" class="boy-img">
+
+  </div>
+
+
+
+
+
+  <div class="card">
+
+    <br>
+    <br>
+
+    <h2>
+
+      Welcome 👋
+
+    </h2>
+
+    <p class="welcome">
+
+      Login to continue your tasty journey.
+
+    </p>
+
+
+    <div id="googleButton"></div>
+
+
+    <!-- <button class="google-btn" (click)="loginWithGoogle()" [disabled]="loading">
+
+      <img src="google.png">
+
+      <span>
+
+        Continue with Google
+
+      </span>
+
+    </button> -->
+
+ 
+
+
+    <div *ngIf="loading" class="loading">
+
+      <div class="spinner"></div>
+
+    </div>
+
+
+
+
+
+    <p class="terms">
+
+      By continuing, you agree to our
+
+      <span (click)="openetermandpoloicy('terms-and-conditions.html')">
+
+        Terms
+
+      </span>
+
+      &
+
+      <span (click)="openetermandpoloicy('privacy-policy.html')">
+
+        Privacy Policy
+
+      </span>
+
+    </p>
+
+
+
+
+
+  </div>
+
+
+
+
+
+
+
+  <!-- MOBILE POPUP -->
+
+  <div class="popup-bg" *ngIf="showMobilePopup">
+
+
+
+    <div class="popup">
+
+
+
+      <h3>
+
+        Complete Profile
+
+      </h3>
+
+
+
+      <p>
+
+        Please enter your mobile number.
+
+      </p>
+
+
+
+
+
+      <div class="input-group">
+
+        <span class="prefix">
+
+          +91
+
+        </span>
+
+        <input maxlength="10" [(ngModel)]="mobile" (input)="onMobileChange()" placeholder="Enter mobile number">
+
+      </div>
+
+
+
+
+
+      <button class="continue-btn" (click)="saveMobile()" [disabled]="!isValidMobile(mobile) || loadingM">
+
+        <span *ngIf="loadingM" class="continue-btn-spinner"></span>
+        <span>{{ loadingM ? 'Please wait...' : 'Continue' }}</span>
+
+      </button>
+
+
+
+
+
+    </div>
+
+  </div>

@@ -1,0 +1,632 @@
+<div class="page">
+    <div class="spinner-overlay" *ngIf="loading2">
+        <div class="spinner"></div>
+    </div>
+    <!-- HEADER -->
+
+    <div class="top-header">
+
+        <div class="title">
+
+            Delivered Orders
+
+        </div>
+
+        <button class="refresh-btn" (click)="refreshOrders()">
+
+            <i class="bi bi-arrow-repeat"></i>
+
+
+        </button>
+
+    </div>
+    <div class="date-filter">
+
+        <div>
+            <label>Quick Filter</label>
+
+            <select [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+
+                <option value="">Custom</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="currentWeek">Current Week</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="last7Days">Last 7 Days</option>
+                <option value="currentMonth">Current Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="last30Days">Last 30 Days</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+
+            </select>
+        </div>
+    </div>
+    <div class="date-filter">
+        <div>
+            <label>From Date</label>
+
+            <input type="date" [(ngModel)]="fromDate" (change)="onManualDateChange()">
+        </div>
+
+        <div>
+            <label>To Date</label>
+
+            <input type="date" [(ngModel)]="toDate" (change)="onManualDateChange()">
+        </div>
+
+        <button class="search-btn" (click)="searchOrders()">
+
+            Search
+
+        </button>
+
+    </div>
+    <!-- FILTER -->
+
+    <div class="filter-wrapper">
+
+        <div *ngFor="let item of filters" class="filter-btn" [class.active]="
+        selectedFilter == item
+      " (click)="changeFilter(item)">
+
+            {{item}}
+
+        </div>
+
+    </div>
+
+    <span *ngIf="this.usertype=='admin'">
+        <span *ngIf="   this.selectedFilter ==
+      'Non Settled for store'">
+            <button class="settle0-btn" *ngIf="totalamountofNonSettledforAdmin_for_store>0"
+                (click)="clicktosettleforstore()">
+
+                Settle for stores
+
+            </button>
+
+        </span>
+        <span *ngIf="   this.selectedFilter ==
+      'Non Settled for Delivery boy'">
+            <button class="settle0-btn" *ngIf="totalamountofNonSettledforAdmin_for_delieveryboy>0"
+                (click)="clicktosettleforDboys()">
+
+                Settle for delievery boys
+
+            </button>
+        </span>
+
+
+        <span *ngIf="   this.selectedFilter ==
+      'Non Settled'">
+            <button class="settle0-btn" *ngIf="totalamountofNonSettledforAdmin_for_delieveryboy>0"
+                (click)="clicktosettleforDboys()">
+
+                Settle for delievery boys
+
+            </button>
+            &nbsp;<button class="settle0-btn" *ngIf="totalamountofNonSettledforAdmin_for_store>0"
+                (click)="clicktosettleforstore()">
+
+                Settle for stores
+
+            </button>
+        </span>
+
+
+        <br />
+        <br />
+    </span>
+
+
+    <small *ngIf="this.usertype=='store' &&  this.selectedFilter ==
+      'All'">Total Delivered Amount: ₹{{totalamountofdeleveredordersforstore}}</small>
+    <small *ngIf="this.usertype=='store' &&  this.selectedFilter ==
+      'Settled'">Total Settled Amount: ₹{{totalsettledamountforstore}}</small>
+    <small *ngIf="this.usertype=='store' &&  this.selectedFilter ==
+      'Non Settled'">Total Non Settled Amount: ₹{{totalNonsettledamountforstore}}</small>
+
+
+    <small *ngIf="this.usertype=='deliveryboy' &&  this.selectedFilter ==
+      'Settled'">Total Settled Amount: ₹{{totalsettledamountfordeliveryboy}}</small>
+    <small *ngIf="this.usertype=='deliveryboy' &&  this.selectedFilter ==
+      'Non Settled'">Total Non Settled Amount: ₹{{totalNonsettledamountfordeliveryboy}}</small>
+
+
+    <span *ngIf="this.usertype=='admin'">
+        <small *ngIf="  this.selectedFilter ==
+      'All'">Total Delivered Amount: ₹{{totalamountofdeleveredordersforAdmin}}</small>
+        <small *ngIf="  this.selectedFilter ==
+      'Settled'">Total Settled Amount: ₹{{totalamountofSettledforAdmin}}</small>
+        <small *ngIf="   this.selectedFilter ==
+      'Non Settled'">Total Non Settled Amount: ₹{{totalamountofNonSettledforAdmin}}</small>
+
+
+        <small *ngIf="  this.selectedFilter ==
+      'Settled for Delivery boy'">Total Settled Amount for Delivery boy:
+            ₹{{totalamountofSettledforAdmin_for_delieveryboy}}</small>
+        <small *ngIf="   this.selectedFilter ==
+      'Non Settled for Delivery boy'">Total Non Settled Amount for Delivery boy:
+            ₹{{totalamountofNonSettledforAdmin_for_delieveryboy}}</small>
+
+        <small *ngIf="  this.selectedFilter ==
+      'Settled for store'">Total Settled Amount for Store: ₹{{totalamountofSettledforAdmin_for_store}}</small>
+        <small *ngIf="   this.selectedFilter ==
+      'Non Settled for store'">Total Non Settled Amount for Store:
+            ₹{{totalamountofNonSettledforAdmin_for_store}}</small>
+
+
+    </span>
+
+
+    <!-- LOADING -->
+
+    <div class="loading" *ngIf="loading">
+
+        Loading...
+
+    </div>
+
+    <!-- EMPTY -->
+
+    <div class="empty" *ngIf="
+
+      !loading &&
+
+      groupedOrders.length == 0
+
+    ">
+
+        No Orders Found
+
+    </div>
+
+    <!-- ORDERS -->
+
+    <div class="main-order-card" *ngFor="
+      let order of groupedOrders
+    " (click)="openorder(order)">
+
+        <!-- TOP -->
+
+        <div class="main-top">
+
+            <div>
+
+                <div class="main-id">
+
+                    {{order?.mainOrder?.mainorderid}}
+
+                </div>
+
+                <div class="main-date">
+
+                    {{formatDate(
+                    order?.mainOrder?.orderdatetime
+                    )}}
+
+                </div>
+
+
+            </div>
+
+            <i class="ri-arrow-right-s-line" *ngIf="this.usertype != 'store'"></i>
+
+        </div>
+
+        <!-- GRID -->
+
+        <div class="info-grid" *ngIf="this.usertype == 'admin'">
+
+            <div class="info-box">
+
+                <div class="label">
+
+                    Amount
+
+                </div>
+
+                <div class="value">
+
+                    ₹{{order?.mainOrder?.totalamount}}
+
+                </div>
+
+            </div>
+
+            <div class="info-box">
+
+                <div class="label">
+
+                    Stores
+
+                </div>
+
+                <div class="value">
+
+                    {{order?.totalStores}}
+
+                </div>
+
+            </div>
+
+            <div class="info-box">
+
+                <div class="label">
+
+                    Delivery Charge
+
+                </div>
+
+                <div class="value">
+
+                    ₹{{order?.mainOrder?.deliveryCharge}}
+
+                </div>
+
+            </div>
+
+            <div class="info-box">
+
+                <div class="label">
+
+                    Payment By
+
+                </div>
+
+                <div class="value upper">
+
+                    {{order?.mainOrder?.paymentMethod}}
+                    <span style="font-size: 10px; color: red;" *ngIf="order?.mainOrder?.paymentStatus=='pending'">
+                        (Pending)
+                    </span>
+                    <span style="font-size: 10px; color: green;" *ngIf="order?.mainOrder?.paymentStatus=='completed'">
+                        (Completed)
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SUB ORDERS -->
+
+        <div class="suborders-wrapper">
+            <span *ngFor="let sub of order?.subOrders" (click)="openSubOrder(order, sub, $event)">
+                <div class="settlement-status-wrapper" (click)="$event.stopPropagation();">
+
+                    <div (click)="$event.stopPropagation();">
+                        <div class="  statuss" [ngClass]="sub?.settlementdonefordeliveryboy ? 'success' : 'cancel'"
+                            *ngIf="usertype == 'admin'">
+
+                            {{sub?.settlementdonefordeliveryboy
+                            ? 'Settled for Delivery Boy'
+                            : 'Not Settled for Delivery Boy'}}
+
+                        </div>
+                        <div class="  statuss" [ngClass]="sub?.settlementdoneforstore ? 'success' : 'cancel'"
+                            *ngIf="usertype == 'admin'">
+
+                            {{sub?.settlementdoneforstore
+                            ? 'Settled for Store'
+                            : 'Not Settled for Store'}}
+
+                        </div>
+                        <div class="  statuss" [ngClass]="sub?.settlementdonefordeliveryboy ? 'success' : 'cancel'"
+                            *ngIf="usertype == 'deliveryboy'">
+
+                            {{sub?.settlementdonefordeliveryboy
+                            ? 'Settled'
+                            : 'Not Settled'}}
+
+                        </div>
+                        <div class="  statuss" [ngClass]="sub?.settlementdoneforstore ? 'success' : 'cancel'"
+                            *ngIf="usertype == 'store'">
+
+                            {{sub?.settlementdoneforstore
+                            ? 'Settled'
+                            : 'Not Settled'}}
+
+                        </div>
+                        <br />
+                        <div class="  statuss nothhh "
+                            (click)="$event.stopPropagation();markAsUnsettledForDeliveryBoy_or_store(sub,'store')"
+                            *ngIf="this.usertype == 'admin' && sub?.settlementdoneforstore">
+                            Mark as Un-Settled for Store
+                        </div>
+                        <div class="  statuss nothhh"
+                            (click)="$event.stopPropagation();markAsUnsettledForDeliveryBoy_or_store(sub,'deliveryboy')"
+                            *ngIf="this.usertype == 'admin' && sub?.settlementdonefordeliveryboy   ">
+                            Mark as Un-Settled for Delivery Boy
+                        </div>
+
+
+
+                    </div>
+
+                </div>
+
+                <div class="suborder-card" *ngIf="this.usertype == 'store'">
+                    <div class="info-grid">
+
+                        <div class="info-box">
+
+                            <div class="label">
+
+                                Amount
+
+                            </div>
+
+                            <div class="value">
+
+                                ₹{{sub.storeTotaltoshowtostore}}
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="info-box">
+
+                            <div class="label">
+
+                                Items
+
+                            </div>
+
+                            <div class="value">
+
+                                {{getTotalItems(sub?.items)}} Items
+
+                            </div>
+
+                        </div>
+
+
+
+                    </div>
+                </div>
+                <div class="suborder-card">
+
+
+                    <!-- LEFT -->
+                    <div class="sub-left">
+
+                        <div class="store-name" *ngIf="this.usertype !== 'store'">
+                            {{sub?.storeInfo?.storeName}}
+                        </div>
+
+                        <div class="sub-id">
+                            {{sub?.suborderid}}
+                        </div>
+
+                        <div class="sub-id" *ngIf="this.usertype == 'admin'">
+                            Amount for store: ₹{{sub.storeTotaltoshowtostore}}
+                        </div>
+
+
+                    </div>
+
+                    <!-- RIGHT -->
+
+
+                    <i class="ri-arrow-right-s-line"></i>
+
+                </div>
+                <div class="suborder-card-2" style="font-size:12px"
+                    *ngIf="sub?.settlementdoneforstore && (this.usertype == 'admin' ||  this.usertype == 'store') ">
+                    <b>Store Settlement Amount</b>: ₹{{sub?.settlementamountforstore}}<br />
+                    <b>Store Settlement Date</b>: {{sub?.settlementdatetimeforstore | date:'medium'}}<br />
+                    <b>Store Settlement Method</b>: {{sub?.settlementmethodforstore}}<br />
+                    <span *ngIf="sub?.settlementtransactionidforstore">
+                        <b>Store Settlement Transaction ID</b>: {{sub?.settlementtransactionidforstore}}
+                    </span>
+
+
+
+
+                </div>
+
+                <div class="suborder-card-2" (click)="$event.stopPropagation(); "
+                    *ngIf="!sub?.settlementdonefordeliveryboy && (this.usertype == 'admin' ||  this.usertype == 'deliveryboy') ">
+
+                    <b style="font-size:12px"> Delivery Boy</b>:{{sub.deliveryBoyName}}<br />
+                    <b style="font-size:12px">Settlement Amount for Delivery Boy</b>:
+                    ₹{{sub?.settlementamountfordeliveryboy}}
+
+                    <span *ngIf="this.usertype == 'admin'">
+                        <div class="form-group">
+
+                            <input type="number" style="margin-top:5px;width:80%" class=""
+                                (blur)="$event.stopPropagation(); setsettledamoutforDboy(sub)"
+                                placeholder="Enter Settlement Amount for Delivery Boy"
+                                [(ngModel)]="sub.settlementamountfordeliveryboy" />
+                        </div>
+
+                    </span>
+                    <span style="color: red;font-size:12px"> (Settlement Pending for Delivery Boy) </span>
+                </div>
+                <div class="suborder-card-2" style="font-size:12px"
+                    *ngIf="sub?.settlementdonefordeliveryboy && (this.usertype == 'admin' ||  this.usertype == 'deliveryboy') ">
+
+                    <b> Delivery Boy</b>:{{sub.deliveryBoyName}}<br />
+
+                    <b>Delivery Boy Settlement Amount</b>: ₹ {{sub?.settlementamountfordeliveryboy}}<br />
+                    <b>Delivery Boy Settlement Date</b>: {{sub?.settlementdatetimefordeliveryboy | date:'medium'}}<br />
+                    <b>Delivery Boy Settlement Method</b>: {{sub?.settlementmethodfordeliveryboy}}<br />
+                    <span *ngIf="sub?.settlementtransactionidfordeliveryboy">
+                        <b>Delivery Boy Settlement Transaction ID</b>: {{sub?.settlementtransactionidfordeliveryboy}}
+                    </span>
+                </div>
+                <span *ngIf="
+          usertype!='store'">
+                    <hr />
+                </span>
+            </span>
+        </div>
+
+    </div>
+
+</div>
+<!-- STORE POPUP -->
+
+<div class="overlay" *ngIf="showStoreSettlementPopup">
+
+    <div class="popup-card">
+
+        <div class="popup-header">
+            Store Settlement
+            <span class="close-btn" (click)="showStoreSettlementPopup=false">
+                ✕
+            </span>
+        </div>
+
+        <div class="form-group">
+
+            <label>Select Store</label>
+
+            <select [(ngModel)]="selectedStoreId" (change)="onStoreChange()">
+
+                <option value="">Select Store</option>
+
+                <option *ngFor="let store of uniqueStores" [value]="store.storeId">
+
+                    {{store.storeName}}
+
+                </option>
+
+            </select>
+
+        </div>
+        <div class="amount-box" *ngIf="selectedStorePendingAmount > 0">
+
+            Unsettled Amount :
+            <b>₹{{selectedStorePendingAmount}}</b>
+            <br />
+            <small>(after deducting {{commissiontotakefromstore_percent}}% commmision for admin)</small>
+
+        </div>
+        <div class="form-group">
+
+            <label>Payment Method</label>
+
+            <select [(ngModel)]="paymentMethod">
+
+                <option value="">Select</option>
+                <option>COD</option>
+                <option>UPI</option>
+                <option>GooglePay</option>
+                <option>Paytm</option>
+                <option>Paypal</option>
+                <option>NetBanking</option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Settlement Date Time</label>
+
+            <input type="datetime-local" style="width:90%" [(ngModel)]="settlementDateTime">
+
+        </div>
+
+        <div class="form-group" *ngIf="paymentMethod && paymentMethod!='COD'">
+
+            <label>Transaction Id</label>
+
+            <input type="text" style="width:90%" [(ngModel)]="transactionId">
+
+        </div>
+
+        <button class="save-btn" (click)="saveStoreSettlement()">
+
+            Save Settlement
+
+        </button>
+
+    </div>
+
+</div>
+<div class="overlay" *ngIf="showDboySettlementPopup">
+
+    <div class="popup-card">
+
+        <div class="popup-header">
+            Delivery Boy Settlement
+            <span class="close-btn" (click)="showDboySettlementPopup=false">
+                ✕
+            </span>
+        </div>
+
+        <div class="form-group">
+
+            <label>Select Delivery Boy</label>
+
+            <select [(ngModel)]="selectedDeliveryBoyId" (change)="onDeliveryBoyChange()">
+
+                <option value="">Select Delivery Boy</option>
+
+                <option *ngFor="let boy of uniqueDeliveryBoys" [value]="boy.deliveryBoyId">
+
+                    {{boy.deliveryBoyName}}
+                    (₹{{boy.unsettledAmount}})
+
+                </option>
+
+            </select>
+
+        </div>
+        <div class="amount-box" *ngIf="selectedDeliveryBoyPendingAmount > 0">
+
+            Settlement Amount :
+            <b>₹{{selectedDeliveryBoyPendingAmount}}</b>
+
+        </div>
+        <div class="form-group">
+
+            <label>Payment Method</label>
+
+            <select [(ngModel)]="paymentMethod">
+
+                <option value="">Select</option>
+                <option>COD</option>
+                <option>UPI</option>
+                <option>GooglePay</option>
+                <option>Paytm</option>
+                <option>Paypal</option>
+                <option>NetBanking</option>
+
+            </select>
+
+        </div>
+
+        <div class="form-group">
+
+            <label>Date Time</label>
+
+            <input type="datetime-local" style="width:90%" [(ngModel)]="settlementDateTime">
+
+        </div>
+
+        <div class="form-group" *ngIf="paymentMethod && paymentMethod!='COD'">
+
+            <label>Transaction Id</label>
+
+            <input type="text" style="width:90%" [(ngModel)]="transactionId">
+
+        </div>
+
+        <button class="save-btn" (click)="saveDeliveryBoySettlement()">
+
+            Save Settlement
+
+        </button>
+
+    </div>
+
+</div>

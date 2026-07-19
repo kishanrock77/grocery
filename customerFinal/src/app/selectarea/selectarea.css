@@ -1,0 +1,121 @@
+
+/* PAGE */
+.page {
+  min-height: 100dvh;
+  background: #ffffff; /* 🔥 full white */
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.header {
+  padding: 30px 20px 10px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.header p {
+  font-size: 13px;
+  color: #777;
+}
+
+/* LIST */
+.area-list {
+  flex: 1;
+  padding: 10px 15px;
+  overflow-y: auto;
+}
+
+/* CARD */
+.area-card {
+  background: #fff;
+  border-radius: 0; /* 🔥 straight */
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 1px solid #eee;
+}
+
+/* HOVER */
+.area-card:hover {
+  background: #fafafa;
+}
+
+/* ACTIVE (selected) */
+.area-card.active {
+  background: #f7c948; /* 🔥 light yellow */
+  border-color: #f7c948;
+}
+
+/* ICON */
+.area-icon {
+  font-size: 20px;
+  margin-right: 10px;
+}
+
+/* INFO */
+.area-info h4 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.area-info span {
+  font-size: 12px;
+  color: #999;
+
+}
+ 
+
+/* CHECK */
+.check {
+  margin-left: auto;
+  font-size: 16px;
+  color: #fff;
+}
+
+/* BOTTOM */
+.bottom {
+  padding: 15px;
+  border-top: 1px solid #eee;
+  background: #fff;
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #f7c948;; /* 🔥 grey border */
+  background: #fff; /* 🔥 white button */
+  color: #333;
+  font-size: 15px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+/* BUTTON ACTIVE */
+button:not(:disabled):active {
+  background: #f5f5f5;
+}
+
+/* DISABLED */
+button:disabled {
+  color: #aaa;
+  border-color: #ddd;
+}
+
+
+/* HEADER position fix */
+.header {
+  padding: 30px 20px 10px;
+  position: relative; /* 🔥 important */
+}
+

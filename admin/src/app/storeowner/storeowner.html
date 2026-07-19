@@ -1,0 +1,86 @@
+<div class="container">
+
+    <div class="page-loader" *ngIf="loading">
+        <div class="loader"></div>
+    </div>
+
+    <h2>Store Owner  <button class="refresh-btn" style="float: right;" (click)="ngOnInit();">
+
+            <i class="bi bi-arrow-repeat"></i>
+
+
+        </button></h2>
+    <div *ngIf="showadd">
+
+
+        <!-- FORM -->
+        <form #f="ngForm" (ngSubmit)="save(f)">
+
+            <input type="text" name="name" [(ngModel)]="form.name" #name="ngModel" placeholder="Name *" required>
+            <div *ngIf="submitted && name.invalid" class="error" style="padding-bottom: 10px; margin-top: -10px;">Name
+                required</div>
+
+            <input type="text" name="mobile" [(ngModel)]="form.mobile" #mobile="ngModel" placeholder="Mobile *" required
+                pattern="^[0-9]{10}$">
+            <div *ngIf="submitted && mobile.invalid" class="error" style="padding-bottom: 10px; margin-top: -10px;">
+                Valid
+                mobile required</div>
+
+            <input type="email" name="email" [(ngModel)]="form.email" #email="ngModel" placeholder="Email *" required>
+            <div *ngIf="submitted && email.invalid" class="error" style="padding-bottom: 10px; margin-top: -10px;">
+                <div *ngIf="email.errors?.['required']">Email required</div>
+                <div *ngIf="email.errors?.['email']">Invalid email</div>
+            </div>
+
+            <input type="text" name="password" [(ngModel)]="form.password" #password="ngModel" placeholder="Password *"
+                required>
+            <div *ngIf="submitted && password.invalid" class="error" style="padding-bottom: 10px; margin-top: -10px;">
+                Password
+                required</div>
+
+
+            <button class="submit-btn">
+                {{ editId ? 'Update' : 'Add' }}
+            </button>
+            <button class="cancel-btn" type="button" (click)="reset(f);showadd=false">
+                Cancel
+            </button>
+        </form>
+
+        <hr>
+    </div>
+    <button class="view-btn" style="color: black;background-color: white;border: 0.5px solid black;"
+        (click)="showadd=true" *ngIf="!showadd">
+        + Add Store Owner
+    </button>
+    <!-- CARD LIST -->
+    <div class="card-list">
+
+        <div class="card" *ngFor="let item of list">
+
+            <div class="card-body">
+
+                <h3>{{item.name}}</h3>
+                <p> <b>Mobile:</b>
+                    <a href="tel:{{item.mobile}}"> {{item.mobile}}</a>
+                    <br />
+                    <b>Email:</b> <a href="mailto:{{item.email}}"> {{item.email}}</a>
+
+                </p>
+
+                <p><b>Password:</b> {{item.password || 'N/A'}}</p>
+
+                <div class="actions">
+
+                    <button class="edit" style="background-color: #007bff;"
+                        (click)="edit(item);showadd=true">Edit</button>
+                    <button class="delete" (click)="delete(item._id)">Delete</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

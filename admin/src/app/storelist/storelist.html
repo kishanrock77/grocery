@@ -1,0 +1,177 @@
+<div class="store-page">
+  <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>
+  <!-- Header -->
+  <div class="store-header" *ngIf="stores.length > 0">
+    <h2 class="page-title">Your Stores <i class="bi bi-arrow-repeat"  (click)="ngOnInit();"></i></h2>
+
+    <button class="add-store-btn" routerLink="/addstore">
+      + Add Store
+    </button>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-store" *ngIf="stores.length == 0">
+
+    <i class="bi bi-shop empty-icon"></i>
+
+    <h3>No Store Found</h3>
+    <p>Add your first store to start selling</p>
+
+    <button class="add-store-btn big" routerLink="/addstore">
+      + Add Store
+    </button>
+
+  </div>
+
+  <!-- Store Grid -->
+  <div class="store-grid" *ngIf="stores.length > 0">
+    <div class="store-card" *ngFor="let store of stores">
+      <br />
+      <div class="store-status-buttons">
+
+        <button class="status-btn" style="margin-left: 10px;"
+          [ngClass]="{'active-close':store.openCloseStatus=='ForceClose'}"
+          (click)="changeStatus(store._id,'ForceClose','openCloseStatus')">
+          Force Close
+        </button>
+
+        <button class="status-btn" [ngClass]="{'active-open':store.openCloseStatus=='ForceOpen'}"
+          (click)="changeStatus(store._id,'ForceOpen','openCloseStatus')">
+          Force Open
+        </button>
+
+        <button class="status-btn" [ngClass]="{'active-default':store.openCloseStatus=='DefaultOpen'}"
+          (click)="changeStatus(store._id,'DefaultOpen','openCloseStatus')">
+          Default
+        </button>
+
+      </div>
+      <div style="margin-left: 20px;">
+       
+        <strong>{{store.storeName}}
+
+
+        </strong>
+      </div>
+ <br />
+
+
+      <!-- Image Carousel -->
+      <div class="store-image">
+
+        <div class="carousel" *ngIf="store.images.length > 0">
+
+          <img [src]=" store.images[currentImageIndex[store._id] || 0]">
+
+          <!-- arrows -->
+
+          <button class="nav prev" *ngIf="store.images.length > 1" (click)="prevImage(store)">
+            ❮
+          </button>
+
+          <button class="nav next" *ngIf="store.images.length > 1" (click)="nextImage(store)">
+            ❯
+          </button>
+
+        </div>
+
+        <div class="no-img" *ngIf="store.images.length == 0">
+          <i class="bi bi-image"></i>
+        </div>
+
+      </div>
+
+      <!-- Store Info -->
+      <div class="store-info" style="display: inline-block;">
+
+
+        <div class="store-status-buttons">
+
+          <button class="status-btn" style="margin-left: 10px;" [ngClass]="{'active-open':store.activeStatus==true}"
+            (click)="changeStatus(store._id,true,'activeStatus')">
+            Active
+          </button>
+
+          <button class="status-btn" [ngClass]="{'active-close':store.activeStatus==false}"
+            (click)="changeStatus(store._id,false,'activeStatus')">
+            De-Active
+          </button>
+
+
+
+        </div>
+
+
+        <div class="store-actions">
+          <button class="view-btn" (click)="toggleDetail(store)">
+            {{store.showDetail ? 'Hide Details' : 'View Details'}}
+          </button>
+          <button class="edit-btn" (click)="editStore(store._id)">
+            Edit
+          </button>
+
+          <button class="delete-btn" (click)="deleteStore(store._id)">
+            Delete
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Expand Section -->
+      <div class="store-details" *ngIf="store.showDetail">
+ <small class="store-type">{{store.storeType}}</small>
+      
+        <p><strong>Owner:</strong> {{store.ownerName}} </p>
+        <hr />
+
+
+        <p> <strong>Owner Mobile :</strong>
+
+          <a href="tel:{{store.ownerMobile}}"> {{store.ownerMobile}}</a>
+        </p>
+        <hr />
+        <p> <strong>Owner Email:</strong>
+
+          <a href="mailto:{{store.ownerEmail}}"> {{store.ownerEmail}}</a>
+        </p>
+
+
+
+        <hr />
+        <p><strong>Store Address:</strong>{{store.address}} {{store.city}}</p>
+        <hr />
+        <p>
+          <strong>Landmark:</strong> {{store.landmark}}
+        </p>
+        <hr />
+        <p> <strong>Address on Map:</strong>
+          {{store.address_map}} <br />
+          <!-- Latitude: {{store.location?.coordinates[1]}} | Longitude: {{store.location?.coordinates[0]}} -->
+          <a href="https://www.google.com/maps/search/?api=1&query={{store.location?.coordinates[1]}},{{store.location?.coordinates[0]}}"
+            target="_blank">
+            View on Map
+          </a>
+
+
+        </p>
+        <hr />
+
+        <p><strong>Timing:</strong> {{store.openingTime}} - {{store.closingTime}}</p>
+        <hr />
+        <p><strong>Week off:</strong> {{store.weekOff}}</p>
+        <hr />
+        <p><strong>Commission for admin:</strong> {{store.commissionforadmin}} %</p>
+        <hr />
+        <p><strong>Increase item price by:</strong> {{store.increasepriceby}} %</p>
+
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

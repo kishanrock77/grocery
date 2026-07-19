@@ -1,0 +1,128 @@
+<div class="store-page">
+
+  <!-- LOADER -->
+  <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="store-header" *ngIf="list.length > 0">
+    <h2>Delivery Boys  <i class="bi bi-arrow-repeat"  (click)="ngOnInit();"></i></h2>
+    <button routerLink="/adddeliveryboy" class="add-store-btn">
+      + Add Delivery Boy
+    </button>  
+  </div>
+
+  <!-- EMPTY -->
+  <div class="empty-store" *ngIf="list.length == 0">
+    <i class="bi bi-people empty-icon"></i>
+    <h3>No Delivery Boy Found</h3>
+    <p>Add your first Delivery Boy to Deliver orders</p>
+
+    <button class="add-store-btn big" routerLink="/adddeliveryboy">
+      + Add Delivery Boy
+    </button>
+  </div>
+
+  <!-- LIST -->
+  <div class="store-grid" *ngIf="list.length > 0">
+
+    <div class="store-card" *ngFor="let d of list">
+
+      <!-- TOP ROW -->
+      <div class="top-row">
+
+        <!-- PROFILE PIC -->
+        <div class="profile">
+          <img *ngIf="d.profilePic; else noImg" [src]="d.profilePic">
+          <ng-template #noImg>
+            <div class="no-img">
+              <i class="bi bi-person"></i>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- INFO -->
+        <div class="info">
+          <strong>{{d.name}}</strong>
+          <p>
+
+            <a href="tel:{{d.mobile}}"> <i class="bi bi-phone"></i> {{d.mobile}}</a>
+            <a href="mailto:{{d.email}}"><i class="bi bi-envelope"></i> {{d.email}}</a>
+          </p>
+
+
+
+          <!-- PARTNER TYPE -->
+
+          <!-- SALARY / COMMISSION -->
+          <p *ngIf="d.onsalaryorcommission === 'commission'">
+            <i class="bi bi-cash"></i>
+            <b> Commission:</b>
+            {{d.commission}}
+            {{ d.comissionType === 'percent' ? '%' : '₹/order' }}
+          </p>
+
+          <p *ngIf="d.onsalaryorcommission === 'salary'">
+            <i class="bi bi-wallet2"></i>
+            <b> Salary Based</b>
+          </p>
+
+
+
+        </div>
+
+      </div>
+      <div class="info">
+         <hr/>
+        <p><i class="bi bi-geo-alt"></i> <strong>Address :</strong>   {{d.address}}</p>
+        <p *ngIf="d.address_map"><i class="bi bi-geo-alt"></i> <strong>Current Location :</strong>   {{d.address_map}}
+        </p>
+
+        <!-- MAP LINK -->
+        <a *ngIf="d.location?.coordinates[0] && d.location?.coordinates[1]"
+          [href]="'https://www.google.com/maps?q=' + d.location.coordinates[1] + ',' + d.location.coordinates[0]"
+          target="_blank">
+          📍 View on Map
+        </a>  
+        <hr/>
+        <p>  <strong> Pickup area:</strong></p>
+        <div class="areas" *ngIf="d.pickupAreas?.length > 0">
+          <span *ngFor="let area of d.pickupAreas">
+            {{area}}
+          </span>
+        </div> <hr/>
+        <p>  <strong> Delivery area:</strong></p>
+        <!-- DELIVERY AREAS -->
+        <div class="areas" *ngIf="d.deliveryAreas?.length > 0">
+          <span *ngFor="let area of d.deliveryAreas">
+            {{area}}
+          </span>
+        </div>
+
+
+      </div>
+      <!-- STATUS -->
+      <div class="store-status-buttons">
+
+        <button class="status-btn" [ngClass]="{'active-open':d.activeStatus}" (click)="changeStatus(d._id,true)">
+          Active
+        </button>
+
+        <button class="status-btn" [ngClass]="{'active-close':!d.activeStatus}" (click)="changeStatus(d._id,false)">
+          De-Active
+        </button>
+
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="store-actions" style="margin-top: -10px;">
+        <button (click)="edit(d._id)">Edit</button>
+        <button (click)="delete(d._id)">Delete</button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

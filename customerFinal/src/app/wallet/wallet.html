@@ -1,0 +1,100 @@
+<app-subheader
+  [showback]="true"
+  [backurl]="''">
+</app-subheader>
+
+<div class="wallet-page">
+
+  <!-- BALANCE -->
+
+  <div class="wallet-card">
+
+    <div class="wallet-icon">
+      <i class="ri-wallet-3-fill"></i>
+    </div>
+
+    <div class="balance-label">
+      Available Balance
+    </div>
+
+    <div class="balance-amount">
+
+      ₹{{balanceAmount}}
+
+    </div>
+
+  </div>
+
+  <!-- HISTORY -->
+
+  <div class="section-title">
+
+    Wallet History
+
+  </div>
+
+  <div
+    *ngIf="walletList.length==0"
+    class="empty-card">
+
+    <i class="ri-inbox-line"></i>
+
+    <span>
+      No Wallet History Found
+    </span>
+
+  </div>
+
+  <div
+    class="history-card"
+    *ngFor="let item of walletList">
+
+    <div class="left">
+
+      <div
+        class="history-icon"
+        [class.credit]="item.amountType=='credit'"
+        [class.debit]="item.amountType=='debit'">
+
+        <i
+          *ngIf="item.amountType=='credit'"
+          class="ri-arrow-down-line"></i>
+
+        <i
+          *ngIf="item.amountType=='debit'"
+          class="ri-arrow-up-line"></i>
+
+      </div>
+
+      <div class="details">
+
+        <div class="reason">
+
+          {{item.reason}}
+
+        </div>
+
+        <div class="date">
+
+          {{formatDate(item.datetime)}}
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div
+      class="amount"
+      [class.credit-text]="item.amountType=='credit'"
+      [class.debit-text]="item.amountType=='debit'">
+
+      {{item.amountType=='credit' ? '+' : '-'}}
+      ₹{{item.amount}}
+
+    </div>
+
+  </div>
+
+</div>
+

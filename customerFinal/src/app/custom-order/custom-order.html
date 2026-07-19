@@ -1,0 +1,470 @@
+<div class="order-page">
+    <div class="page-loader" *ngIf="loading">
+
+        <div class="loader"></div>
+
+    </div>
+    <app-subheader [showback]="true" [backurl]="''">
+
+    </app-subheader>
+
+    <!-- HEADER -->
+
+    <div class="items-header fancy">
+
+        <h2> Custom Order</h2>
+
+    </div>
+
+    <!-- ORDER TYPE -->
+
+    <div class="card">
+
+
+        <div class="section-title">
+            Select Order Type
+        </div>
+
+
+
+        <div class="type-box">
+
+
+            <label [class.active]="type=='cake'" (click)="changeType('cake')">
+
+
+                <i class="ri-cake-3-line"></i>
+
+                Cake
+
+
+            </label>
+
+
+
+            <label [class.active]="type=='medical'" (click)="changeType('medical')">
+
+
+                <i class="ri-medicine-bottle-line"></i>
+
+                Medical
+
+
+            </label>
+
+
+
+
+            <label [class.active]="type=='other'" (click)="changeType('other')">
+
+
+                <i class="ri-shopping-bag-line"></i>
+
+                Other
+
+
+            </label>
+
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+    <!-- UPLOAD -->
+
+
+    <div class="card" *ngIf="imagePreview.length<2">
+
+
+        <div class="section-title">
+
+            Upload Images (Max 2).
+
+
+        </div>
+
+
+
+        <label class="upload-box" (click)="openFilePicker()">
+
+            <i class="ri-upload-cloud-2-line"></i>
+
+            <span>
+                Click to upload
+            </span>
+
+        </label>
+
+
+
+
+        <input style="display: none;" id="fileInput" type="file" accept="image/*" capture="environment"
+            (change)="fileChange($event)">
+
+
+
+
+    </div>
+
+
+    <div class="preview-box" *ngIf="imagePreview.length">
+
+
+        <div class="preview-img" *ngFor="let img of imagePreview; let i=index">
+
+
+            <img [src]="img">
+
+
+
+            <button type="button" class="remove-img" (click)="removeImage(i)">
+
+
+                <i class="ri-close-line"></i>
+
+
+            </button>
+
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- CAKE -->
+    <br />
+
+
+    <div class="card" *ngIf="type=='cake'">
+
+
+        <div class="section-title">
+
+            Cake Details
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Flavour
+            </label>
+
+
+            <div class="option-wrap">
+
+
+                <label class="option-card" *ngFor="let flavour of cakeFlavours" [class.active]="cake.flavour==flavour">
+
+
+                    <input hidden type="radio" [(ngModel)]="cake.flavour" [value]="flavour">
+
+
+                    {{flavour}}
+
+
+                </label>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+        <div class="form-group">
+
+
+            <label>
+
+                Message On Cake
+
+            </label>
+
+
+            <textarea placeholder="Write message" maxlength="30" [(ngModel)]="cake.message">
+
+</textarea>
+
+
+        </div>
+
+        <div class="form-group">
+
+
+
+
+
+            <div class="option-wrap">
+
+
+
+                <label class="option-card" [class.active]="cake.egglesstype=='With Egg'">
+
+
+                    <input hidden type="radio" [(ngModel)]="cake.egglesstype" value="With Egg">
+
+
+                    With Egg
+
+
+                </label>
+
+
+
+
+
+                <label class="option-card" [class.active]="cake.egglesstype=='Eggless'">
+
+
+                    <input hidden type="radio" [(ngModel)]="cake.egglesstype" value="Eggless">
+
+
+                    Eggless
+
+
+                </label>
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+        <div class="form-group">
+
+
+            <label>
+                Weight
+            </label>
+
+
+
+            <div class="weight-box">
+
+
+                <label class="weight-card" *ngFor="
+let w of cake.flavour!=='Milk Cake' 
+? cakeWeightsPound 
+: cakeWeightsKg
+" [class.active]="cake.weight==w">
+
+
+                    <input hidden type="radio" [(ngModel)]="cake.weight" [value]="w">
+
+
+                    <span>
+                        {{w}}
+                    </span>
+
+
+                </label>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+    <!-- MEDICAL -->
+
+
+    <div class="card" *ngIf="type=='medical'">
+
+
+        <div class="section-title">
+
+            Medicine Details (optional)
+
+        </div>
+
+
+
+
+        <div class="medicine-box" *ngFor="let m of medicalItems;let i=index">
+
+
+            <div class="medicine-row">
+
+
+                <input placeholder="Medicine Name" [(ngModel)]="m.name">
+
+
+
+
+                <input placeholder="Quantity" type="number" [(ngModel)]="m.quantity">
+
+
+
+
+                <button class="delete-btn" *ngIf="medicalItems.length>1" (click)="removeMedicine(i)">
+
+                    <i class="ri-delete-bin-line"></i>
+
+                </button>
+
+                <button class="delete-btn" *ngIf="medicalItems.length==1" (click)="m.name='';m.quantity=''">
+
+                    <i class="ri-delete-bin-line"></i>
+
+                </button>
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+        <button class="add-btn" (click)="addMedicine()">
+
+
+            <i class="ri-add-line"></i>
+
+            Add Medicine
+
+
+        </button>
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- OTHER -->
+
+
+
+    <div class="card" *ngIf="type=='other'">
+
+
+        <div class="section-title">
+
+            Item Details
+
+        </div>
+
+
+
+
+        <div class="form-group">
+
+
+            <label>
+
+                Item Name
+
+            </label>
+
+
+            <input placeholder="Enter item name" [(ngModel)]="other.itemName">
+
+
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+    <!-- COMMON DETAIL -->
+
+
+    <div class="card">
+
+
+        <div class="section-title">
+
+            Extra Detail
+
+        </div>
+
+
+
+        <textarea placeholder="Any extra requirement" [(ngModel)]="extraDetail">
+
+</textarea>
+
+
+
+    </div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+<!-- FOOTER -->
+
+<div class="error-box" *ngIf="errorMessage">
+
+
+    {{errorMessage}}
+
+
+</div>
+<div class="footer">
+
+
+    <button class="submit" (click)="submit()">
+
+
+        Submit Request
+
+
+    </button>
+
+
+</div>

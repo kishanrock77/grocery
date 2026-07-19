@@ -1,0 +1,465 @@
+<div class="page">
+
+    <div class="page-loader" *ngIf="loader">
+
+        <div class="loader"></div>
+
+    </div>
+    <app-subheader [showback]="true" [backurl]="''">
+
+    </app-subheader>
+
+
+
+    <div class="items-header fancy">
+
+        <h2> Custom Order List</h2>
+
+    </div>
+    <br />
+    <button class="refresh-btn" (click)="getcustomorderlist()">
+
+        <i class="ri-refresh-line"></i>
+
+        Refresh
+    </button><br />
+    <button class="refresh-btn" (click)="addcustomeorder()">
+
+        +
+        Add Custom Order
+    </button>
+    <!-- Filters -->
+
+    <div class="filter-bar">
+
+        <button [class.active]="filterType=='all'" (click)="filterType='all'">
+            All
+        </button>
+
+        <button [class.active]="filterType=='admin'" (click)="filterType='admin'">
+            Pending From Admin
+        </button>
+
+        <button [class.active]="filterType=='customer'" (click)="filterType='customer'">
+            Pending From Your Side
+        </button>
+
+    </div>
+
+    <!-- No Data -->
+
+    <div class="empty-box" *ngIf="filteredList.length==0">
+
+        No Custom Orders Found
+
+    </div>
+
+    <!-- Orders -->
+    <div class="order-card" *ngFor="let order of filteredList">
+
+
+        <!-- IMAGE GALLERY -->
+
+        <div class="image-gallery" *ngIf="order.images?.length">
+
+
+            <div class="small-image" *ngFor="let img of order.images" (click)="openImage(img)">
+
+
+                <img [src]="img" onerror="this.src='assets/no-image.png'">
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- PDF -->
+
+        <div class="pdf-box" *ngIf="order.pdf">
+
+
+            <a [href]="order.pdf" target="_blank">
+
+                <i class="ri-file-pdf-line"></i>
+
+                View Prescription PDF
+
+            </a>
+
+
+        </div>
+
+
+
+
+
+
+        <div class="top-section">
+
+
+            <div class="order-info">
+
+
+                <h3>
+
+                    {{order.type | titlecase}} Custom Order
+
+                </h3>
+
+
+
+
+
+                <div class="order-date">
+
+                    {{formatDate(order.createdAt)}}
+
+                </div>
+
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- STATUS -->
+
+
+        <div class="status-wrapper">
+
+            <span *ngIf="order.statusByAdmin=='approved'">
+                <span class="badge admin" style="background:green;color: white;">
+
+
+                    Approved From Admin
+
+
+                </span><br /><br />
+
+                <div class="detail-row">
+
+                    <span> Estimated amount</span>
+
+                    <strong>
+                        ₹{{order.estimateAmount}}
+                    </strong>
+
+                </div>
+
+
+                <div class="detail-row" style="display: block;">
+
+                    <span> Estimate message</span>
+                    <br />
+                    {{order.estimatemessage}}
+
+                </div>
+
+                <br />
+
+
+            </span>
+            <span *ngIf="order.statusByAdmin=='rejected'">
+                <span class="badge admin" style="background:red;color:white">
+
+
+                    Rejected From Admin
+
+
+                </span><br /><br />
+
+
+
+                <div class="detail-row" style="display: block;">
+
+                    <span> Cancel Reason</span>
+                    <br />
+                    {{order.cancelReason}}
+
+                </div>
+
+            </span>
+            <span class="badge admin" *ngIf="order.statusByAdmin=='pending'">
+
+
+                Pending From Admin
+
+
+            </span>
+
+
+ <span class="badge customer" style="background:green;color: white;" *ngIf="
+        order.statusByAdmin!='pending' &&
+         order.statusByAdmin!='rejected'
+        &&
+        order.statusByCustomer=='approved'
+        ">
+
+
+                Approved From Your Side
+
+
+            </span>
+<span class="badge customer"  style="background:red;color:white" *ngIf="
+        order.statusByAdmin!='pending' &&
+         order.statusByAdmin!='rejected'
+        &&
+        order.statusByCustomer=='rejected'
+        ">
+
+
+                Rejected From Your Side
+
+
+            </span>
+
+            <span class="badge customer" *ngIf="
+        order.statusByAdmin!='pending' &&
+         order.statusByAdmin!='rejected'
+        &&
+        order.statusByCustomer=='pending'
+        ">
+
+
+                Pending From Your Side
+
+
+           
+
+            <br /><br />
+            <button class="refresh-btn" style="display:inline"
+                *ngIf="order.statusByCustomer=='pending' || order.statusByCustomer=='rejected'"
+                (click)="actionbycustomer(order,'approved')">
+
+                <i class="ri-check-line"></i>
+                Approve
+
+            </button>
+
+
+            &nbsp;<button class="refresh-btn" style="display:inline"
+                *ngIf="order.statusByCustomer=='pending' || order.statusByCustomer=='approved'"
+                (click)="actionbycustomer(order,'rejected')">
+
+                <i class="ri-close-line"></i>
+                Reject
+
+            </button>&nbsp;&nbsp;
+
+ </span>
+            &nbsp;<span class="badge success" *ngIf="
+        order.statusByAdmin=='approved'   
+        &&
+        order.statusByCustomer=='approved'
+        " (click)="checkitem(order)">
+
+
+               Order now
+
+
+            </span>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+
+        <!-- CAKE -->
+
+
+        <div class="detail-box" *ngIf="order.type=='cake'">
+
+
+            <h4>Cake Details</h4>
+
+
+            <div class="detail-row">
+
+                <span>Flavour</span>
+
+                <strong>
+                    {{order.cake?.flavour}} ({{order.cake?.egglesstype}})
+                </strong>
+
+            </div>
+
+
+
+            <div class="detail-row">
+
+                <span>Weight</span>
+
+                <strong>
+                    {{order.cake?.weight}}
+                </strong>
+
+            </div>
+
+
+
+            <div class="detail-row" style="display: block;">
+
+                <span>Message</span>
+
+
+                <p>
+                    {{order.cake?.message}}
+                </p>
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- MEDICAL -->
+
+
+        <div class="medical-section" *ngIf="order.type=='medical' 
+    && order.medical?.length">
+
+
+            <div class="medical-header" (click)="toggleMedical(order)">
+
+
+                <span>
+
+                    Medicines ({{order.medical.length}})
+
+                </span>
+
+
+                <i [class]="
+            'ri-arrow-' +
+            (order.showMedical?'up':'down')
+            +
+            '-s-line'
+            ">
+
+                </i>
+
+
+            </div>
+
+
+
+
+
+            <div class="medicine-list" *ngIf="order.showMedical">
+
+
+                <div class="medicine-item" *ngFor="let med of order.medical">
+
+
+                    <b>
+                        {{med.name}}
+                    </b>
+
+
+                    <span>
+
+                        Qty : {{med.quantity}}
+
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- OTHER -->
+
+
+        <div class="detail-box" *ngIf="order.type=='other'">
+
+
+            <h4>Item Details</h4>
+
+
+            <div class="detail-row">
+
+
+                <span>Item</span>
+
+
+                <strong>
+
+                    {{order.other?.itemName}}
+
+                </strong>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+
+
+        <!-- COMMON -->
+
+
+        <div class="detail-row" style="display: block;">
+
+
+            <span>Extra Detail</span>
+
+
+            <p>
+
+                {{order.extraDetail || '-'}}
+
+            </p>
+
+
+        </div>
+
+
+
+    </div>
+
+</div>

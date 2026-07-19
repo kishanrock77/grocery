@@ -1,0 +1,345 @@
+<div class="page">
+
+  <!-- TOPBAR -->
+
+  <app-subheader [showback]="true" [backurl]="''">
+
+  </app-subheader>
+
+  <!-- HEADER -->
+
+  <div class="items-header fancy">
+
+    <h2>Your Orders</h2>
+
+  </div>
+  <button class="refresh-btn" (click)="refreshOrders()">
+
+    <i class="ri-refresh-line"></i>
+
+    Refresh
+  </button>
+  <!-- FILTERS -->
+
+  <div class="filter-wrapper">
+
+    <div class="filter-btn" *ngFor="let item of filters" [class.active]="selectedFilter == item"
+      (click)="changeFilter(item)">
+
+      {{item}}
+
+    </div>
+
+  </div>
+
+  <!-- SHIMMER -->
+
+  <ng-container *ngIf="loading">
+
+    <div class="main-order-card shimmer-card" *ngFor="let item of [1,2,3]">
+
+      <div class="shimmer shimmer-big">
+      </div>
+
+      <div class="shimmer shimmer-medium">
+      </div>
+
+      <div class="shimmer shimmer-medium">
+      </div>
+
+      <div class="shimmer shimmer-small">
+      </div>
+
+    </div>
+
+  </ng-container>
+
+  <!-- EMPTY -->
+
+  <div class="empty-state" *ngIf="
+
+      !loading &&
+
+      groupedOrders.length == 0
+
+    ">
+
+    <div class="empty-icon">
+
+      <i class="ri-file-list-3-line"></i>
+
+    </div>
+
+    <div class="empty-title">
+
+      No Orders Found
+
+    </div>
+
+    <div class="empty-subtitle">
+
+      You have no orders in this section yet.
+
+    </div>
+
+    <!--Write code for refresh button below.with icon of refresh-->
+
+
+    <button class="shop-btn" (click)="gotohome()">
+
+      Start Shopping
+
+    </button>
+    <button class="refresh-btn" (click)="refreshOrders()" style="margin-top: 10px;">
+
+      <i class="ri-refresh-line"></i>
+
+      Refresh
+    </button>
+  </div>
+
+  <!-- ORDERS -->
+
+  <ng-container *ngIf="!loading">
+
+    <div class="main-order-card" *ngFor="let order of groupedOrders" (click)="openMainOrder(order)">
+
+      <!-- TOP -->
+
+      <div class="main-top">
+
+        <div>
+
+          <div class="main-order-id">
+
+            {{order?.mainOrder?.mainorderid}}
+
+          </div>
+
+          <div class="main-date">
+
+            {{formatDate(
+            order?.mainOrder?.orderdatetime
+            )}}
+
+          </div>
+
+        </div>
+
+        <div class="main-arrow">
+
+          <i class="ri-arrow-right-line"></i>
+
+        </div>
+
+      </div>
+
+      <!-- MAIN INFO -->
+
+      <div class="main-details-grid">
+
+        <div class="main-detail-box">
+
+          <div class="label">
+
+            Total Amount
+
+          </div>
+
+          <div class="value">
+
+            ₹{{order?.mainOrder?.totalamount}}
+
+          </div>
+
+        </div>
+
+        <div class="main-detail-box">
+
+          <div class="label">
+
+            Total Stores
+
+          </div>
+
+          <div class="value">
+
+            {{order?.totalStores}}
+
+          </div>
+
+        </div>
+
+        <div class="main-detail-box">
+
+          <div class="label">
+
+            Total Items
+
+          </div>
+
+          <div class="value">
+
+            {{order?.totalItems}}
+
+          </div>
+
+        </div>
+
+        <div class="main-detail-box">
+
+          <div class="label">
+
+            Payment method
+
+          </div>
+
+          <div class="value ">
+
+            {{order?.mainOrder?.paymentMethod | uppercase}}
+            <small style="color:red"
+              *ngIf="order?.mainOrder?.paymentMethod=='online' && order?.mainOrder?.paymentStatus == 'pending'">
+              (Failed)
+            </small>
+
+          </div>
+
+        </div>
+        <div class="main-detail-box"
+          *ngIf="order?.mainOrder?.paymentMethod=='online' && order?.mainOrder?.paymentStatus == 'pending'">
+
+          <div class="label">
+
+            Change Payment method
+
+          </div>
+
+          <div class="value " (click)=" $event.stopPropagation(); ">
+
+            <button (click)=" $event.stopPropagation(); changepaymentmethodtocod(order)" class="map-btn">
+
+              <i class="ri-money-line"></i> Change to COD
+
+            </button>
+
+          </div>
+
+        </div>
+        <div class="main-detail-box">
+
+          <div class="label">
+
+            Payment Staus
+
+          </div>
+
+          <div class="value ">
+
+
+            <div class="sub-status" [ngClass]="{
+
+                pending:
+                order?.mainOrder?.paymentStatus == 'pending',
+
+                delivered:
+                order?.mainOrder?.paymentStatus !== 'pending' 
+ 
+
+              }">
+
+              {{order?.mainOrder?.paymentStatus == 'pending' ? 'Pending':'Complete' }}
+
+            </div>
+
+
+            <br />
+            <button *ngIf="order?.mainOrder?.totalamount > 0  && order?.mainOrder?.paymentStatus=='pending'"
+              (click)="payNowforinprogressorder(order?.mainOrder)" class="map-btn">
+
+              <i class="ri-money-line"></i> Pay online
+
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SUB ORDERS -->
+
+      <div class="suborders-wrapper">
+        <!-- (click)="openSubOrder(sub,$event)" -->
+        <div class="suborder-card" *ngFor="let sub of order?.subOrders">
+
+          <!-- LEFT -->
+
+          <div class="sub-left">
+
+            <div class="sub-store">
+
+              {{sub?.storeInfo?.storeName}}
+
+            </div>
+
+            <div class="sub-id">
+
+              {{sub?.suborderid}}
+
+            </div>
+
+          </div>
+
+          <!-- RIGHT -->
+
+          <div class="sub-right">
+
+            <div class="sub-status" [ngClass]="{
+
+                pending:
+                sub?.suborderstatus == 'Pending',
+
+                delivered:
+                sub?.suborderstatus == 'Delivered',
+
+                cancelled:
+                sub?.suborderstatus == 'Cancelled',
+
+                returned:
+                sub?.suborderstatus == 'Returned'
+
+              }">
+
+              {{sub?.suborderstatus}}
+
+            </div>
+
+            <div class="sub-items">
+
+              {{getTotalItems(sub?.items)}}
+              Items
+
+            </div>
+
+            <!-- <div class="sub-price">
+
+              ₹{{sub?.storeTotal}}
+
+            </div> -->
+
+            <!-- 
+            <i class="ri-arrow-right-line"></i> -->
+
+
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+</div><app-footer>
+</app-footer>

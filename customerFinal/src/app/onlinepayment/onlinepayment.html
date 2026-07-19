@@ -1,0 +1,168 @@
+<div class="success-page">
+
+    <!-- LOADING -->
+
+    <div class="loading-box" *ngIf="loading">
+
+        <div class="loader"></div>
+
+        <p>Loading order...</p>
+
+    </div>
+
+    <!-- CONTENT -->
+
+    <div class="success-container"
+        *ngIf="!loading && orderData && (orderData.paymentStatus=='paid' || orderData.paymentStatus=='completed')">
+
+        <!-- SUCCESS ICON -->
+
+        <div class="success-icon">
+
+            ✓
+
+        </div>
+
+        <!-- TITLE -->
+
+        <h1 class="title">
+
+            Order Placed Successfully
+
+        </h1>
+
+        <p class="subtitle">
+
+            Thank you for shopping with us.
+
+        </p>
+
+        <!-- ORDER CARD -->
+
+        <div class="order-card">
+
+            <!-- ORDER ID -->
+
+            <div class="row">
+
+                <span class="label">
+
+                    Order ID
+
+                </span>
+
+                <span class="value order-link">
+
+                    #{{orderData?.mainorderid}}
+
+                </span>
+
+            </div>
+
+            <!-- PAYMENT -->
+
+            <div class="row">
+
+                <span class="label">
+
+                    Payment Method
+
+                </span>
+
+                <span class="value">
+
+                    {{orderData?.paymentmethod=='cod' ? 'Cash on Delivery' : 'Online Payment'}}
+
+                </span>
+
+            </div>
+            <div class="row">
+
+                <span class="label">
+
+                    Order Time
+
+                </span>
+
+                <span class="status">
+
+                    {{orderData?.orderdatetime | date:'medium'}}
+
+                </span>
+
+            </div>
+            <!-- TOTAL -->
+
+            <div class="row">
+
+                <span class="label">
+
+                    Total Amount
+
+                </span>
+
+                <span class="value total">
+
+                    ₹{{orderData?.totalamount }}
+
+                </span>
+
+            </div>
+
+            <!-- STATUS -->
+
+
+
+        </div>
+
+        <!-- BUTTONS -->
+
+        <div class="btns">
+
+
+
+            <button class="shop-btn">
+
+                <- Now you can go back </button>
+
+        </div>
+
+    </div>
+
+
+
+    <div *ngIf="istransactioncancelled" class="cancel-box">
+
+        <div class="cancel-icon">
+            <i class="ri-close-circle-fill"></i>
+        </div>
+
+        <h3>Transaction Cancelled !</h3>
+
+        <p>Your payment was cancelled. Please try again.</p>
+
+        <button type="button" class="shop-btn" (click)="ceatebackendorderforazorpay()">
+            Try Again
+        </button>
+
+    </div>
+    <div *ngIf="opentryagain" class="cancel-box">
+
+        <div class="cancel-icon">
+            <i class="ri-close-circle-fill"></i>
+        </div>
+
+        <h3>Something went wrong !</h3>
+
+        <p> Please try again.</p>
+
+        <button type="button" class="shop-btn" (click)="ceatebackendorderforazorpay()">
+            Try Again
+        </button>
+
+    </div>
+
+
+
+
+</div>

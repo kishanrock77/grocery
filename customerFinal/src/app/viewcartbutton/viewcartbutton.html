@@ -1,0 +1,49 @@
+<div
+  class="cart-pill"
+  [style.bottom.px]="bottomOffset"
+  *ngIf="showBar"
+  (click)="goToCart()">
+
+  <!-- LEFT -->
+
+  <div class="cart-left">
+
+    <div
+      class="cart-img-stack"
+      *ngFor="let item of cart.slice().reverse().slice(0,3)">
+
+      <img
+        [src]="item.itemimage"
+        alt="item">
+
+    </div>
+
+  </div>
+
+  <!-- CENTER -->
+
+  <div class="cart-center">
+
+    <div class="cart-pill-title">
+
+      View cart
+
+    </div>
+
+    <div class="cart-pill-sub">
+
+      {{ cartCount }} items
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+
+  <div class="cart-right">
+
+    <i class="ri-arrow-right-line"></i>
+
+  </div>
+
+</div>

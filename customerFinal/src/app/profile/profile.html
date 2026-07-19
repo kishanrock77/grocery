@@ -1,0 +1,79 @@
+<app-subheader [showback]="true" [backurl]="''">
+</app-subheader>
+
+<div class="profile-page">
+
+  <!-- HERO -->
+
+  <div class="profile-hero">
+
+    <div class="profile-icon">
+      <i class="ri-user-3-fill" *ngIf="!this.user?.profilePic"></i>
+       <img class="profile-avatar" *ngIf="this.user?.profilePic" [src]="this.user?.profilePic" alt="Profile picture" />
+
+    </div>
+   
+    <h2>
+      Your Profile
+    </h2>
+
+    <p>
+      Update your personal information
+    </p>
+
+  </div>
+
+  <!-- FORM CARD -->
+
+  <div class="profile-card">
+
+    <!-- MOBILE -->
+
+
+
+    <!-- NAME -->
+
+    <div class="form-group">
+
+      <label>
+        Full Name
+      </label>
+
+      <input type="text" [(ngModel)]="formobj.name" placeholder="Enter your name">
+
+    </div>
+    <div class="form-group">
+
+      <label>
+        Mobile Number
+      </label>
+
+      <input type="tel" maxlength="10" autocomplete="off" [(ngModel)]="formobj.mobile" placeholder="Enter your mobile number">
+
+    </div>
+
+    <!-- DOB -->
+
+    <div class="form-group">
+
+      <label>
+        Date of Birth
+      </label>
+
+      <input type="date" [(ngModel)]="formobj.dateofbirth">
+
+    </div>
+
+    <!-- BUTTON -->
+
+    <button class="save-btn" (click)="updateUser()" [disabled]="loading">
+
+      <i class="ri-save-line"></i>
+
+      {{loading ? 'Updating...' : 'Update Profile'}}
+
+    </button>
+
+  </div>
+
+</div>

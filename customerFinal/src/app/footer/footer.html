@@ -1,0 +1,29 @@
+<!-- 🔝 SCROLL TO TOP -->
+<div class="scroll-top"
+     *ngIf="showScrollTop && showpopofitemconditionrightnowfooter == false"
+     (click)="scrollToTop()">
+
+  <i class="ri-arrow-up-line"></i>
+
+</div>
+ 
+<app-viewcartbutton [pagenow]="pagenow" ></app-viewcartbutton>
+<footer class="app-footer" [class.hide]="hideFooter || alwayshide">
+
+  <!-- ACTIVE GLOW -->
+  <div class="active-indicator"
+       [style.transform]="'translateX(' + activeIndex * 100 + '%)'">
+  </div>
+
+  <div class="nav-item"
+       *ngFor="let item of navItems; let i = index"
+       [class.active]="activeIndex === i"
+       (click)="navigate(item.path, i)">
+
+    <i [class]="item.icon"></i>
+
+    <p>{{item.label}}</p>
+
+  </div>
+
+</footer>

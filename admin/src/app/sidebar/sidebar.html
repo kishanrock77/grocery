@@ -1,0 +1,186 @@
+<!-- Sidebar -->
+
+<div class="page-loader" *ngIf="isLoading">
+  <div class="loader"></div>
+</div>
+<button class="sidebar-toggle-2" (click)="toggleSidebar()">
+  <i class="bi" [ngClass]="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+</button>
+
+
+<span *ngIf="userType === 'store'">
+  <strong>
+
+    <a routerLink="/select-store" style="text-decoration: none;
+    float: right;">
+      <i class="bi bi-shop"></i> <span> {{auth.storename }}</span>
+    </a>
+
+  </strong>
+  <div class="store-status-buttons" *ngIf="store">
+
+    <button class="status-btn" style="margin-left: 50px;"
+      [ngClass]="{'active-close':store.openCloseStatus=='ForceClose'}"
+      (click)="changeStatus(store._id,'ForceClose','openCloseStatus')">
+      Force Close
+    </button>
+
+    <button class="status-btn" [ngClass]="{'active-open':store.openCloseStatus=='ForceOpen'}"
+      (click)="changeStatus(store._id,'ForceOpen','openCloseStatus')">
+      Force Open
+    </button>
+
+    <button class="status-btn" [ngClass]="{'active-default':store.openCloseStatus=='DefaultOpen'}"
+      (click)="changeStatus(store._id,'DefaultOpen','openCloseStatus')">
+      Default
+    </button>
+
+  </div>
+</span>
+
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <div class="sidebar-content">
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <i class="bi" [ngClass]="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+    </button>
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <i class="bi bi-grid-fill sidebar-icon"></i>
+        <span> {{this.common.brandname}}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul (click)="toggleSidebar()">
+        <li *ngIf="userType === 'store'">
+          <a routerLink="/select-store" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span>Select Store</span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'store'">
+          <a routerLink="/store-dashboard" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span> Dashboard</span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/admin-dashboard" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span> Dashboard</span>
+          </a>
+        </li>
+
+
+
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/deliveryarealist" routerLinkActive="active">
+            <i class="bi bi-people"></i> <span>Delivery Area </span>
+          </a>
+        </li>
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/deliveryboylist" routerLinkActive="active">
+            <i class="bi bi-people"></i> <span>Delivery Boy </span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/storeowner" routerLinkActive="active">
+            <i class="bi bi-people"></i> <span>Store Owner </span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/storelist" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span>Stores </span>
+          </a>
+        </li>
+        <li *ngIf="store && userType === 'store'">
+          <a routerLink="/addstore/{{store._id}}" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span>Store Details </span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/itemcategory" routerLinkActive="active">
+            <i class="bi bi-box-seam"></i> <span>Item Category </span>
+          </a>
+        </li>
+
+        <li>
+          <a routerLink="/items" routerLinkActive="active">
+            <i class="bi bi-box-seam"></i> <span>Items</span>
+          </a>
+        </li>
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/itemassign" routerLinkActive="active">
+            <i class="bi bi-box-seam"></i> <span>Assign Items</span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/banner" routerLinkActive="active">
+            <i class="bi bi-box-seam"></i> <span>Banner</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/orders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>New/In-progress Orders</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/deliveredorders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>Delivered Orders</span>
+          </a>
+        </li>
+
+        <li *ngIf="userType === 'admin'">
+          <a routerLink="/custom-order" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>Custom Orders</span>
+          </a>
+        </li>
+
+
+        <li>
+          <a routerLink="/cancelledorders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>Cancelled Orders</span>
+          </a>
+        </li>
+
+        <li>
+          <a routerLink="/customers" routerLinkActive="active" *ngIf="userType === 'admin'  ">
+            <i class="bi bi-people"></i> <span>Customers</span>
+          </a>
+        </li>
+        <!-- 
+        <li>
+          <a routerLink="/reports" routerLinkActive="active">
+            <i class="bi bi-bar-chart"></i> <span>Reports</span>
+          </a>
+        </li>
+
+        <li>
+          <a routerLink="/settings" routerLinkActive="active">
+            <i class="bi bi-gear"></i> <span>Settings</span>
+          </a>
+        </li> -->
+        <li *ngIf="userType === 'admin' && adminemail === 'kishan@gmail.com'">
+          <a routerLink="/admin" routerLinkActive="active">
+            <i class="bi bi-box-seam"></i> <span>Admin page</span>
+          </a>
+        </li>
+
+        <li>
+          <a style="cursor: pointer;" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Toggle Button -->
+
+</aside>

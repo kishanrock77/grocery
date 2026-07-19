@@ -1,0 +1,232 @@
+<!-- 🔄 Loader -->
+<div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+</div>
+
+<div class="mapping-container">
+
+    <!-- 🔷 Header -->
+    <div class="page-header">
+        <h2>Map Items to Store</h2>
+    </div>
+
+    <!-- 🔷 Filters -->
+    <div class="filters">
+        <div class="form-group">
+            <label>Category (Level 1)</label>
+            <select [(ngModel)]="selectedCategory" (change)="loadGeneralItems()">
+                <option value="" disabled>Select Category</option>
+                <option *ngFor="let cat of categoriesLevel1" [value]="cat._id">
+                    {{ cat.categoryName }}
+                </option>
+            </select>
+        </div>
+
+
+
+
+        <div class="form-group">
+            <label>Select Store</label>
+            <select [(ngModel)]="selectedStore" (change)="loadStoreItems()">
+                <option value="" disabled>Select Store</option>
+                <option *ngFor="let store of storeList" [value]="store._id">
+                    {{ store.storeName }}
+                </option>
+            </select>
+<br/>
+            <small style="color: red;" *ngIf="selectedStore && !hidealldivtoshowmessage">
+                <i> App price will increase by {{this.selectedStoreData?.increasepriceby}}%, only for selected item, for
+                    first time</i>
+            </small>
+        </div>
+        <div class="price-field" *ngIf="selectedStore && !hidealldivtoshowmessage">
+            <label>You can change Increase Percentage for all selected items </label>
+
+            <input type="number" [(ngModel)]="increasepricebyNew" (input)="updateApppriceforallselected()" />
+        </div>
+
+    </div>
+
+
+    <span *ngIf="hidealldivtoshowmessage">
+        <div class="no-data">
+            In this store, some items has been added by store owner,
+            so you can't assign items to this store from this page
+        </div>
+
+    </span>
+
+    <span *ngIf="!hidealldivtoshowmessage">
+
+
+        <!-- 🔷 Action Buttons -->
+        <div class="action-bar" *ngIf="generalItems.length > 0 && selectedStore">
+            <button class="btn-outline" (click)="selectAll()">Select All</button>
+            <button class="btn-outline danger" (click)="unselectAll()">Unselect All</button>
+        </div>
+
+        <!-- 🔷 No Data -->
+        <div class="no-data" *ngIf="selectedCategory && generalItems.length === 0 && !isLoading">
+            No Data Found
+        </div>
+
+        <!-- 🔷 Item Cards -->
+        <div class="card-container" *ngIf="generalItems.length > 0">
+            <div class="item-card" *ngFor="let item of generalItems" [class.selected]="selectedItems.has(item._id)"
+                (click)="toggleItem(item)">
+                <!-- Item Name -->
+                <div class="item-header">
+                    {{ item.itemName }}
+                </div>
+
+                <!-- 🔹 Single Item Price -->
+
+                <div class="item-prices" *ngIf="item.itemType === 'single'" (click)="$event.stopPropagation()">
+                    <div class="price-group">
+                        <label>Store Price</label>
+                        <input type="number" [(ngModel)]="item.storePrice" (input)="updateItemAppPrice(item)"
+                            placeholder="Store Price" />
+                    </div>
+
+                    <div class="price-group">
+                        <label>App Price</label>
+                        <input type="number" [(ngModel)]="item.appPrice" placeholder="App Price" />
+                    </div>
+
+                    <span *ngIf="item.itemQuestions?.length > 0">
+
+                        <label class="variant-label"><br />Custom Questions:</label>
+
+
+                        <div class="question-section" (click)="$event.stopPropagation()">
+
+
+                            <div *ngFor="let q of item.itemQuestions" class="question-box">
+
+                                <div class="q-title">Question : {{ q.title }}</div>
+
+                                <div *ngFor="let opt of q.options" class="option-row">
+
+                                    <div class="option-name">
+                                        Option : {{ opt.label }}
+                                    </div>
+
+                                    <div class="option-prices">
+
+                                        <div class="price-group">
+
+
+                                            <label>Store Price</label>
+                                            <input type="number" [(ngModel)]="opt.storePrice"
+                                                (input)="updateOptionAppPrice(opt)" placeholder="Store Price" />
+                                        </div>
+
+                                        <div class="price-group">
+
+                                            <label>App Price</label>
+                                            <input type="number" [(ngModel)]="opt.appPrice" placeholder="App Price" />
+                                        </div>
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </span>
+                </div>
+                <label class="variant-label" *ngIf="item.addons.length>0"><br />Addons:</label>
+
+                <div class="variant-section" (click)="$event.stopPropagation()">
+                    <div class="variant-row" *ngFor="let addonper of item.addons" (click)="$event.stopPropagation()">
+
+                        <!-- Variant Name -->
+                        <div class="variant-name">
+                            {{ addonper.itemName }}
+                        </div>
+
+                        <!-- Variant Prices -->
+                        <div class="variant-prices" style="display: block;">
+                            <div class="price-field">
+                                <label>Store Price</label>
+                                <input type="number" [(ngModel)]="addonper.storePrice"
+                                    (input)="updateVariantAppPrice(addonper)" placeholder="Enter Store Price" min="0" />
+                            </div>
+
+                            <div class="price-field">
+                                <label>App Price</label>
+                                <input type="number" [(ngModel)]="addonper.appPrice" placeholder="Enter App Price"
+                                    min="0" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <label class="variant-label"
+                    *ngIf="item.itemType === 'variant' && item.variantItems.length > 0"><br />Variants:</label>
+                <!-- 🔹 Variant Items -->
+                <div class="variant-section" *ngIf="item.itemType === 'variant'" (click)="$event.stopPropagation()">
+                    <div class="variant-row" *ngFor="let variant of item.variantItems"
+                        (click)="$event.stopPropagation()">
+                        <!-- Variant Name -->
+                        <div class="variant-name">
+                            {{ variant.itemName }}
+                        </div>
+
+                        <!-- Variant Prices -->
+                        <div class="variant-prices" style="display: block;">
+                            <div class="price-field">
+                                <label>Store Price</label>
+                                <input type="number" [(ngModel)]="variant.storePrice"
+                                    (input)="updateVariantAppPrice(variant)" placeholder="Enter Store Price" min="0" />
+                            </div>
+
+                            <div class="price-field">
+                                <label>App Price</label>
+                                <input type="number" [(ngModel)]="variant.appPrice" placeholder="Enter App Price"
+                                    min="0" />
+                            </div>
+                        </div>
+
+                        <span *ngIf="variant.itemQuestions?.length > 0">
+                            <label class="variant-label"><br />Custom Questions:</label>
+                            <div class="question-section">
+
+                                <div *ngFor="let q of variant.itemQuestions">
+                                    <div class="q-title">Questions : {{ q.title }}</div>
+
+                                    <div *ngFor="let opt of q.options" class="option-row">
+                                        <div class="option-name">
+                                            Option : {{ opt.label }}
+                                        </div>
+                                        <div class="price-group">
+                                            <label>Store Price</label>
+                                            <input [(ngModel)]="opt.storePrice" (input)="updateOptionAppPrice(opt)" />
+                                        </div>
+
+                                        <div class="price-group">
+                                            <label>App Price</label>
+
+                                            <input [(ngModel)]="opt.appPrice" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔷 Save Button -->
+        <div class="save-container" *ngIf="generalItems.length > 0">
+            <button class="save-btn" (click)="save()">Save</button>
+        </div>
+    </span>
+</div>

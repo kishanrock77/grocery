@@ -1,0 +1,330 @@
+<div class="container">
+
+  <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>
+
+  <span *ngIf="form.storeId">
+    <h2>Edit Store Item</h2>
+  </span>
+  <span *ngIf="!form.storeId">
+    <h2>{{ itemId ? 'Edit General Item' : 'Add General Item' }}</h2>
+  </span>
+
+
+  <!-- ITEM TYPE -->
+  <div class="card">
+    <label class="label">Item Type *</label>
+    <div class="radio-group">
+      <label class="radio-box">
+        <input type="radio" name="itemType" value="single" [(ngModel)]="itemType" (change)="itemtypechange()">
+        <span>Single Item</span>
+      </label>
+
+      <label class="radio-box" *ngIf="(!itemId || parentIdArr.length == 0)">
+        <input type="radio" name="itemType" value="variant" [(ngModel)]="itemType" (change)="itemtypechange()">
+        <span>Have Variants</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="label">Veg Or Non-Veg *</label>
+    <div class="radio-group">
+      <label class="radio-box">
+        <input type="radio" name="vegtype" value="veg" [(ngModel)]="vegtype">
+        <span>Veg</span>
+      </label>
+
+      <label class="radio-box">
+        <input type="radio" name="vegtype" value="nonveg" [(ngModel)]="vegtype">
+        <span> Non-Veg</span>
+      </label>
+      <label class="radio-box">
+        <input type="radio" name="vegtype" value="na" [(ngModel)]="vegtype">
+        <span> Not valid</span>
+      </label>
+    </div>
+  </div>
+  <!-- USE AS CHILD -->
+  <div class="card" *ngIf="itemType === 'single'">
+    <label class="label">Use this item as variant/Add-on *</label>
+    <div class="radio-group">
+      <label class="radio-box">
+        <input type="radio" [(ngModel)]="form.useThisItemAsChild" [value]="true">
+        <span>Yes</span>
+      </label>
+
+      <label class="radio-box" *ngIf="(!itemId || parentIdArr.length == 0)">
+        <input type="radio" [(ngModel)]="form.useThisItemAsChild" [value]="false">
+        <span>No</span>
+      </label>
+    </div>
+
+
+  </div>
+  <div class="card" *ngIf="itemType === 'single'  && form.useThisItemAsChild">
+    <div *ngIf="(itemId || parentIdArr.length > 0)">
+      <label class="label">This item is used as</label>
+      <span style="font-weight: bold; color: green;">
+        {{ form.variant_or_addon === 'variant' ? 'Variant' : 'Add-on' }}
+      </span>
+    </div>
+    <div *ngIf="(!itemId || parentIdArr.length == 0)">
+      <label class="label">Variant or Add-on *</label>
+      <div class="radio-group">
+        <label class="radio-box">
+          <input type="radio" name="variant_or_addon" value="addon" [(ngModel)]="variant_or_addon">
+          <span>Add-on</span>
+        </label>
+
+        <label class="radio-box">
+          <input type="radio" name="variant_or_addon" value="variant" [(ngModel)]="variant_or_addon">
+          <span>Variant</span>
+        </label>
+      </div>
+    </div>
+
+  </div>
+  <!-- BASIC DETAILS -->
+  <div class="card">
+    <label class="label">Item Name *</label>
+    <input type="text" [(ngModel)]="form.itemName" class="form-control">
+    <div class="error" *ngIf="submitted && !form.itemName">
+      Item Name is required
+    </div>
+
+    <label class="label">Item Sub Name</label>
+    <input type="text" [(ngModel)]="form.itemSubName" class="form-control">
+
+    <label class="label">Description *</label>
+    <textarea [(ngModel)]="form.description" class="form-control"></textarea>
+    <div class="error" *ngIf="submitted && !form.description">
+      Description is required
+    </div>
+  </div>
+  <!-- PRICE -->
+
+  <div class="card" *ngIf="itemType === 'single' ">
+
+    <!-- UNIT -->
+    <label class="label">Item Unit *</label>
+    <select [(ngModel)]="form.unit" class="form-control">
+      <option value="">Select Unit</option>
+      <option value="kg">KG</option>
+      <option value="gram">Gram</option>
+      <option value="litre">Litre</option>
+      <option value="piece">Piece</option>
+      <option value="pound">Pound</option>
+      <option value="plate">Plate</option>
+      <option value="meter">Meter</option>
+      <option value="centimeter">Centimeter</option>
+      <option value="glass">Glass</option>
+            <option value="ML">ML</option>
+                  <option value="tablets">Tablets</option>
+                        <option value="packet">Packet</option>
+    </select>
+
+
+  </div>
+
+  <div class="card" *ngIf="itemType === 'single' && form.unit">
+
+    <!-- UNIT -->
+    <label class="label">Item Size in {{ form.unit}} *</label>
+    <input type="number" [(ngModel)]="form.size" class="form-control">
+    <div class="error" *ngIf="submitted && !form.size">
+      size is required
+    </div>
+
+  </div>
+
+
+
+  <div class="card" *ngIf="itemType === 'single' && form.unit">
+    <label class="label">Store Price *</label>
+    <input type="number" [(ngModel)]="form.storePrice" class="form-control" (input)="updateItemAppPrice()">
+    <div class="error" *ngIf="submitted && !form.storePrice">
+      Store Price is required
+    </div>
+    <span *ngIf="storeid">
+      <small style="color: red;"> <i> App price will increase by {{this.storedata?.increasepriceby}}% </i>
+
+      </small>
+
+      <label class="label">App Price *</label>
+      <input type="number" [(ngModel)]="form.appPrice" class="form-control" readonly>
+      <div class="error" *ngIf="submitted && !form.appPrice">
+        App Price is required
+      </div>
+    </span>
+
+  </div>
+  <!-- ================= ITEM UNIT + QUESTIONS ================= -->
+  <div class="card"
+    *ngIf="this.itemType === 'single' && ((this. variant_or_addon=='variant' && this.form.useThisItemAsChild) || (!this.form.useThisItemAsChild))">
+
+
+
+    <!-- QUESTIONS -->
+    <div class="question-section">
+
+      <div class="q-header">
+        <h3>More Options for customer</h3>
+        <button type="button" class="btn-add-q" (click)="addQuestion()" [disabled]="form.itemQuestions.length>0">
+          + Add Option
+        </button>
+      </div>
+
+      <div *ngFor="let q of form.itemQuestions; let qi = index" class="question-box">
+
+        <div class="q-top">
+          <input [(ngModel)]="q.title" placeholder="Enter Question Title" class="form-control" />
+          <button type="button" class="btn-delete-q" (click)="removeQuestion(qi)">
+            🗑
+          </button>
+        </div>
+
+        <div *ngFor="let opt of q.options; let oi = index" class="option-row">
+
+          <input [(ngModel)]="opt.label" placeholder="Option Name *" class="form-control" />
+
+          <input type="number" [(ngModel)]="opt.storePrice" class="form-control" placeholder="Store Price *"
+            (input)="updateOptionAppPrice(opt)" />
+
+          <!-- APP PRICE ONLY IF STORE -->
+          <input *ngIf="storeid" type="number" [(ngModel)]="opt.appPrice" placeholder="App Price *" readonly />
+
+          <button type="button" class="btn-delete-opt" (click)="removeOption(q, oi)">
+            ✕
+          </button>
+
+        </div>
+
+        <button type="button" class="btn-add-opt" (click)="addOption(q)">
+          + Add Option
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- CATEGORY -->
+  <div class="card">
+    <label class="label">Select Category *</label>
+
+    <select [(ngModel)]="selectedCategory.level1_id" (change)="onLevel1Change()" class="form-control">
+      <option value="">Select Level 1</option>
+      <option *ngFor="let c of level1List" [value]="c._id">{{c.categoryName}}</option>
+    </select>
+
+    <select [(ngModel)]="selectedCategory.parent_id" (change)="onLevel2Change()" class="form-control">
+      <option value="">Select Level 2</option>
+      <option *ngFor="let c of level2ListToShow" [value]="c._id">{{c.categoryName}}</option>
+    </select>
+
+    <select [(ngModel)]="selectedCategory.level3_id" (change)="onLevel3Change()" class="form-control">
+      <option value="">Select Level 3</option>
+      <option *ngFor="let c of level3ListToShow" [value]="c._id">{{c.categoryName}}</option>
+    </select>
+
+    <button class="btn-add" (click)="addCategory()">+ Add Category</button>
+
+    <div class="chip-container" *ngIf="selectedCategories.length > 0">
+      <span class="chip" *ngFor="let cat of selectedCategories; let i = index">
+
+        {{ getCategoryName(cat.level3) }}
+
+        <button type="button" (click)="removeCategory(i)">×</button>
+      </span>
+    </div>
+
+    <div class="error" *ngIf="submitted && selectedCategories.length === 0">
+      At least one category is required
+    </div>
+  </div>
+
+  <!-- FILTER KEYS -->
+  <div class="card" *ngIf="filterKeys.length > 0">
+    <label class="label">Filter Keys</label>
+
+    <div *ngFor="let fk of filterKeys">
+      <label>{{ fk.key }}</label>
+      <input type="text" class="form-control" [(ngModel)]="fk.value" placeholder="Enter {{ fk.key }}" />
+    </div>
+  </div>
+
+  <!-- IMAGE UPLOAD -->
+  <div class="card">
+    <label class="label">Upload Images (Max 5, 2MB each)</label>
+
+    <input type="file" multiple accept="image/*" (change)="onFileChange($event)" class="form-control" />
+    <div class="preview" *ngIf="imagePreviews2.length > 0">
+      <div class="image-box" *ngFor="let img of imagePreviews2; let i = index">
+        <img [src]="  img" alt="Preview" />
+        <button type="button" class="remove-btn" (click)="removeImageold(i)">
+          ×
+        </button>
+      </div>
+    </div>
+    <div class="preview" *ngIf="imagePreviews.length > 0">
+      <div class="image-box" *ngFor="let img of imagePreviews; let i = index">
+        <img [src]="img" alt="Preview" />
+        <button type="button" class="remove-btn" (click)="removeImage(i)">
+          ×
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- VARIANT ITEMS -->
+  <!-- VARIANT ITEMS -->
+  <div class="card" *ngIf="itemType === 'variant'">
+    <label class="label">Select Variant Items *</label>
+
+    <div class="checkbox-list">
+      <label *ngFor="let item of childItems">
+        <input type="checkbox" [checked]="selectedVariants.includes(item._id)"
+          (change)="onVariantChange($event, item._id)" />
+        {{ item.itemName }}
+      </label>
+    </div>
+
+    <!-- Validation Error -->
+    <div class="error2" *ngIf="submitted && selectedVariants.length === 0">
+      Please select at least one variant item.
+    </div>
+  </div>
+
+  <div class="card" *ngIf="!form.useThisItemAsChild">
+    <label class="label">Select Addon Items *</label>
+
+    <div class="checkbox-list">
+      <label *ngFor="let item of addonsItems">
+        <input type="checkbox" [checked]="selectedAddons.includes(item._id)"
+          (change)="onAddonChange($event, item._id)" />
+        {{ item.itemName }}
+      </label>
+    </div>
+
+
+  </div>
+  <div class="row" style="display: flex;">
+    <div class="col-lg-6 col-md-6 col-sm-12"> <button class="save-btn" (click)="saveItem()">Save Item</button>
+
+    </div>
+    <div class="col-lg-2 col-md-2 col-sm-2">
+      &nbsp;
+
+    </div>
+    <div class="col-lg-4 col-md-4 col-sm-10">
+
+      <button class="save-btn" style="background:red" (click)="cancelItem()">Cancel</button>
+    </div>
+  </div>
+
+</div>

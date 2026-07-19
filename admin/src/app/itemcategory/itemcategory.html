@@ -1,0 +1,168 @@
+<div class="category-page">
+    <div class="page-loader" *ngIf="isLoading">
+        <div class="loader"></div>
+    </div>
+    <!-- Header -->
+    <div class="header" style="width: 90%;">
+        <h2>Items Category       <i class="bi bi-arrow-repeat"  (click)="ngOnInit();"></i>
+              </h2>
+
+    </div>
+    <button class="add-btn" (click)="toggleForm()" *ngIf="!showForm">
+        + Add Category
+    </button>
+    <!-- FORM -->
+    <div class="form-card" *ngIf="showForm">
+
+        <h3>Add Category</h3>
+
+        <div class="form-group">
+            <label>Level *</label>
+            <select [(ngModel)]="form.level_no">
+                <option value="">Select Level</option>
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+            </select>
+            <div class="error" *ngIf="submitted && !form.level_no">
+                Level is required
+            </div>
+        </div>
+
+        <!-- Level 1 -->
+        <div class="form-group" *ngIf="form.level_no >= 2">
+            <label>Parent Category (Level 1) *</label>
+            <select [(ngModel)]="form.grandparent_id" (change)="changelevel( )">
+                <option value="">Select</option>
+                <option *ngFor="let c of level1List" [value]="c._id">
+                    {{c.categoryName}}
+                </option>
+            </select>
+            <div class="error" *ngIf="submitted && !form.grandparent_id">
+                Parent required
+            </div>
+        </div>
+
+        <!-- Level 2 -->
+        <div class="form-group" *ngIf="form.level_no == 3">
+            <label>Parent Category (Level 2) *</label>
+            <select [(ngModel)]="form.parent_id">
+                <option value="">Select</option>
+                <option *ngFor="let c of level2Listtoshow" [value]="c._id">
+                    {{c.categoryName}}
+                </option>
+            </select>
+            <div class="error" *ngIf="submitted && !form.parent_id">
+                Level 2 required
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Category Name *</label>
+            <input type="text" [(ngModel)]="form.categoryName" style="width:91%">
+            <div class="error" *ngIf="submitted && !form.categoryName">
+                Category name required
+            </div>
+        </div>
+        <div class="containerd" *ngIf="form.level_no == 3">
+
+            <h5> Filter keys to show in App</h5>
+
+            <!-- Input Box -->
+            <div class="input-boxd">
+                <input type="text" [(ngModel)]="newKey" placeholder="Enter new key..." (keyup.enter)="addKey()">
+
+                <button (click)="addKey()">Add</button>
+            </div>
+
+            <!-- List -->
+            <div class="listd" *ngIf="keys.length > 0" >
+
+                <div class="cardd" *ngFor="let key of keys; let i = index">
+
+                    <span>{{ key }}</span>
+
+                    <button class="deleted" (click)="deleteKey(i)">
+                        Delete
+                    </button>
+
+                </div>
+
+                <!-- Empty State -->
+                <!-- <div *ngIf="keys.length === 0" class="emptyd">
+                    No keys added yet
+                </div> -->
+
+            </div>
+
+        </div>
+        <div class="form-group">
+            <label>Category Image *</label>
+            <input type="file" (change)="onFileSelect($event)" style="width:91%">
+
+            <!-- NEW IMAGE PREVIEW -->
+            <div *ngIf="imagePreview" class="preview">
+                <img [src]="imagePreview">
+            </div>
+
+            <!-- OLD IMAGE (EDIT CASE) -->
+            <div *ngIf="!imagePreview && form.imagepath" class="preview">
+                <img [src]="  form.imagepath">
+            </div>
+
+            <div class="error" *ngIf="submitted && !form.image && !form._id">
+                Image is required
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="form-actions">
+            <button class="save-btn" (click)="save()">Save</button>
+            <button class="cancel-btn" (click)="cancel()">Cancel</button>
+        </div>
+
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty" *ngIf="list.length == 0 && !showForm">
+        <div class="empty-box">
+            <h3>No Category Added</h3>
+            <p>Start by adding your first category</p>
+        </div>
+    </div>
+
+    <!-- LIST -->
+
+    <!-- SEARCH -->
+<div class="search-box" *ngIf="list.length > 0 && !showForm">
+
+    <input
+        type="text"
+        [(ngModel)]="searchText"
+        placeholder="Search category..."
+    >
+
+</div>
+    <div class="card-container" *ngIf="list.length > 0 && !showForm">
+
+      <div class="card" *ngFor="let c of filteredList">
+
+            <img [src]="  c.imagepath">
+            <h3>
+                {{c.categoryName}}
+            </h3>
+
+            <div class="title" *ngIf="c.level_no!=1">
+                {{ getFullPath(c) }}
+            </div>
+
+            <div class="actions">
+                <button class="edit" (click)="edit(c)">Edit</button>
+                <button class="delete" (click)="delete(c._id)">Delete</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

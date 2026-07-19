@@ -1,0 +1,152 @@
+<app-subheader
+  [showback]="true"
+  [backurl]="''">
+</app-subheader>
+
+<div class="support-page">
+
+  <!-- HERO -->
+
+  <div class="support-hero">
+
+    <div class="support-icon">
+      <i class="ri-customer-service-2-fill"></i>
+    </div>
+
+    <h3>
+      We’re Here To Help  
+    </h3>
+ 
+  </div>
+
+  <!-- phone -->
+
+  <div class="support-card">
+
+    <div class="left">
+
+      <div class="icon phone">
+        <i class="ri-phone-fill"></i>
+      </div>
+
+      <div class="details">
+
+        <span class="label">
+          Call Support
+        </span>
+
+        <a
+          [href]="'tel:' + userdetails.phone"
+          class="value">
+
+          {{ userdetails.phone }}
+
+        </a>
+
+      </div>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="copy-btn"
+        (click)="copyText(userdetails.phone)">
+
+        <i class="ri-file-copy-line"></i>
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- WHATSAPP -->
+
+  <div class="support-card">
+
+    <div class="left">
+
+      <div class="icon whatsapp">
+        <i class="ri-whatsapp-fill"></i>
+      </div>
+
+      <div class="details">
+
+        <span class="label">
+          WhatsApp Support
+        </span>
+
+        <a
+          [href]="'https://wa.me/' + userdetails.phone"
+          target="_blank"
+          class="value">
+
+          {{ userdetails.phone }}
+
+        </a>
+
+      </div>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="copy-btn"
+        (click)="copyText(userdetails.phone)">
+
+        <i class="ri-file-copy-line"></i>
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- EMAIL -->
+
+  <div class="support-card">
+
+    <div class="left">
+
+      <div class="icon email">
+        <i class="ri-mail-fill"></i>
+      </div>
+
+      <div class="details">
+
+        <span class="label">
+          Email Support
+        </span>
+
+        <a
+          [href]="'mailto:' + userdetails.email"
+          class="value">
+
+          {{ userdetails.email }}
+
+        </a>
+
+      </div>
+
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="copy-btn"
+        (click)="copyText(userdetails.email)">
+
+        <i class="ri-file-copy-line"></i>
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<app-footer>
+</app-footer>

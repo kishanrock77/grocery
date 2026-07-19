@@ -1,0 +1,25 @@
+<div class="location{{comingfrom === 'home' ? 'home' : ''}}" (click)="goToSelectArea()">
+
+    <i class="bi bi-geo-alt" style="font-size: larger;"></i>
+
+    <div>
+
+        <div class="title{{comingfrom === 'home' ? 'home' : ''}}">
+
+            Delivery in 30 min
+
+        </div>
+
+        <div class="area{{comingfrom === 'home' ? 'home' : ''}}" *ngIf="!selectedAddress">
+
+            {{selectedAreaname || 'Select Location'}} ▼
+
+        </div>
+        <div class="area{{comingfrom === 'home' ? 'home' : ''}} textextra" *ngIf="selectedAddress">
+
+            <span class="textextraspan"> {{selectedAddress.mapAddress}} </span>▼
+
+        </div>
+    </div>
+
+</div>

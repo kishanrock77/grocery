@@ -1,0 +1,153 @@
+<div class="container" (window:scroll)="onScroll()">
+  <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>
+  <!-- Header -->
+  <div class="header">
+    <h2>Item List   <i class="bi bi-arrow-repeat"  (click)="ngOnInit();"></i></h2>
+    <button class="add-btn" (click)="openAddItem()"  >+ Add Item</button>
+    <!-- <button (click)="deleteItemAll()"> Delete All Items</button> -->
+  </div>
+  <!-- ITEM TYPE -->
+  <div class="card" *ngIf="session?.userType === 'admin'">
+
+    <div class="radio-group">
+      <label class="radio-box">
+        <input type="radio" name="itemType" value="GI" [(ngModel)]="filters.showahat"
+          (change)="filters.storeId='-1';items=[]">
+        <span>General Items</span>
+      </label>
+
+      <label class="radio-box">
+        <input type="radio" name="itemType" value="SI" [(ngModel)]="filters.showahat"
+          (change)="filters.storeId='Onlystore';items=[]">
+        <span>Store Items</span>
+      </label>
+    </div>
+  </div>
+  <br />
+  <!-- Filters -->
+  <div class="filter-card">
+
+    <!-- Store Filter (Admin Only) -->
+    <div class="form-group" *ngIf="session?.userType === 'admin' && filters.showahat === 'SI'">
+      <label>Store</label>
+      <select [(ngModel)]="filters.storeId">
+
+        <option value="Onlystore" selected>All Stores</option>
+        <option *ngFor="let store of storeList" [value]="store._id">
+          {{ store.storeName }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="form-group">
+      <label>Category</label>
+      <select [(ngModel)]="filters.categoryId">
+        <option value="">All Categories</option>
+        <option *ngFor="let cat of categoryList" [value]="cat._id">
+          {{ cat.categoryName }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Item Name Search -->
+    <div class="form-group">
+      <label>Item Name</label>
+      <input type="text" [(ngModel)]="filters.itemName" placeholder="Search by item name" />
+    </div>
+
+    <div class="form-group button-group">
+      <button class="search-btn" (click)="search()">Search</button>
+    </div>
+
+  </div>
+
+  <!-- Loader -->
+
+  <!-- Item List -->
+
+  <div class="card-container" *ngIf="view=='full'">
+    <div class="card" *ngFor="let item of items" [ngClass]="{'variant-card': item.useThisItemAsChild}">
+      <span (click)="showdetails(item)">
+
+        <!-- Variant Badge -->
+        <div class="variant-badge" *ngIf="item.useThisItemAsChild">
+        <span *ngIf="item.variant_or_addon">
+              ({{ item.variant_or_addon === 'variant' ? 'Variant' : 'Add-on' }})
+            </span>
+        </div>
+
+        <img *ngIf="item.images?.length" [src]="item.images[0]" alt="Item Image">
+
+        <h3>{{ item.itemName }}
+
+<span *ngIf="item.vegtype=='veg'" style="color: green;font-size: 20;">.</span>
+<span *ngIf="item.vegtype=='veg'" style="color: red;font-size: 20;">.</span>
+
+        </h3>
+        <p class="sub-name">{{ item.itemSubName }}</p>
+
+
+        <span *ngIf="!item.useThisItemAsChild">
+
+          <p class="item-status">
+            Status:
+            <span [ngClass]="item.showOnFront ? 'active' : 'inactive'">
+              {{ item.showOnFront ? 'Visible on Front' : 'Hidden from Front' }}
+            </span>
+          </p>
+          <div class="action-buttons" (click)="$event.stopPropagation()">
+            <button class="btn show-btn" style="    width: 100%;
+" *ngIf="!item.showOnFront" (click)="updateShowOnFront(item, true)">
+              Show On Front
+            </button>
+
+            <button class="btn hide-btn" style="    width: 100%;
+" *ngIf="item.showOnFront" (click)="updateShowOnFront(item, false)">
+              Hide From Front
+            </button>
+          </div>
+        </span>
+        <p>
+          <strong>Have Variants?:</strong>
+          {{ item.itemType === 'single' ? 'No' : 'Yes' }}
+        </p>
+        <span *ngIf="item.itemType=='single'">
+          <p><strong>Store Price:</strong> ₹{{ item.storePrice }}</p>
+          <p *ngIf=" item.storeId "><strong>App Price:</strong> ₹{{ item.appPrice }}</p>
+
+
+          <p>
+            <strong>Is it a variant/Add-on?:</strong>
+            {{ item.useThisItemAsChild ? 'Yes' : 'No' }}
+            <span *ngIf="item.useThisItemAsChild && item.variant_or_addon">
+              ({{ item.variant_or_addon === 'variant' ? 'Variant' : 'Add-on' }})
+            </span>
+
+          </p>
+        </span>
+        <p>
+          <strong>Added By:</strong>
+          {{ item.addedByString }}
+        </p>
+
+        <p>
+          <strong>Store:</strong>
+          {{ item.storeName }}
+        </p>
+
+
+      </span>
+      <div class="actions">
+        <button class="edit-btn" (click)="openEdit(item._id)">Edit</button>
+        <button class="delete-btn" (click)="deleteItem(item)">Delete</button>
+      </div>
+    </div>
+  </div>
+  <!-- Empty State -->
+  <div class="empty" *ngIf="!isLoading && items.length === 0">
+    No items found.
+  </div>
+</div>

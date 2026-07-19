@@ -1,0 +1,206 @@
+import { Injectable } from '@angular/core';
+import { io, Socket } from 'socket.io-client';
+import { BehaviorSubject } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class NotificationService {
+
+  websuburi: string = environment.websuburi;
+  weburi: string = environment.weburi;
+  uri: string = environment.commonURL;
+
+  private socket!: Socket;
+
+  private notifications =
+    new BehaviorSubject<any[]>([]);
+
+  notifications$ =
+    this.notifications.asObservable();
+
+  constructor() {
+
+    this.initSocket();
+
+  }
+
+  // ============================
+  // SOCKET INIT
+  // ============================
+
+  initSocket() {
+
+    this.socket = io(this.uri);
+
+    this.socket.on('connect', () => {
+
+      console.log(
+        'Socket connected:',
+        this.socket.id
+      );
+
+      const userId =
+        localStorage.getItem(
+          'userId'
+        );
+
+      if (userId) {
+
+        this.socket.emit(
+          'registerUser',
+          {
+            userId
+          }
+        );
+
+        console.log(
+          'Socket room joined:',
+          userId
+        );
+
+      }
+
+    });
+
+    // ============================
+    // RECEIVE NOTIFICATION
+    // ============================
+
+    this.socket.on(
+      'newNotification',
+      (data: any) => {
+
+        console.log(
+          'New Notification:',
+          data
+        );
+
+        const current =
+          this.notifications.value;
+
+        this.notifications.next([
+          data,
+          ...current
+        ]);
+
+        // sound
+        this.playSound();
+
+        // browser popup
+
+        if (
+          'Notification' in window &&
+          Notification.permission ===
+          'granted'
+        ) {
+
+          new Notification(
+            data.title,
+            {
+              body:
+                data.message,
+              icon:
+                'logo.png'
+            }
+          );
+
+        }
+
+      }
+    );
+
+    // ============================
+    // DISCONNECT
+    // ============================
+
+    this.socket.on(
+      'disconnect',
+      () => {
+
+        console.log(
+          'Socket disconnected'
+        );
+
+      }
+    );
+
+  }
+
+  // ============================
+  // REQUEST PERMISSION
+  // ============================
+
+  requestPermission() {
+
+    if (
+      'Notification' in window
+    ) {
+
+      Notification
+        .requestPermission()
+        .then(permission => {
+
+          console.log(
+            'Notification permission:',
+            permission
+          );
+
+        });
+
+    }
+
+  }
+
+  // ============================
+  // PLAY SOUND
+  // ============================
+
+  playSound() {
+
+    try {
+
+      const audio =
+        new Audio(
+          'notification.mp3'
+        );
+
+      audio.load();
+
+      audio.play().catch(
+        err =>
+          console.log(
+            'Audio blocked:',
+            err
+          )
+      );
+
+    }
+    catch (err) {
+
+      console.log(
+        'Audio error:',
+        err
+      );
+
+    }
+
+  }
+
+  // ============================
+  // TEST
+  // ============================
+
+  sendTestNotification(
+    msg: string
+  ) {
+
+    this.socket.emit(
+      'sendTest',
+      msg
+    );
+
+  }
+
+}

@@ -1,0 +1,51 @@
+<div class="back-btn" (click)="goBack()" *ngIf="userType=='customer'">
+  <i class="ri-arrow-left-line"></i>
+</div>
+
+<div class="track-container" *ngIf="boydoata">
+
+  <!-- Header -->
+   
+    <div class="info">
+      <h2 align="center">{{ boydoata?.name || 'Delivery Boy' }},
+        {{ boydoata?.mobile }} </h2>
+    </div>
+ 
+ <br/>
+ <br/>
+  <button class="refresh-btn" (click)="refresh()">
+    <i class="ri-refresh-line"></i>
+    Refresh Now
+  </button>
+  <!-- Auto Refresh Timer -->
+  <div class="timer-box">
+    Next auto refresh in
+    <strong>{{ remainingMinutes }}</strong>m
+    <strong>{{ remainingSeconds }}</strong>s
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    Loading location...
+  </div>
+
+  <!-- Map -->
+  <div *ngIf="
+      !loading &&
+      boydoata?.location?.coordinates &&
+      boydoata?.location?.coordinates?.length === 2
+    " class="map-wrapper">
+    <iframe width="100%" height="500" frameborder="0" allowfullscreen loading="lazy" [src]="mapUrl">
+    </iframe>
+  </div>
+
+  <!-- No Location -->
+  <div *ngIf="
+      !loading &&
+      (!boydoata?.location?.coordinates ||
+      boydoata?.location?.coordinates?.length !== 2)
+    " class="no-location">
+    Location not available.
+  </div>
+
+</div>

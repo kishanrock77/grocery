@@ -1,0 +1,114 @@
+/* 🔥 LOCATION */
+.location {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    cursor: pointer;
+
+    width: 100%;
+
+    min-width: 0;
+    /* IMPORTANT */
+}
+
+/* dot */
+.dot {
+    width: 10px;
+    height: 10px;
+    background: #f7c948;
+    border-radius: 50%;
+}
+
+/* texts */
+.title {
+    font-size: 11px;
+    color: #888;
+    line-height: 1;
+}
+
+.area {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #222;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+/* LOCATION */
+
+.locationhome {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: center;
+
+    width: 100%;
+
+    min-width: 0;
+}
+
+.dothome {
+
+    width: 10px;
+
+    height: 10px;
+
+    background: #00d84a;
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 10px rgba(0, 216, 74, 0.6);
+}
+
+.titlehome {
+
+    font-size: 11px;
+
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.areahome {
+
+    font-weight: 600;
+
+    font-size: 14px;
+
+    color: #fff;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+.textextra {
+
+    
+
+    width: 50%;
+}
+.textextraspan {
+
+    white-space: nowrap;
+
+    overflow: hidden;
+    font-size: small;
+    text-overflow: ellipsis;
+
+    
+}

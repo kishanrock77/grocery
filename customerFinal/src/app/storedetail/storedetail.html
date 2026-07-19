@@ -1,0 +1,268 @@
+<app-subheader [showback]="true" [backurl]="'/storelist'" [closeofpopupornormal]="'popup'"></app-subheader>
+<ng-container *ngIf="isLoading">
+    <div class="store-card shimmer-card" *ngFor="let item of [1,2,3,4,5]">
+
+        <!-- IMAGE -->
+        <div class="slider shimmer-box"></div>
+
+        <!-- INFO -->
+        <div class="info">
+            <div class="shimmer-line title"></div>
+            <div class="shimmer-line small"></div>
+            <div class="shimmer-line small"></div>
+        </div>
+
+    </div>
+</ng-container>
+<ng-container *ngIf="!isLoading">
+    <div class="page" *ngIf="storedetails">
+
+        <!-- 🔥 STORE CARD (same as list page) -->
+        <div class="store-box">
+
+            <!-- 🔥 TOP INFO ROW -->
+            <div class="top-row">
+                <div class="type">{{ storedetails.storeType }}</div>
+
+                <div class="status open" *ngIf="storedetails.finalopenstatus=='Open'">
+                    Open
+                </div>
+
+                <div class="status close" *ngIf="storedetails.finalopenstatus=='Closed'">
+                    Closed
+                </div>
+
+
+            </div>
+
+            <!-- 🔥 MAIN ROW -->
+            <div class="main-row">
+
+                <!-- LEFT (IMAGES) -->
+                <div class="left">
+                    <img *ngIf="storedetails.images?.length > 0" [src]="storedetails.images[0]"
+                        (click)="openImage(storedetails.images[0])">
+
+                    <img *ngIf="storedetails.images?.length > 1" [src]="storedetails.images[1]"
+                        (click)="openImage(storedetails.images[1])">
+                </div>
+
+                <!-- RIGHT (DETAILS) -->
+                <div class="right">
+                    <h3>{{ storedetails.storeName }}</h3>
+
+                     <small style="    color: #6b7280;
+    font-size: 15px;" *ngIf="storedetails.distanceData &&  selectedAddress">
+                <i class="ri-time-fill"></i>&nbsp;
+              {{storedetails.distanceData.distanceinkm}}
+            KM  
+                
+
+            </small>
+                   
+                    <p class="address">
+                        {{ storedetails.address }}
+                    </p>
+                    <p class="time">
+                        Timing - {{ storedetails.openingTime | time12 }} - {{ storedetails.closingTime | time12 }}
+
+                    </p>
+                    <p class="time" *ngIf="storedetails.weekOff.length > 0">
+
+                        Week off: {{ storedetails.weekOff }}
+                    </p>
+
+                    <a class="map-btn"
+                        href="https://www.google.com/maps/search/?api=1&query={{storedetails.location?.coordinates[1]}},{{storedetails.location?.coordinates[0]}}"
+                        target="_blank">
+                        <i class="ri-map-pin-line"></i> View Map
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="sticky-wrapper">
+            <div class="items-header fancy">
+                <h2>{{storedetails.storeName}} Menu</h2>
+            </div>
+            <div class="items-filter">
+
+                <!-- 🔍 SEARCH -->
+                <div class="search-box">
+                    <i class="ri-search-line"></i>
+                    <input type="text" placeholder="Search items in {{storedetails.storeName}}..."
+                        [(ngModel)]="searchText" (input)="onSearchChange()" />
+                </div>
+
+                <!-- 🔽 FILTER ROW -->
+                <div class="filter-row">
+
+                    <!-- SORT -->
+                    <select [(ngModel)]="sortType" (change)="applyFilter()">
+                        <option value="">Sort</option>
+                        <option value="low">Price ↑</option>
+                        <option value="high">Price ↓</option>
+                    </select>
+
+                    <!-- VEG/NONVEG -->
+                    <select [(ngModel)]="vegFilter" (change)="applyFilter()"
+                        *ngIf=" storedetails.storeType=='Restaurant' &&  storedetails.storeType=='Bakery'">
+                        <option value="">All</option>
+                        <option value="veg">Veg</option>
+                        <option value="nonveg">Non-Veg</option>
+                    </select>
+
+                    <!-- PRICE -->
+                    <select [(ngModel)]="priceRange" (change)="applyFilter()">
+                        <option value="">Price</option>
+                        <option value="0-100">0-100</option>
+                        <option value="100-300">100-300</option>
+                        <option value="300-9999">300+</option>
+                    </select>
+
+                    <!-- RESET -->
+                    <button class="reset-btn" (click)="resetFilters()">Reset</button>
+
+                </div>
+
+                <!-- 🔥 ACTIVE FILTER CHIPS -->
+                <div class="chips" *ngIf="isFilterMode">
+
+                    <!-- SEARCH -->
+                    <span *ngIf="searchText" class="chip" (click)="clearSearch()">
+                        "{{searchText}}" ✕
+                    </span>
+
+                    <!-- SORT -->
+                    <span *ngIf="sortType" class="chip" (click)="clearSort()">
+                        {{
+                        sortType === 'low' ? 'Price: Low to High' :
+                        sortType === 'high' ? 'Price: High to Low' : ''
+                        }} ✕
+                    </span>
+
+                    <!-- VEG -->
+                    <span *ngIf="vegFilter" class="chip" (click)="clearVeg()">
+                        {{
+                        vegFilter === 'veg' ? 'Veg' :
+                        vegFilter === 'nonveg' ? 'Non-Veg' : ''
+                        }} ✕
+                    </span>
+
+                    <!-- PRICE -->
+                    <span *ngIf="priceRange" class="chip" (click)="clearPrice()">
+                        {{
+                        priceRange === '0-100' ? 'Price: ₹0 - ₹100' :
+                        priceRange === '100-300' ? 'Price: ₹100 - ₹300' :
+                        priceRange === '300-9999' ? 'Price: ₹300+' : ''
+                        }} ✕
+                    </span>
+
+                </div>
+
+            </div>
+        </div>
+        <!-- 🔥 ITEMS SECTION -->
+        <!-- 🔥 FILTER MODE (Search / Sort applied) -->
+        <div *ngIf="isFilterMode">
+
+            <div *ngIf="filteredItems.length > 0; else noItem">
+
+                <div class="items-grid">
+                    <app-item-card *ngFor="let item of filteredItems" [item]="item"
+                        [storestatus]="storedetails.finalopenstatus">
+                    </app-item-card>
+                </div>
+
+            </div>
+
+            <ng-template #noItem>
+                <div class="no-item-box">
+                    <i class="ri-search-eye-line"></i>
+
+                    <h3>No items found</h3>
+
+                    <p>
+                        Try changing your search or filters
+                    </p>
+
+                    <button (click)="resetFilters()">Reset Filters</button>
+                </div>
+            </ng-template>
+
+        </div>
+
+        <!-- 🔥 NORMAL MODE -->
+        <div *ngIf="!isFilterMode">
+
+            <div *ngFor="let l2 of groupedItems">
+
+                <h2 class="level2-title">{{l2.level2Name}}</h2>
+
+                <div *ngFor="let cat of l2.level3" [attr.id]="'cat-' + cat.level3Id">
+
+                    <h3 class="category-title">
+                        {{cat.categoryName}}
+                    </h3>
+
+                    <div class="items-grid">
+                        <app-item-card *ngFor="let item of cat.items" [item]="item"
+                            [storestatus]="storedetails.finalopenstatus">
+                        </app-item-card>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+</ng-container>
+
+
+<!-- 🔥 FLOATING MENU BUTTON -->
+<button class="menu-btn" (click)="toggleMenu()" *ngIf="storedetails && !isFilterMode">
+    <i [ngClass]="getStoreIcon(storedetails?.storeType)" style="font-weight:400"></i>
+    <span>Menu</span>
+</button>
+
+<!-- 🔥 SIDE MENU -->
+<!-- 🔥 OVERLAY -->
+<div class="menu-overlay" *ngIf="showMenu" (click)="toggleMenu()"></div>
+
+<!-- 🔥 POPUP -->
+<div class="menu-popup" [class.open]="showMenu">
+
+    <div class="menu-header">
+        <h3>Menu</h3>
+        <span (click)="toggleMenu()">✕</span>
+    </div>
+
+    <!-- 🔥 SCROLLABLE CONTENT -->
+    <div class="menu-content">
+
+        <div *ngFor="let l2 of groupedItems" class="level2-group">
+
+            <div class="level2-title">
+                {{l2.level2Name}}
+            </div>
+
+            <div *ngFor="let cat of l2.level3" class="level3-item" [class.active]="activeCat == cat.level3Id"
+                (click)="scrollTo(cat.level3Id)">
+
+                {{cat.categoryName}}
+                <span class="count">{{cat.items.length}}</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<br /><br /><br /><br />
+
+<app-footer [alwayshide]="true"></app-footer><!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

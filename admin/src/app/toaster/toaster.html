@@ -1,0 +1,56 @@
+<div class="toast-container">
+
+  <div
+    class="toast"
+    *ngFor="let t of toasts"
+    [ngClass]="t.type"
+  >
+
+    <div class="toast-left">
+
+      <i
+        *ngIf="t.type=='success'"
+        class="ri-checkbox-circle-fill"
+      ></i>
+
+      <i
+        *ngIf="t.type=='error'"
+        class="ri-close-circle-fill"
+      ></i>
+
+      <i
+        *ngIf="t.type=='warning'"
+        class="ri-error-warning-fill"
+      ></i>
+
+      <i
+        *ngIf="t.type=='info'"
+        class="ri-information-fill"
+      ></i>
+
+    </div>
+
+    <div class="toast-content">
+
+      <div class="toast-title">
+        {{t.title}}
+      </div>
+
+      <div class="toast-message">
+        {{t.message}}
+      </div>
+
+    </div>
+
+    <button
+      class="toast-close"
+      (click)="removeToast(t.id)"
+    >
+
+      <i class="ri-close-line"></i>
+
+    </button>
+
+  </div>
+
+</div>

@@ -1,0 +1,108 @@
+<app-subheader [showback]="true" [backurl]="''"></app-subheader>
+
+
+
+<div class="page">
+
+    <!-- 🔍 FILTER SECTION -->
+    <div class="filter-box" *ngIf="!isLoading">
+
+        <!-- Search -->
+        <input type="text" style="margin-bottom: 10px;
+        "  [class.cccc]="searchFocused === true"  placeholder="Search store..."
+            [(ngModel)]="searchText" (input)="applyFilter()" (focus)="searchFocused = true"
+            (blur)="searchFocused = false" />
+
+        <!-- Badges -->
+        <div class="badges">
+            <span class="badge" [class.active]="selectedType === 'All'" (click)="selectType('All')">
+                All
+            </span>
+
+            <span class="badge" *ngFor="let type of storeTypes" [class.active]="selectedType === type"
+                (click)="selectType(type)">
+                {{ type }}
+            </span>
+        </div>
+
+    </div>
+    <!-- SHIMMER -->
+    <div class="store-list" *ngIf="isLoading">
+
+        <div class="store-card shimmer-card" *ngFor="let item of [1,2,3,4,5]">
+
+            <!-- IMAGE -->
+            <div class="slider shimmer-box"></div>
+
+            <!-- INFO -->
+            <div class="info">
+                <div class="shimmer-line title"></div>
+                <div class="shimmer-line small"></div>
+                <div class="shimmer-line small"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 🏪 STORE LIST -->
+    <div class="store-list" *ngIf="!isLoading">
+
+        <div class="store-card" *ngFor="let store of filteredStores" (click)="openStore(store)">
+
+            <div class="slider">
+                <img [src]="store.images[currentImageIndex[store._id]]" alt="">
+
+                <!-- LEFT: Store Type -->
+                <span class="badgedc top-left">{{ store.storeType }}</span>
+
+                <!-- RIGHT: Open/Closed -->
+                <span class="badgedc top-right open"
+                    *ngIf="store.finalopenstatus=='Open'">{{store.finalopenstatus}}</span>
+                <span class="badgedc top-right close"
+                    *ngIf="store.finalopenstatus=='Closed'">{{store.finalopenstatus}}</span>
+
+                <!-- TOP CENTER: Time -->
+                <div class="time-overlay">
+                    <i class="ri-time-line"></i> {{ store.openingTime | time12 }} - {{ store.closingTime | time12 }}
+                </div>
+
+                <!-- Week Off -->
+
+
+                <!-- NAV -->
+                <button class="nav prev" *ngIf="store.images.length>1" (click)="prevImage(store, $event)">‹</button>
+                <button class="nav next" *ngIf="store.images.length>1" (click)="nextImage(store, $event)">›</button>
+            </div>
+
+            <div class="info">
+                <h3>{{ store.storeName }}</h3>
+                <div *ngIf="store.distanceData && common.selectedaddress" style="    color: #6b7280;
+    font-size: 12px;">
+
+                    <i class="ri-time-fill"></i> {{store.distanceData.distanceinkm}}
+                    KM - {{store.distanceData.minuteorhr}}
+
+                </div>
+
+                <p class="address">
+                    {{ store.address }}
+                </p>
+
+                <a class="map-btn"
+                    href="https://www.google.com/maps/search/?api=1&query={{store.location?.coordinates[1]}},{{store.location?.coordinates[0]}}"
+                    target="_blank">
+                    <i class="ri-map-pin-line"></i>
+                    View on Map
+                </a>
+                <span class="map-btn" *ngIf="store.weekOff.length > 0" style="float:right">
+                    Week off: {{store.weekOff}}
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+    <app-footer [alwayshide]="false"></app-footer>
+</div><!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

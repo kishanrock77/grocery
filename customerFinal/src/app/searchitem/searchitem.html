@@ -1,0 +1,563 @@
+<!-- ========================================= -->
+<!-- SEARCH PAGE -->
+<!-- ========================================= -->
+<app-subheader [showback]="true" [backurl]="" [closeofpopupornormal]="'popup'"></app-subheader>
+
+<div class="search-page">
+
+    <!-- ========================================= -->
+    <!-- TOP BAR -->
+    <!-- ========================================= -->
+
+    <div class="topbar">
+
+        <!-- BACK -->
+
+
+
+        <!-- SEARCH -->
+
+        <div class="search-box" [class.focused]="searchFocused">
+
+            <!-- SEARCH ICON -->
+
+            <i class="ri-search-line left-icon"></i>
+
+            <!-- INPUT -->
+
+            <input #searchInput type="text" [(ngModel)]="searchText" placeholder="{{placeholder}}" autocomplete="off"
+                (focus)="searchFocused = true" (blur)="searchFocused = false" (input)="onSearchInput()"
+                (keyup.enter)="submitSearch()" />
+
+            <!-- CLEAR -->
+
+            <button *ngIf="searchText" class="icon-btn" (click)="clearSearch()">
+
+                <i class="ri-close-line"></i>
+
+            </button>
+
+            <!-- MIC -->
+            
+<button
+  class="icon-btn"
+  type="button"
+  (click)="toggleVoiceSearchg()">
+
+  <span>
+
+    <i class="ri-mic-line" [class.listening]="isListening"></i>
+
+  </span>
+
+</button>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- SEARCH SUGGESTIONS -->
+    <!-- ========================================= -->
+
+    <div class="suggestions-dropdown" *ngIf="
+      showSuggestions &&
+      suggestionItems.length > 0
+    ">
+
+        <div class="suggestion-item" *ngFor="
+        let item of suggestionItems
+      " (click)="selectSuggestion(item)">
+
+            <!-- IMAGE -->
+
+            <img [src]="
+          item?.image ||
+          'assets/noimage.png'
+        " alt="">
+
+            <!-- NAME -->
+
+            <span>
+
+                {{ item?.itemName }}
+
+            </span>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- SEARCH RESULT MODE -->
+    <!-- ========================================= -->
+
+    <ng-container *ngIf="searchPerformed">
+
+        <!-- ========================================= -->
+        <!-- FILTER -->
+        <!-- ========================================= -->
+
+        <!-- ===================================== -->
+        <!-- FILTER BAR -->
+        <!-- ===================================== -->
+
+        <div class="filter-bar">
+
+            <!-- PRICE -->
+
+            <div class="filter-btn" (click)="togglePriceSort()" [class.active]="priceSort!=''">
+
+                <!-- ICON -->
+
+                <div class="filter-icon-group">
+
+                    <!-- DEFAULT -->
+
+                    <ng-container *ngIf="priceSort==''">
+
+                        <i class="fa-solid fa-arrow-up small-icon">
+
+                        </i>
+
+                        <i class="fa-solid fa-arrow-down small-icon down">
+
+                        </i>
+
+                    </ng-container>
+
+                    <!-- ASC -->
+
+                    <i *ngIf="priceSort=='asc'" class="fa-solid fa-arrow-up active-icon">
+
+                    </i>
+
+                    <!-- DESC -->
+
+                    <i *ngIf="priceSort=='desc'" class="fa-solid fa-arrow-down active-icon">
+
+                    </i>
+
+                </div>
+
+                <!-- TEXT -->
+
+                <span>
+
+                    Price
+
+                </span>
+
+            </div>
+
+            <!-- NAME -->
+
+            <div class="filter-btn" (click)="toggleNameSort()" [class.active]="nameSort!=''">
+
+                <!-- ICON -->
+
+                <div class="filter-icon-group">
+
+                    <!-- DEFAULT -->
+
+                    <ng-container *ngIf="nameSort==''">
+
+                        <i class="fa-solid fa-arrow-up small-icon">
+
+                        </i>
+
+                        <i class="fa-solid fa-arrow-down small-icon down">
+
+                        </i>
+
+                    </ng-container>
+
+                    <!-- ASC -->
+
+                    <i *ngIf="nameSort=='asc'" class="fa-solid fa-arrow-up active-icon">
+
+                    </i>
+
+                    <!-- DESC -->
+
+                    <i *ngIf="nameSort=='desc'" class="fa-solid fa-arrow-down active-icon">
+
+                    </i>
+
+                </div>
+
+                <!-- TEXT -->
+
+                <span>
+
+                    Name
+
+                </span>
+
+            </div>
+
+        </div>
+        <!-- ========================================= -->
+        <!-- LOADER -->
+        <!-- ========================================= -->
+
+        <div class="search-loader" *ngIf="loadingSearch">
+
+            <div class="shimmer-card" *ngFor="
+          let x of [1,2,3,4,5,6]
+        ">
+
+                <div class="shimmer-img"></div>
+
+                <div class="shimmer-line big">
+
+                </div>
+
+                <div class="shimmer-line small">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- CATEGORY ITEMS -->
+        <!-- ========================================= -->
+
+        <div class="section" *ngIf="
+        !loadingSearch &&
+        categorySearchItems
+          .length > 0
+      ">
+
+            <div class="section-header">
+
+                <h2>
+
+                    Category Items
+
+                </h2>
+
+                <span>
+
+                    {{
+                    categorySearchItems
+                    .length
+                    }}
+                    items
+
+                </span>
+
+            </div>
+
+            <div class="items-grid">
+
+                <app-item-card *ngFor="
+            let item of
+            categorySearchItems
+          " [item]="item">
+
+                </app-item-card>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- GLOBAL ITEMS -->
+        <!-- ========================================= -->
+
+        <div class="section" *ngIf="
+        !loadingSearch &&
+        globalSearchItems
+          .length > 0
+      ">
+
+            <div class="section-header">
+
+                <h2>
+
+                    Global Search
+
+                </h2>
+
+                <span>
+
+                    {{
+                    globalSearchItems
+                    .length
+                    }}
+                    items
+
+                </span>
+
+            </div>
+
+            <div class="items-grid">
+
+                <app-item-card *ngFor="
+            let item of
+            globalSearchItems
+          " [item]="item">
+
+                </app-item-card>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- NO DATA -->
+        <!-- ========================================= -->
+
+        <div class="empty-box" *ngIf="
+        !loadingSearch &&
+        categorySearchItems
+          .length == 0 &&
+        globalSearchItems
+          .length == 0
+      ">
+
+            <img src="no-data.png" alt="">
+
+            <h3>
+
+                No Items Found
+
+            </h3>
+
+            <p>
+
+                Try searching something else
+
+            </p>
+ <div class="customorderclass">
+                        <b (click)="opencustomorder()">
+                            Agar item nahi milta h to aap apna
+                            item custom order me add karwa sakte hain ! <span style="color:blue">Click here</span> </b>
+                    </div>
+
+                      
+        </div>
+
+    </ng-container>
+
+    <!-- ========================================= -->
+    <!-- DEFAULT SCREEN -->
+    <!-- ========================================= -->
+
+    <ng-container *ngIf="!searchPerformed">
+
+        <!-- ========================================= -->
+        <!-- OLD SEARCHES -->
+        <!-- ========================================= -->
+
+        <div class="section" *ngIf="
+        oldSearches.length > 0
+      ">
+
+            <div class="section-header">
+
+                <h2>
+
+                    Recent Searches
+
+                </h2>
+
+                <button class="clear-all-btn" (click)="clearAllSearches()">
+
+                    Clear All
+
+                </button>
+
+            </div>
+
+            <div class="old-search-item" *ngFor="
+          let term of oldSearches
+        ">
+
+                <!-- LEFT -->
+
+                <div class="left" (click)="
+            searchFromHistory(term)
+          ">
+
+                    <i class="ri-history-line">
+
+                    </i>
+
+                    <span>
+
+                        {{ term }}
+
+                    </span>
+
+                </div>
+
+                <!-- DELETE -->
+
+                <button class="delete-btn" (click)="
+            deleteSearchTerm(term)
+          ">
+
+                    <i class="ri-delete-bin-line">
+
+                    </i>
+
+                </button>
+
+            </div>
+
+        </div>
+        <!-- ========================================= -->
+        <!-- bowseditemArr -->
+        <!-- ========================================= -->
+
+
+
+    </ng-container>
+    <div class="section" *ngIf="
+        borwseditemArrItems.length > 0
+      ">
+
+        <div class="section-header">
+
+            <h3>
+
+                Browsed Items
+
+            </h3>
+
+            <span>
+
+                {{
+                borwseditemArrItems.length
+                }}
+                items
+
+            </span>
+
+        </div>
+
+        <div class="items-grid">
+
+            <app-item-card *ngFor="
+            let item of
+            borwseditemArrItems
+          " [item]="item">
+
+            </app-item-card>
+
+        </div>
+
+    </div>
+    <!-- ========================================= -->
+    <!-- WISHLIST -->
+    <!-- ========================================= -->
+
+    <div class="section" *ngIf="
+        wishlistItems.length > 0
+      ">
+
+        <div class="section-header">
+
+            <h3>
+
+                Wishlist Items
+
+            </h3>
+
+            <!-- <span>
+
+                    {{
+                    wishlistItems.length
+                    }}
+                    items
+
+                </span> -->
+
+        </div>
+
+        <div class="items-grid">
+
+            <app-item-card *ngFor="
+            let item of
+            wishlistItems
+          " [item]="item">
+
+            </app-item-card>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- CATEGORIES -->
+    <!-- ========================================= -->
+
+    <div class="section" *ngIf="
+        categories.length > 0
+      ">
+
+        <div class="section-header">
+
+            <h3>
+
+                Categories
+
+            </h3>
+
+
+
+        </div>
+
+        <div class="category-grid">
+
+            <div class="category-card" *ngFor="
+            let c of categories
+          ">
+
+                <!-- IMAGE -->
+                <img [src]="
+                  c.imagepath ||
+                  'placeholder.png'
+                " (click)="
+                gobacktocategory(c)
+              ">
+
+
+                <!-- NAME -->
+
+                <span>
+
+                    {{
+                    c?.categoryName ||
+                    c?.name
+                    }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+     <div class="custom-order-card" (click)="opencustomorder()">
+
+                        <div class="custom-content">
+                            <span class="small-text">To Place</span>
+                            <h2>Custom Order</h2>
+
+                            <button>
+                                Click Here
+                                <span>→</span>
+                            </button>
+                        </div>
+
+                    </div>
+</div>
+
+<app-footer [alwayshide]="true">
+</app-footer><!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

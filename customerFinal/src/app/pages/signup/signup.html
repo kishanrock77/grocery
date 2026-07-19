@@ -1,0 +1,288 @@
+<div class="page">
+
+
+  <!-- IMAGE -->
+
+  <div class="hero">
+
+    <img class="boy-img" src="loginbanner.jpg">
+
+  </div>
+
+
+
+  <!-- CARD -->
+
+  <div class="card">
+
+    <br /><br />
+
+
+    <!-- MOBILE -->
+
+    <ng-container *ngIf="view === 'mobile'">
+
+
+      <h2>
+        Register
+      </h2>
+
+
+      <p class="welcome">
+        &nbsp;Create your account and start ordering 🍕
+      </p>
+
+
+
+
+      <div class="input-group" [ngClass]="{
+      'error': mobileTouched && !isValidMobile(mobile),
+      'success': isValidMobile(mobile)
+      }">
+
+
+        <span class="prefix">
+          +91
+        </span>
+
+
+        <input type="tel" maxlength="10" autocomplete="off" placeholder="Enter mobile number" [(ngModel)]="mobile"
+          (input)="onMobileChange()" (blur)="mobileTouched=true">
+
+
+        <span class="success-icon" *ngIf="isValidMobile(mobile)">
+          ✔
+        </span>
+
+
+      </div>
+
+
+
+
+
+      <button class="continue-btn" [disabled]="!isValidMobile(mobile)||loading" (click)="sendOtp()">
+
+
+
+        Continue
+
+        <span *ngIf="loading" class="spinner"></span>
+
+
+      </button>
+
+
+
+
+
+      <p class="register">
+
+        Already have an account?
+
+        <b (click)="goToLogin()">
+
+          Login
+
+        </b>
+        
+      </p>
+
+
+
+    </ng-container>
+
+
+
+
+
+
+
+
+
+
+    <!-- OTP -->
+
+
+    <ng-container *ngIf="view==='otp'">
+
+
+      <h2>
+        Verify OTP
+      </h2>
+
+
+      <p class="subtitle">
+
+        Sent to +91 {{mobile}}
+
+      </p>
+
+
+
+
+      <div class="otp-container">
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[0]" (input)="moveNext($event,0)"
+          (paste)="handlePaste($event)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[1]" (input)="moveNext($event,1)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[2]" (input)="moveNext($event,2)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[3]" (input)="moveNext($event,3)">
+
+
+
+      </div>
+
+
+
+
+
+      <p class="change-number" (click)="changeNumber()">
+
+        Change Number
+
+      </p>
+
+
+
+
+      <button class="continue-btn" [disabled]="isVerifying" (click)="verifyOtp()">
+
+
+
+        Verify OTP
+
+
+      </button>
+
+
+
+
+      <p class="resend" *ngIf="timer>0">
+
+        Resend in {{timer}} sec
+
+      </p>
+
+
+
+
+      <p class="resend active" *ngIf="timer===0" (click)="resendOtp()">
+
+        Resend OTP
+
+      </p>
+
+
+
+
+    </ng-container>
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- DETAILS -->
+
+
+    <ng-container *ngIf="view==='details'">
+
+
+      <h2>
+        Create Account
+      </h2>
+
+
+
+      <p class="welcome">
+
+        Complete your profile
+
+      </p>
+
+
+
+
+      <div class="input-group">
+
+        <input placeholder="Full Name" [(ngModel)]="name">
+
+
+      </div>
+
+
+
+
+
+      <div class="input-group">
+
+
+        <input type="password" placeholder="Password" [(ngModel)]="password">
+
+
+      </div>
+
+
+
+
+
+      <div class="input-group">
+
+
+        <input type="password" placeholder="Confirm Password" [(ngModel)]="confirmPassword">
+
+
+      </div>
+
+
+
+
+
+      <button class="continue-btn" (click)="register()">
+
+
+
+        Create Account
+
+
+      </button>
+
+
+
+
+
+      <p class="change-number" (click)="changeNumber()">
+
+        Change Number
+
+      </p>
+
+
+
+
+    </ng-container>
+
+
+
+
+  </div>
+
+
+</div>

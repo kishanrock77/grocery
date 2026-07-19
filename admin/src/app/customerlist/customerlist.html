@@ -1,0 +1,222 @@
+<div class="customer-page">
+<div class="top-header">
+
+        <div class="title">
+
+            Customer  
+
+        </div>
+
+        <button class="refresh-btn" (click)="loadCustomers()">
+
+            <i class="bi bi-arrow-repeat"></i>
+
+
+        </button>
+
+    </div>
+ <!-- LOADING -->
+
+    <div class="loading" *ngIf="loading">
+
+        Loading...
+
+    </div>
+    <div class="search-box">
+
+       <input
+  type="text"
+  placeholder="Search by Name or Mobile"
+  [(ngModel)]="search"
+  (input)="onSearchChange()">
+
+    </div>
+
+    <div
+  class="customer-card"
+  *ngFor="let customer of customers">
+
+  <div
+    class="customer-header"
+    (click)="toggle(customer)">
+
+    <div class="left">
+
+      <h3>
+        {{customer.name}}
+      </h3>
+
+      <p>
+        {{customer.mobile}}
+      </p>
+<p *ngIf="adminemail=='kishan@gmail.com'">
+       pwd-  {{customer.password}}
+      </p>
+      <div class="stats">
+
+        <span>
+          🛒 {{customer.totalOrders}}
+          Orders
+        </span>
+
+        <span>
+          ₹{{customer.totalSpend}}
+        </span>
+
+      </div>
+
+    </div>
+
+    <div class="right">
+
+      <span
+        class="status"
+        [ngClass]="
+          customer.status
+          ? 'active'
+          : 'inactive'
+        ">
+
+        {{
+          customer.status
+          ? 'Active'
+          : 'Inactive'
+        }}
+
+      </span>
+
+    </div>
+        <i class="bi" style="font-size:21px" [ngClass]="customer.expanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+
+  </div>
+
+  <div
+    class="customer-details"
+    *ngIf="customer.expanded">
+
+    <div class="info-row">
+
+      <label>
+        Customer Since
+      </label>
+
+      <span>
+        {{
+          customer.created_on
+          | date:'dd-MM-yyyy'
+        }}
+      </span>
+
+    </div>
+
+    <div class="info-row">
+
+      <label>
+        Last Order
+      </label>
+
+      <span>
+
+        {{
+          customer.lastOrderDate
+          ? (
+              customer.lastOrderDate
+              | date:'dd-MM-yyyy'
+            )
+          : '-'
+        }}
+
+      </span>
+
+    </div>
+
+    <div class="info-row">
+
+      <label>
+        Total Orders
+      </label>
+
+      <span>
+        {{customer.totalOrders}}
+      </span>
+
+    </div>
+
+    <div class="info-row">
+
+      <label>
+        Total Spend
+      </label>
+
+      <span>
+        ₹{{customer.totalSpend}}
+      </span>
+
+    </div>
+
+    <hr>
+
+    <div
+      *ngFor="
+        let add
+        of customer.address
+      ">
+
+      <p>
+        <strong>
+          Address:
+        </strong>
+
+        {{add.fullAddress}}
+      </p>
+
+      <!-- <p>
+        <strong>
+          City:
+        </strong>
+
+        {{add.city}}
+      </p> -->
+
+      <p>
+        <strong>
+          State:
+        </strong>
+
+        {{add.state}}
+      </p>
+
+      <p>
+        <strong>
+          Pincode:
+        </strong>
+
+        {{add.pincode}}
+      </p>
+
+    </div>
+
+    <button
+      class="order-btn"
+      (click)="
+      openOrders(
+      customer._id
+      )">
+
+      Check His Orders 
+
+    </button>
+
+  </div>
+
+</div>
+
+    <div
+        class="loading"
+        *ngIf="loading">
+
+        Loading...
+
+    </div>
+
+</div>

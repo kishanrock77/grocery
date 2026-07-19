@@ -1,0 +1,363 @@
+ /* =========================
+PAGE
+========================= */
+
+ :host {
+  display: block;
+
+  min-height: 100dvh; /* better for mobile */
+
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 10, 0.18), transparent 30%),
+    radial-gradient(circle at top right, rgba(255, 193, 7, 0.12), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(255, 235, 120, 0.16), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.10), transparent 28%),
+    linear-gradient(180deg, #fffdf5 0%, #fff9e8 30%, #fffef8 65%, #ffffff 100%);
+
+  position: relative;
+
+  overflow: hidden; /* IMPORTANT */
+}
+
+/* =========================
+GLOWS
+========================= */
+
+:host::before,
+:host::after{
+
+  content:"";
+
+  position:absolute;
+
+  border-radius:50%;
+
+  filter:blur(90px);
+
+  z-index:0;
+
+  pointer-events:none;
+}
+
+:host::before{
+
+  width:280px;
+  height:280px;
+
+  top:-100px;
+  left:-70px;
+
+  background:
+    rgba(255, 210, 0, 0.18);
+}
+
+:host::after{
+
+  width:340px;
+  height:340px;
+
+  bottom:-140px;
+  right:-120px;
+
+  background:
+    rgba(255, 235, 59, 0.14);
+}
+
+/* =========================
+CONTENT
+========================= */
+
+.support-page{
+
+  position:relative;
+
+  z-index:1;
+
+  padding:18px;
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:16px;
+
+  justify-content:center;
+}
+
+/* =========================
+HERO
+========================= */
+
+.support-hero{
+
+  width:100%;
+
+  text-align:center;
+ 
+}
+
+.support-icon{
+
+  width:76px;
+  height:76px;
+
+  margin:auto;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffcc00,
+      #ffdf5e
+    );
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  box-shadow:
+    0 12px 35px rgba(255, 204, 0, 0.35);
+
+  animation:floaty 3s ease-in-out infinite;
+}
+
+.support-icon i{
+
+  font-size:38px;
+
+  color:#222;
+}
+
+.support-hero h1{
+
+  margin-top:18px;
+
+  font-size:30px;
+
+  font-weight:800;
+
+  color:#111;
+
+  letter-spacing:-0.5px;
+}
+
+.support-hero p{
+
+  margin-top:10px;
+
+  color:#666;
+
+  font-size:15px;
+
+  line-height:1.7;
+}
+
+/* =========================
+CARD
+========================= */
+
+.support-card{
+
+  width:calc(33.33% - 11px);
+
+  min-width:280px;
+
+  background:
+    rgba(255,255,255,0.78);
+
+  backdrop-filter:blur(14px);
+
+  border:1px solid rgba(255,255,255,0.7);
+
+  border-radius:24px;
+
+  padding:2px;
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.06);
+
+  transition:0.25s;
+}
+
+.support-card:hover{
+
+  transform:
+    translateY(-3px);
+}
+
+.left{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:14px;
+
+  min-width:0;
+
+  flex:1;
+}
+
+.icon{
+
+  width:58px;
+  height:58px;
+
+  border-radius:18px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex-shrink:0;
+}
+
+.icon i{
+
+  font-size:28px;
+}
+
+.phone{
+
+  background:
+    rgba(255, 204, 0, 0.18);
+
+  color:#d99b00;
+}
+
+.whatsapp{
+
+  background:
+    rgba(37, 211, 102, 0.14);
+
+  color:#1fa855;
+}
+
+.email{
+
+  background:
+    rgba(255, 170, 0, 0.16);
+
+  color:#ff9800;
+}
+
+.details{
+
+  min-width:0;
+}
+
+.label{
+
+  display:block;
+
+  font-size:13px;
+
+  color:#888;
+
+  margin-bottom:5px;
+}
+
+.value{
+
+  color:#111;
+
+  font-size:16px;
+
+  font-weight:700;
+
+  text-decoration:none;
+
+  word-break:break-word;
+}
+
+/* =========================
+COPY BUTTON
+========================= */
+
+.copy-btn{
+
+  width:46px;
+  height:46px;
+
+  border:none;
+
+  border-radius:14px;
+ 
+
+  color:#222;
+
+  font-size:21px;
+
+  cursor:pointer;
+
+  flex-shrink:0;
+
+  box-shadow:
+    0 8px 22px rgba(255, 204, 0, 0.28);
+
+  transition:0.25s;
+}
+
+.copy-btn:active{
+
+  transform:scale(0.92);
+}
+
+/* =========================
+MOBILE
+========================= */
+
+@media(max-width:992px){
+
+  .support-card{
+
+    width:calc(50% - 8px);
+  }
+
+}
+
+@media(max-width:768px){
+
+  .support-page{
+
+    gap:14px;
+  }
+
+  .support-card{
+
+    width:100%;
+
+    min-width:unset;
+  }
+
+}
+
+/* =========================
+ANIMATION
+========================= */
+
+@keyframes floaty{
+
+  0%{
+    transform:translateY(0px);
+  }
+
+  50%{
+    transform:translateY(-7px);
+  }
+
+  100%{
+    transform:translateY(0px);
+  }
+}

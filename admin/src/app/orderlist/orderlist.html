@@ -1,0 +1,373 @@
+<div class="page">
+
+  <!-- HEADER -->
+
+  <div class="top-header">
+
+    <div class="title">
+
+      Orders
+
+    </div>
+
+    <button class="refresh-btn" (click)="refreshOrders()">
+
+      <i class="bi bi-arrow-repeat"></i>
+
+
+    </button>
+
+  </div>
+
+  <!-- FILTER -->
+
+  <div class="filter-wrapper">
+
+    <div *ngFor="let item of filters" class="filter-btn" [class.active]="
+        selectedFilter == item
+      " (click)="changeFilter(item)">
+
+      {{item}}
+
+    </div>
+
+  </div>
+
+  <!-- LOADING -->
+
+  <div class="loading" *ngIf="loading">
+
+    Loading...
+
+  </div>
+
+  <!-- EMPTY -->
+
+  <div class="empty" *ngIf="
+
+      !loading &&
+
+      groupedOrders.length == 0
+
+    ">
+
+    No Orders Found
+
+  </div>
+
+  <!-- ORDERS -->
+
+  <div class="main-order-card" *ngFor="
+      let order of groupedOrders
+    " (click)="openorder(order)">
+
+    <!-- TOP -->
+
+    <div class="main-top">
+
+      <div>
+
+        <div class="main-id">
+
+          {{order?.mainOrder?.mainorderid}}
+
+        </div>
+
+        <div class="main-date">
+
+          {{formatDate(
+          order?.mainOrder?.orderdatetime
+          )}}
+
+        </div>
+
+        <span *ngIf="usertype=='deliveryboy'">
+
+
+          <!--agar kisis bhi sub order me deelevry boy assign nahi hua to man lo k kisis me bhi ni hua-->
+          <button class="assign-btn" *ngIf="canAssignOrder(order)" (click)="
+    assignordertoDeliveryBoy(order);
+    $event.stopPropagation();
+  ">
+            Assign to me
+          </button>
+        </span>
+      </div>
+
+      <i class="ri-arrow-right-s-line" *ngIf="this.usertype != 'store'"></i>
+
+    </div>
+
+    <!-- GRID -->
+
+    <div class="info-grid" *ngIf="this.usertype != 'store'">
+
+      <div class="info-box">
+
+        <div class="label">
+
+          Amount
+
+        </div>
+
+        <div class="value">
+
+          ₹{{order?.mainOrder?.totalamount}}
+
+        </div>
+
+      </div>
+
+      <div class="info-box">
+
+        <div class="label">
+
+          Stores
+
+        </div>
+
+        <div class="value">
+
+          {{order?.totalStores}}
+
+        </div>
+
+      </div>
+
+      <div class="info-box">
+
+        <div class="label">
+
+          Items
+
+        </div>
+
+        <div class="value">
+
+          {{order?.totalItems}}
+
+        </div>
+
+      </div>
+
+      <div class="info-box">
+
+        <div class="label">
+
+          Payment By
+
+        </div>
+
+        <div class="value upper">
+
+          {{order?.mainOrder?.paymentMethod}}
+          <span style="font-size: 10px; color: red;" *ngIf="order?.mainOrder?.paymentStatus=='pending'">
+            (Pending)
+          </span>
+          <span style="font-size: 10px; color: green;" *ngIf="order?.mainOrder?.paymentStatus=='completed'">
+            (Completed)
+          </span>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SUB ORDERS -->
+
+    <div class="suborders-wrapper">
+      <span *ngFor="let sub of order?.subOrders" (click)="openSubOrder(order, sub, $event)">
+
+        <div class="suborder-card" *ngIf="this.usertype == 'store'">
+          <div class="info-grid">
+
+            <div class="info-box">
+
+              <div class="label">
+
+                Amount
+
+              </div>
+
+              <div class="value">
+
+                ₹{{sub.storeTotaltoshowtostore}}
+
+              </div>
+
+            </div>
+
+
+
+            <div class="info-box">
+
+              <div class="label">
+
+                Items
+
+              </div>
+
+              <div class="value">
+
+                {{getTotalItems(sub?.items)}} Items
+
+              </div>
+
+            </div>
+
+
+
+          </div>
+        </div>
+        <div class="suborder-card">
+
+
+          <!-- LEFT -->
+          <div class="sub-left">
+
+            <div class="store-name">
+              {{sub?.storeInfo?.storeName}}
+            </div>
+
+            <div class="sub-id">
+              {{sub?.suborderid}}
+            </div>
+
+          </div>
+
+          <!-- RIGHT -->
+          <div class="sub-right">
+
+            <div class="status pending">
+              {{sub?.suborderstatus}}
+            </div>
+
+            <div class="sub-items" *ngIf="this.usertype !== 'store'">
+              {{getTotalItems(sub?.items)}} Items
+            </div>
+
+
+          </div>
+
+          <i class="ri-arrow-right-s-line"></i>
+
+        </div>
+        <div class="suborder-card-2">
+
+          <table style="width:100%">
+            <tr>
+              <td>
+                <span *ngIf="sub.currentstatuskey=='orderplacedbycustomer'">
+                  Waiting for assigment of delivery boy
+                </span>
+                <span *ngIf="sub.currentstatuskey=='orderacceptedbydeliveryboy'">
+                  Waiting for acceptance from store
+                </span>
+                <span *ngIf="sub.currentstatuskey=='orderacceptedbystore'">
+                  Waiting for store to start preparation
+                </span>
+
+                <span *ngIf="sub.currentstatuskey=='underpreparation'">
+                  Waiting for store to pack item
+                </span>
+                <span *ngIf="sub.currentstatuskey=='packedorder'">
+                  Waiting for delievery boy to pick item from store
+                </span>
+
+                <span *ngIf="sub.currentstatuskey=='pickedorder'">
+                  Waiting for delievery boy to deliver item to customer
+
+                  <span *ngIf="usertype=='deliveryboy' && order.mainOrder.paymentStatus=='pending'">
+                    , do not forget to collect money
+                  </span> </span>
+              </td>
+            </tr>
+          </table>
+          <div *ngIf="
+          usertype=='deliveryboy'">
+            <button class="assign-btn" *ngIf=" 
+          sub.currentstatuskey=='packedorder'
+        " (click)="
+          pickfromstore(order,sub,'pickedorder');
+          $event.stopPropagation();
+        ">
+              Pick Item from store
+            </button>&nbsp;
+
+            <button class="assign-btn" *ngIf=" 
+          sub.currentstatuskey=='pickedorder'
+        " (click)="
+          deliveredme(order,sub,'delivered');
+          $event.stopPropagation();
+        ">
+              Deliever to customer
+            </button>&nbsp;
+            <span style="color: red;"
+              *ngIf="sub.currentstatuskey=='pickedorder' && usertype=='deliveryboy' && order.mainOrder.paymentStatus=='pending'">
+            <br/>  Do not forget to collect money
+            </span>
+
+          </div>
+
+          <div *ngIf="
+          usertype=='store'">
+
+            <button class="assign-btn" *ngIf=" 
+          sub.currentstatuskey=='orderacceptedbystore'
+        " (click)="
+          underpreperation(order,sub,'underpreparation');
+          $event.stopPropagation();
+        ">
+              Start Preparation
+            </button>&nbsp;
+
+            <button class="assign-btn" *ngIf=" 
+          sub.currentstatuskey=='underpreparation'
+        " (click)="
+          packitem(order,sub,'packedorder');
+          $event.stopPropagation();
+        ">
+              Complete Packeging
+            </button>&nbsp;
+
+
+
+            <button class="assign-btn" *ngIf=" 
+          sub.currentstatuskey=='orderacceptedbydeliveryboy'
+        " (click)="
+          acceptRejectSuborderbyStore(order,sub,'orderacceptedbystore');
+          $event.stopPropagation();
+        ">
+              Accept Order
+            </button>
+
+            <button class="cancel-btn" *ngIf=" 
+          ( sub.currentstatuskey=='orderacceptedbystore'  
+          || sub.currentstatuskey=='orderacceptedbydeliveryboy'
+
+            || sub.currentstatuskey=='orderrejectedbystore'
+              || sub.currentstatuskey=='packedorder'
+                || sub.currentstatuskey=='underpreparation'
+        )
+        " (click)="
+          acceptRejectSuborderbyStore(order,sub,'orderrejectedbystore');
+          $event.stopPropagation();
+        ">
+              Cancel Order
+            </button>
+
+
+
+          </div>
+        </div>
+        <span *ngIf="
+          usertype!='store'">
+          <hr />
+        </span>
+      </span>
+    </div>
+
+  </div>
+
+</div>

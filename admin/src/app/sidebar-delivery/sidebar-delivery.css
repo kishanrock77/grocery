@@ -1,0 +1,125 @@
+/* Sidebar container */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #e0e0e0;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.05);
+  transition: width 0.3s ease;
+  overflow-y: auto;   /* 👈 ADD THIS */
+  overflow-x: hidden;
+  z-index: 100;
+}
+.active {
+  background: #19692c;
+  color: #fff !important;
+  border-radius: 6px;
+}
+/* Collapsed: hide content, only toggle visible */
+.sidebar.collapsed {
+  width: 0px; /* just enough for toggle button */
+}
+
+/* Sidebar content (header + nav) */
+.sidebar-content {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+}
+
+.sidebar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #28a745;
+}
+
+.sidebar-icon {
+  font-size: 1.4rem;
+}
+
+/* Navigation */
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin-bottom: 15px;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #555;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.sidebar-nav li a i {
+  font-size: 1.1rem;
+}
+
+.sidebar-nav li a:hover {
+  background: #28a745;
+  color: #fff;
+}
+
+/* Toggle Button */
+.sidebar-toggle {
+  width: 100%;
+  background: #28a745;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px 0;
+  font-size: 1.2rem;
+  transition: background 0.3s;
+}
+
+.sidebar-toggle:hover {
+  background: #19692c;
+}
+.sidebar-toggle-2 {
+  width: 10%;
+  background: #28a745;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 10px 0;
+  font-size: 1.2rem;
+  transition: background 0.3s;
+}
+
+.sidebar-toggle-2:hover {
+  background: #19692c;
+}
+/* Optional: keep toggle fixed on left edge */
+.sidebar.collapsed .sidebar-toggle {
+  width: 100%;
+  border-radius: 0;
+}
+.active {
+  background: #19692c;
+  color: #fff !important;
+  border-radius: 6px;
+}

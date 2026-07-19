@@ -1,0 +1,277 @@
+<app-subheader [showback]="true" [backurl]="'/categories'" [closeofpopupornormal]="'popup'">
+</app-subheader>
+<!-- ===================================== -->
+<!-- LEVEL 2 HORIZONTAL LIST -->
+<!-- ===================================== -->
+
+<div class="level2-scroll" *ngIf="!loading && level2List.length > 1">
+
+    <div class="level2-chip" *ngFor="let c of level2List" (click)="selectLevel2(c._id,true)"
+        [class.active]="selectedLevel2Id == c._id">
+
+        <!-- IMAGE -->
+        <img [src]="
+          c.imagepath ||
+          'placeholder.png'
+        ">
+
+        <!-- NAME -->
+        <p>
+            {{ c.categoryName }}
+        </p>
+
+    </div>
+
+</div>
+<!-- ===================================== -->
+<!-- STICKY TOPBAR -->
+<!-- ===================================== -->
+
+<div class="topbar" *ngIf="!loading">
+
+    <!-- ================================= -->
+    <!-- SINGLE ROW -->
+    <!-- ================================= -->
+
+    <div class="topbar-row">
+
+        <!-- CATEGORY NAME -->
+        <div class="heading">
+
+            {{ level2Data?.categoryName }}
+
+        </div>
+
+        <!-- PRICE -->
+        <div class="filter-btn" (click)="togglePriceSort()" [class.active]="
+        priceSort!=''
+      ">
+
+            <!-- DEFAULT -->
+            <span *ngIf="priceSort==''">
+
+                <i class="fa-solid fa-arrow-up" style="margin-right: 3px;">
+                </i>
+
+                <i class="fa-solid fa-arrow-down">
+                </i>
+
+            </span>
+
+            <!-- ASC -->
+            <i *ngIf="priceSort=='asc'" class="fa-solid fa-arrow-up">
+
+            </i>
+
+            <!-- DESC -->
+            <i *ngIf="priceSort=='desc'" class="fa-solid fa-arrow-down">
+
+            </i>
+
+            Price
+
+        </div>
+
+        <!-- NAME -->
+        <div class="filter-btn" (click)="toggleNameSort()" [class.active]="
+        nameSort!=''
+      ">
+
+            <!-- DEFAULT -->
+            <span *ngIf="nameSort==''">
+
+                <i class="fa-solid fa-arrow-up" style="margin-right: 3px;">
+                </i>
+
+                <i class="fa-solid fa-arrow-down">
+                </i>
+
+            </span>
+
+            <!-- ASC -->
+            <i *ngIf="nameSort=='asc'" class="fa-solid fa-arrow-up">
+
+            </i>
+
+            <!-- DESC -->
+            <i *ngIf="nameSort=='desc'" class="fa-solid fa-arrow-down">
+
+            </i>
+
+            Name
+
+        </div>
+
+        <!-- SEARCH -->
+        <div class="search-btn" (click)="
+        goToSearch( level2Data
+        )
+      ">
+
+            <i class="fa-solid fa-magnifying-glass">
+            </i>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ===================================== -->
+<!-- PAGE -->
+<!-- ===================================== -->
+
+<div class="page">
+
+    <!-- ===================================== -->
+    <!-- BODY -->
+    <!-- ===================================== -->
+
+    <div class="layout">
+
+        <!-- ===================================== -->
+        <!-- LEFTBAR -->
+        <!-- ===================================== -->
+
+        <div class="leftbar" *ngIf="!loading">
+
+            <div class="left-cat" *ngFor="
+          let c of level3Categories
+        " (click)="selectCategory(c._id,true)" [class.active]="
+          selectedLevel3Id == c._id
+        ">
+
+                <img [src]="
+            c.imagepath ||
+            'placeholder.png'
+          ">
+
+                <p>
+                    {{ c.categoryName }}
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- ===================================== -->
+        <!-- RIGHT -->
+        <!-- ===================================== -->
+
+        <div class="rightcontent custom-scroll-container">
+
+            <!-- SHIMMER -->
+            <div class="items-grid" *ngIf="
+          loading ||
+          itemLoading
+        ">
+
+                <div class="shimmer-card" *ngFor="
+            let x of [1,2,3,4,5,6]
+          ">
+
+                    <div class="shimmer shimmer-img">
+                    </div>
+
+                    <div class="shimmer shimmer-line small">
+                    </div>
+
+                    <div class="shimmer shimmer-line big">
+                    </div>
+
+                    <div class="shimmer shimmer-line small">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- NO DATA -->
+            <div class="nodata" *ngIf="
+
+          !loading &&
+
+          !itemLoading &&
+
+          displayItems.length == 0
+
+        ">
+
+                <div class="no-item-box">
+                    <br />    <br />
+                    <i class="ri-search-eye-line">
+                    </i>
+
+                    <h3>
+                        No items found
+                    </h3>
+                    <p>Try another category !
+
+
+                    </p>
+                    <div class="customorderclass">
+                        <b (click)="opencustomorder()">
+                            Agar item nahi milta h to aap apna
+                            item custom order me add karwa sakte hain ! <span style="color:blue">Click here</span> </b>
+                    </div>
+
+                    <div class="custom-order-card" (click)="opencustomorder()">
+
+                        <div class="custom-content">
+                            <span class="small-text">To Place</span>
+                            <h2>Custom Order</h2>
+
+                            <button>
+                                Click Here
+                                <span>→</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ITEMS -->
+            <div class="items-grid" *ngIf="
+          !loading &&
+          !itemLoading
+        ">
+
+                <app-item-card *ngFor="
+            let item of displayItems
+          " [item]="item" [storestatus]="
+
+            item.storedetails
+            ?.finalopenstatus
+
+          ">
+
+                </app-item-card>
+
+            </div>
+ <div class="custom-order-card" *ngIf=" displayItems.length >0" (click)="opencustomorder()">
+
+                        <div class="custom-content">
+                            <span class="small-text">To Place</span>
+                            <h2>Custom Order</h2>
+
+                            <button>
+                                Click Here
+                                <span>→</span>
+                            </button>
+                        </div>
+
+                    </div>
+            <br /> <br /> <br /> <br />
+        </div>
+
+    </div>
+
+</div>
+
+<!-- FOOTER SPACE -->
+
+
+<app-footer [alwayshide]="true">
+</app-footer>

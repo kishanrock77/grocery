@@ -1,0 +1,42 @@
+<!-- address-reminder-popup.component.html -->
+
+<div class="popup-backdrop" *ngIf="showPopup">
+  <div class="address-popup">
+
+    <!-- TOP ICON -->
+    <div class="icon-wrapper">
+      <i class="fas fa-map-marker-alt"></i>
+    </div>
+
+    <!-- TITLE -->
+    <h2>Please Select Your Address</h2>
+
+    <!-- SUBTITLE -->
+    <p class="subtitle">
+      See accurate store distance & delivery time for items.
+    </p>
+
+    <!-- HINDI TEXT -->
+    <div class="message-box">
+      <p>
+        Agar aap apne ghar se store ka distance dekhna chahte hain
+        ya item ka delivery time dekhna chahte hain to delivery
+        address chuniye.
+      </p>
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="popup-actions">
+
+      <button class="skip-btn" (click)="closePopup()">
+        Skip For Now
+      </button>
+
+      <button class="continue-btn" (click)="openAddressPopup()">
+        Continue
+      </button>
+
+    </div>
+
+  </div>
+</div>

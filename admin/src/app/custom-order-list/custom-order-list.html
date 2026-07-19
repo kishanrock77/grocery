@@ -1,0 +1,673 @@
+<div class="page">
+
+    <div class="page-loader" *ngIf="loader">
+
+        <div class="loader"></div>
+
+    </div>
+
+
+
+
+
+    <h2 align="center"> Custom Order List</h2>
+
+    <br />
+    <button class="refresh-btn" (click)="getcustomorderlist()">
+
+        <i class="ri-refresh-line"></i>
+
+        Refresh
+    </button><br />
+
+    <!-- Filters -->
+
+    <div class="filter-bar">
+
+        <button [class.active]="filterType=='all'" (click)="filterType='all'">
+            All
+        </button>
+
+        <button [class.active]="filterType=='admin'" (click)="filterType='admin'">
+            Pending From Admin
+        </button>
+
+        <button [class.active]="filterType=='customer'" (click)="filterType='customer'">
+            Pending From Customer Side
+        </button>
+
+    </div>
+
+    <!-- No Data -->
+
+    <div class="empty-box" *ngIf="filteredList.length==0">
+
+        No Custom Orders Found
+
+    </div>
+
+    <!-- Orders -->
+    <div class="order-card" *ngFor="let order of filteredList">
+
+
+        <!-- IMAGE GALLERY -->
+
+        <div class="image-gallery" *ngIf="order.images?.length">
+
+
+            <div class="small-image" *ngFor="let img of order.images" (click)="openImage(img)">
+
+
+                <img [src]="img" onerror="this.src='assets/no-image.png'">
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <!-- PDF -->
+
+        <div class="pdf-box" *ngIf="order.pdf">
+
+
+            <a [href]="order.pdf" target="_blank">
+
+                <i class="ri-file-pdf-line"></i>
+
+                View Prescription PDF
+
+            </a>
+
+
+        </div>
+
+
+
+
+
+
+        <div class="top-section">
+
+
+            <div class="order-info">
+
+
+                <h3>
+
+                    {{order.type | titlecase}} Custom Order
+
+                </h3>
+
+
+
+
+
+                <div class="order-date">
+
+                    {{formatDate(order.createdAt)}}
+
+                </div>
+
+                <div class="order-date">
+
+                    Customer: {{ order.customerId.name }},
+                    {{ order.customerId.mobile }}
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+
+        <!-- STATUS -->
+
+
+        <div class="status-wrapper">
+            <span *ngIf="order.statusByAdmin=='approved'">
+                <span class="badge admin" style="background:green;color: white;">
+
+
+                    Approved From Admin
+
+
+                </span><br /><br />
+
+                <div class="detail-row">
+
+                    <span> Estimated amount for app</span>
+
+                    <strong>
+                        ₹{{order.estimateAmount}}
+                    </strong>
+
+                </div>
+ <div class="detail-row">
+
+                    <span> Estimated amount for store</span>
+
+                    <strong>
+                        ₹{{order.estimateAmount_store}}
+                    </strong>
+
+                </div>
+                
+                 <div class="detail-row">
+
+                    <span> Store</span>
+
+                    <strong>
+                        {{order.storeName}}
+                    </strong>
+
+                </div>
+                <div class="detail-row" style="display: block;">
+
+                    <span> Category</span>
+    <br />
+                    <small>
+                        {{order.categories[0]['level1']['name']}}-> {{order.categories[0]['level2']['name']}}-> {{order.categories[0]['level3']['name']}}
+                    </small>
+
+                </div>
+                <div class="detail-row" style="display: block;">
+
+                    <span> Estimate message</span>
+                    <br />
+                    {{order.estimatemessage}}
+
+                </div>
+
+
+
+
+            </span>
+            <span *ngIf="order.statusByAdmin=='rejected'">
+                <span class="badge admin" style="background:red;color:white">
+
+
+                    Cancelled From Admin
+
+
+                </span><br /><br />
+
+
+
+                <div class="detail-row" style="display: block;">
+
+                    <span> Cancel Reason</span>
+                    <br />
+                    {{order.cancelReason}}
+
+                </div>
+
+            </span>
+
+            <span *ngIf="order.statusByAdmin=='pending'">
+
+                <span class="badge admin">
+
+
+                    Pending From Admin
+
+
+                </span>
+
+
+            </span>
+            <br /> <br />
+
+            <button class="action-btn approve-btn"
+                *ngIf="order.statusByAdmin=='pending' || order.statusByAdmin=='rejected'"
+                (click)="actionbyadmin(order,'Approve')">
+
+                <i class="ri-check-line"></i>
+                Approve
+
+            </button>
+
+
+            <button class="action-btn reject-btn"
+                *ngIf="order.statusByAdmin=='pending' || order.statusByAdmin=='approved'"
+                (click)="actionbyadmin(order,'Reject')">
+
+                <i class="ri-close-line"></i>
+                Reject
+
+            </button>
+            <br /><br />
+
+            <span class="badge customer" *ngIf="
+        order.statusByAdmin!='pending'
+        &&
+         order.statusByAdmin!='rejected'
+        &&
+        order.statusByCustomer=='pending'
+        ">
+
+
+                Pending From Customer Side
+
+
+            </span>
+
+
+
+
+
+            <span class="badge success" *ngIf="
+        order.statusByAdmin!='pending'
+        &&
+        order.statusByCustomer!='pending'
+        ">
+
+
+                Check Item
+
+
+            </span>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+
+        <!-- CAKE -->
+
+
+        <div class="detail-box" *ngIf="order.type=='cake'">
+
+
+            <h4>Cake Details</h4>
+
+
+            <div class="detail-row">
+
+                <span>Flavour</span>
+
+                <strong>
+                    {{order.cake?.flavour}} ({{order.cake?.egglesstype}})
+                </strong>
+
+            </div>
+
+
+
+            <div class="detail-row">
+
+                <span>Weight</span>
+
+                <strong>
+                    {{order.cake?.weight}}
+                </strong>
+
+            </div>
+
+
+
+            <div class="detail-row" style="display: block;">
+
+                <span>Message</span>
+
+
+                <p>
+                    {{order.cake?.message}}
+                </p>
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- MEDICAL -->
+
+
+        <div class="medical-section" *ngIf="order.type=='medical' 
+    && order.medical?.length">
+
+
+            <div class="medical-header" (click)="toggleMedical(order)">
+
+
+                <span>
+
+                    Medicines ({{order.medical.length}})
+
+                </span>
+
+
+                <i [class]="
+            'ri-arrow-' +
+            (order.showMedical?'up':'down')
+            +
+            '-s-line'
+            ">
+
+                </i>
+
+
+            </div>
+
+
+
+
+
+            <div class="medicine-list" *ngIf="order.showMedical">
+
+
+                <div class="medicine-item" *ngFor="let med of order.medical">
+
+
+                    <b>
+                        {{med.name}}
+                    </b>
+
+
+                    <span>
+
+                        Qty : {{med.quantity}}
+
+                    </span>
+
+
+                </div>
+
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+
+
+
+
+
+        <!-- OTHER -->
+
+
+        <div class="detail-box" *ngIf="order.type=='other'">
+
+
+            <h4>Item Details</h4>
+
+
+            <div class="detail-row">
+
+
+                <span>Item</span>
+
+
+                <strong>
+
+                    {{order.other?.itemName}}
+
+                </strong>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+
+
+        <!-- COMMON -->
+
+
+        <div class="detail-row" style="display: block;">
+
+
+            <span>Extra Detail</span>
+
+
+            <p>
+
+                {{order.extraDetail || '-'}}
+
+            </p>
+
+
+        </div>
+
+
+
+    </div>
+
+</div>
+
+
+<div class="popup-overlay" *ngIf="showpopup">
+
+    <div class="popup-box">
+
+
+        <div class="popup-header">
+
+            <h3>
+                {{action}} Custom Order
+            </h3>
+
+            <i class="ri-close-line" (click)="closepopup()"></i>
+
+        </div>
+
+
+
+        <!-- APPROVE -->
+
+        <div *ngIf="action=='Approve'">
+
+
+            <label>Store *</label>
+
+            <select class="form-control" [(ngModel)]="approveData.storeId">
+
+                <option value="">
+                    Select Store
+                </option>
+
+                <option *ngFor="let s of storeList" [value]="s._id">
+
+                    {{s.storeName}}
+
+                </option>
+
+            </select>
+
+
+
+
+            <label>Category *</label>
+
+
+            <select class="form-control" [(ngModel)]="selectedCategory.level1_id" (change)="onLevel1Change()">
+
+
+                <option value="">
+                    Select Level 1
+                </option>
+
+
+                <option *ngFor="let c of level1List" [value]="c._id">
+
+                    {{c.categoryName}}
+
+                </option>
+
+            </select>
+
+
+
+
+            <select class="form-control" [(ngModel)]="selectedCategory.parent_id" (change)="onLevel2Change()">
+
+
+
+                <option value="">
+                    Select Level 2
+                </option>
+
+
+                <option *ngFor="let c of level2ListToShow" [value]="c._id">
+
+
+                    {{c.categoryName}}
+
+
+                </option>
+
+
+            </select>
+
+
+
+
+            <select class="form-control" [(ngModel)]="selectedCategory.level3_id">
+
+
+                <option value="">
+                    Select Level 3
+                </option>
+
+
+                <option *ngFor="let c of level3ListToShow" [value]="c._id">
+
+
+                    {{c.categoryName}}
+
+                </option>
+
+
+            </select>
+
+
+
+            <button class="add-btn" (click)="addCategory()">
+
+                + Add Category
+
+            </button>
+
+
+
+
+            <div class="chips">
+
+
+                <span *ngFor="let c of selectedCategories">
+
+                    {{getCategoryName(c.level3)}}
+
+                </span>
+
+
+            </div>
+
+
+
+
+
+            <label>
+                Estimate Amount for App
+            </label>
+
+
+            <input type="number" class="form-control" [(ngModel)]="approveData.estimateAmount">
+
+ <label>
+                Estimate Amount for store
+            </label>
+
+
+            <input type="number" class="form-control" [(ngModel)]="approveData.estimateAmount_store">
+
+
+
+
+            <label>
+                Estimate Message
+            </label>
+
+
+            <textarea class="form-control" [(ngModel)]="approveData.estimatemessage">
+            </textarea>
+
+
+
+        </div>
+
+
+
+
+
+
+        <!-- REJECT -->
+
+
+        <div *ngIf="action=='Reject'">
+
+
+            <label>
+                Cancel Reason *
+            </label>
+
+
+            <textarea class="form-control" [(ngModel)]="rejectReason">
+            </textarea>
+
+
+        </div>
+
+
+
+
+        <button class="save-btn" (click)="saveAdminreplyforcustomorder()">
+
+
+            Save
+
+
+        </button>
+
+
+
+    </div>
+
+
+</div>

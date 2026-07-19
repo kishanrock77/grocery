@@ -1,0 +1,83 @@
+ 
+<!-- SHOW APP -->
+<!-- <div *ngIf="isMobilePortrait"> -->
+
+  <router-outlet></router-outlet>
+<app-newwindow></app-newwindow>
+
+<app-toaster></app-toaster>
+<!-- </div> -->
+
+<!-- BLOCK SCREEN -->
+<!-- <div
+  class="device-blocker"
+  *ngIf="!isMobilePortrait">
+
+  <div class="device-blocker-content">
+
+    <i class="ri-smartphone-line"></i>
+
+    <h2>
+      Mobile Portrait Mode Only
+    </h2>
+
+    <p>
+      Please open this app on a mobile device
+      in portrait mode.
+    </p>
+
+  </div>
+
+</div> -->
+
+<!-- CONFIRM OVERLAY -->
+
+<div
+  class="confirm-overlay"
+  *ngIf="common.showConfirm">
+
+  <!-- BOX -->
+
+  <div class="confirm-box">
+
+    <!-- ICON -->
+
+    <div class="confirm-icon">
+      ?
+    </div>
+
+    <!-- TITLE -->
+
+    
+    <!-- MESSAGE -->
+
+    <div class="confirm-title">
+      {{ common.confrimquestin }}
+    </div>
+
+    <!-- ACTIONS -->
+
+    <div class="confirm-actions">
+ <button
+        class="yes-btn"
+        (click)="common.confrimok()">
+
+        Confirm
+
+      </button>
+      <button
+        class="cancel-btn"
+        (click)="common.confirmcalcel()">
+
+        Cancel
+
+      </button>
+
+     
+
+    </div>
+
+  </div>
+
+</div>
+

@@ -1,0 +1,191 @@
+/* =========================
+PREMIUM BOTTOM NAVBAR
+========================= */
+
+.app-footer{
+  position:fixed;
+
+  left:10px;
+  right:10px;
+  bottom:8px;
+
+  height:58px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+
+  background:#ffffff;
+
+  border-radius:18px;
+
+  border:1px solid #f1f1f1;
+
+  box-shadow:
+    0 4px 18px rgba(0,0,0,0.08);
+
+  z-index:1000;
+
+  overflow:visible;
+
+  transition:
+    transform .3s ease,
+    opacity .3s ease;
+}
+
+/* HIDE */
+.app-footer.hide{
+  transform:translateY(100px);
+  opacity:0;
+}
+
+/* =========================
+ACTIVE BACKGROUND
+========================= */
+/* 
+.active-indicator{
+  position:absolute;
+
+  bottom:5px;
+  left:0;
+
+  width:20%;
+  height:48px;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(135deg,#f7c948,#facc15);
+
+  opacity:.14;
+
+  transition:transform .35s cubic-bezier(.22,1,.36,1);
+} */
+
+/* =========================
+ITEM
+========================= */
+
+.nav-item{
+  position:relative;
+
+  flex:1;
+
+  height:100%;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+ 
+
+  cursor:pointer;
+
+  z-index:2;
+
+  color:#8b8b8b;
+
+  transition:.25s ease;
+}
+
+/* ICON */
+.nav-item i{
+  width:30px;
+  height:30px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:10px;
+
+  font-size:19px;
+
+  transition:all .25s ease;
+}
+
+/* LABEL */
+.nav-item p{
+  margin:0;
+
+  font-size:10px;
+  font-weight:600;
+
+  transition:.25s ease;
+}
+
+/* =========================
+ACTIVE
+========================= */
+
+.nav-item.active{
+  color:#d4a106;    top: 3px;
+}
+
+.nav-item.active i{
+  background:
+    linear-gradient(135deg,#f7c948,#facc15);
+
+  color:#fff;
+
+  transform:
+    translateY(-6px)
+    scale(1.05);
+
+  box-shadow:
+    0 6px 14px rgba(247,201,72,0.32);
+}
+
+.nav-item.active p{
+  font-weight:500;
+}
+
+/* =========================
+PRESS EFFECT
+========================= */
+
+.nav-item:active{
+  transform:scale(.95);
+}
+
+/* =========================
+SCROLL TOP
+========================= */
+
+.scroll-top{
+  position:fixed;
+
+  right:14px;
+  bottom:78px;
+
+  width:46px;
+  height:46px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(135deg,#f7c948,#facc15);
+
+  color:#fff;
+
+  font-size:20px;
+
+  box-shadow:
+    0 6px 16px rgba(247,201,72,0.28);
+
+  cursor:pointer;
+
+  z-index:1000;
+
+  transition:.25s ease;
+}
+
+.scroll-top:hover{
+  transform:
+    translateY(-3px)
+    scale(1.05);
+}

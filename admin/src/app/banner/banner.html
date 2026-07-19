@@ -1,0 +1,130 @@
+<div class="container">
+ <div class="page-loader" *ngIf="isLoading">
+    <div class="loader"></div>
+  </div>
+
+    <div class="form-card">
+
+
+        <h2>Add Banner</h2>
+
+
+        <label class="upload-box"  *ngIf="!preview">
+
+
+            <input type="file" accept="image/*" (change)="selectImage($event)" hidden>
+
+
+            <div class="upload-content">
+
+
+
+                <h3>
+                    Upload Image
+                </h3>
+
+                <p>
+                    270 × 133 px | Max 1MB
+                </p>
+
+            </div>
+
+
+        </label>
+
+
+
+
+
+        <div class="preview-box" *ngIf="preview">
+
+            <img [src]="preview" class="preview">
+
+
+            <button type="button" class="remove-btn" (click)="removeImage()">
+
+                ✕
+
+
+            </button>
+
+
+        </div>
+
+
+        <div class="field">
+
+            <label>
+                Redirect URL
+            </label>
+
+
+            <input type="text" placeholder="https://example.com" [(ngModel)]="url">
+            <small>For url - go to any page of Fastbite website <a href="https://mobileapp.fastbite.food/">https://mobileapp.fastbite.food/</a>, copy  url  of that page. Paste that
+                here.</small>
+        </div>
+
+
+
+
+
+        <button class="save-btn" (click)="save()">
+
+            Save Banner
+
+        </button>
+
+
+    </div>
+
+
+
+
+
+
+
+    <div class="list-card" *ngIf="list.length">
+
+
+        <h2>
+            Banner List
+        </h2>
+
+
+
+        <div class="banner-grid">
+
+
+            <div class="banner-item" *ngFor="let item of list">
+
+
+                <img [src]="item.image">
+
+
+
+                <div class="url">
+
+                    {{item.url}}
+
+                </div>
+
+
+
+                <button class="delete-btn" (click)="delete(item._id)">
+
+                    Delete
+
+                </button>
+
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>

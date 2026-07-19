@@ -1,0 +1,534 @@
+<div class="top-header">
+
+    <button class="back-btn" (click)="closePage()">
+
+        <i class="ri-arrow-left-line"></i>
+
+    </button>
+
+    <div class="title" *ngIf="!showAddForm">
+        Select Address
+    </div>
+    <div class="title" *ngIf="showAddForm">
+        {{isEditAddress ? 'Update' : 'Add'}} Address
+    </div>
+</div>
+<div class="page-loader" *ngIf="loading">
+
+    <div class="loader"></div>
+
+</div>
+<div class="address-page">
+
+    <!-- ADD ADDRESS BUTTON -->
+
+    <button *ngIf="!showAddForm" class="add-address-btn" (click)="showAddForm=true;resetform()">
+
+        <i class="ri-add-line"></i>
+
+        Add Address
+
+    </button>
+
+    <!-- ADDRESS LIST -->
+
+    <!-- ADDRESS LIST -->
+
+    <div *ngIf="!showAddForm">
+
+        <!-- LOADER -->
+
+
+
+        <!-- EMPTY -->
+
+        <div class="empty-address" *ngIf="!loading && addresses.length == 0">
+
+            <i class="ri-map-pin-user-line"></i>
+
+            <div class="empty-title">
+
+                No Address Added Till Now
+
+            </div>
+
+            <div class="empty-subtitle">
+
+                Please add your delivery address
+
+            </div>
+
+        </div>
+
+        <!-- ADDRESS LIST -->
+
+        <div *ngIf="!loading && addresses.length">
+
+            <!-- ADDRESS CARD -->
+
+            <div class="address-card" *ngFor="let item of addresses; let i = index"
+                [class.active]="selectedAddress?.index == i" (click)="selectAddress(item,i)">
+
+                <!-- TOP -->
+
+                <!-- <div class="card-top">
+
+                    <div class="radio">
+
+                        <div class="dot" *ngIf="selectedAddress?.index == i">
+                        </div>
+
+                    </div>
+
+
+
+                </div> -->
+
+                <!-- DATA -->
+
+                <div class="address-data">
+                    <i class="ri-home-5-line" *ngIf="item.label=='home'"></i>
+                    <i class="ri-briefcase-4-line" *ngIf="item.label=='office'"></i>
+                    <i class="ri-map-pin-house-line" *ngIf="item.label=='other'"></i>
+                    <div class="name">
+
+                        {{item.contactName}}
+
+                        <span class="label-chip">
+                            {{item.label}}
+                        </span>
+
+                    </div>
+
+                    <div class="mobile">
+
+                        <i class="ri-phone-line"></i>
+
+                        {{item.contactMobile}}
+
+                    </div>
+
+                    <div class="full-address">
+
+                        {{item.fullAddress}}, <br />{{item.cityName}}, {{item.state}} - {{item.pincode}}
+
+                        <br />
+
+
+                        Landmark : {{item.landmark}}
+
+                    </div>
+
+                    <div class="card-actions">
+
+                        <!-- EDIT -->
+                        <button class="edit-btn" (click)=" $event.stopPropagation()">
+
+
+                            <a href="https://www.google.com/maps/search/?api=1&query={{item.latitude}},{{item.longitude}}"
+                                target="_blank" style="text-decoration: none;
+    color: #2563eb;">
+                                <i class="ri-map-pin-2-line" style="color
+                                
+                                :red"></i>
+                            </a>
+                        </button>
+                        <button class="edit-btn" (click)="editAddress(item,i); $event.stopPropagation()">
+
+                            <i class="ri-pencil-line"></i>
+
+                        </button>
+
+                        <!-- DELETE -->
+
+                        <button class="delete-btn" (click)="deleteAddress(item,i); $event.stopPropagation()">
+
+                            <i class="ri-delete-bin-6-line"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+
+        <div class="footer" *ngIf="addresses.length">
+
+            <button class="next-btn" [disabled]="!selectedAddress" (click)="nextme()">
+                <span *ngIf="comingfromwhichpage=='accounts'">
+                    Continue to Accounts <i class="ri-arrow-right-line"></i>
+                </span><span *ngIf="comingfromwhichpage=== 'cart'">
+                    Next <i class="ri-arrow-right-line"></i>
+                </span>
+                <span *ngIf="comingfromwhichpage=== 'popup'">
+                  Save & Close <i class="ri-check-line"></i>
+                </span>
+ <span *ngIf="comingfromwhichpage=== 'nowhere'">
+                  Save & Close <i class="ri-check-line"></i>
+                </span>
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- ADDRESS FORM -->
+
+    <form *ngIf="showAddForm" [formGroup]="addressForm">
+
+        <!-- CONTACT NAME -->
+        <!-- ADDRESS TYPE -->
+
+        <div class="form-group">
+
+            <label>
+                Address Type
+            </label>
+
+            <div class="address-type-wrap">
+
+                <!-- HOME -->
+
+                <div class="type-card" [class.active]="addressForm.value.label == 'home'"
+                    (click)="addressForm.patchValue({label:'home'})">
+
+                    <i class="ri-home-5-line"></i>
+
+                    <span>
+                        Home
+                    </span>
+
+                </div>
+
+                <!-- OFFICE -->
+
+                <div class="type-card" [class.active]="addressForm.value.label == 'office'"
+                    (click)="addressForm.patchValue({label:'office'})">
+
+                    <i class="ri-briefcase-4-line"></i>
+
+                    <span>
+                        Office
+                    </span>
+
+                </div>
+
+                <!-- OTHER -->
+
+                <div class="type-card" [class.active]="addressForm.value.label == 'other'"
+                    (click)="addressForm.patchValue({label:'other'})">
+
+                    <i class="ri-map-pin-house-line"></i>
+
+                    <span>
+                        Other
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+        <div class="form-group">
+
+            <label>
+                Contact Name
+            </label>
+
+            <input type="text" formControlName="contactName">
+
+            <div class="error"
+                *ngIf="addressForm.controls.contactName.touched && addressForm.controls.contactName.invalid">
+
+                Contact name is required
+
+            </div>
+
+        </div>
+
+        <!-- MOBILE -->
+
+        <div class="form-group">
+
+            <label>
+                Mobile Number
+            </label>
+
+            <input type="text" formControlName="contactMobile">
+
+            <div class="error"
+                *ngIf="addressForm.controls.contactMobile.touched && addressForm.controls.contactMobile.errors?.['required']">
+
+                Mobile number is required
+
+            </div>
+
+            <div class="error"
+                *ngIf="addressForm.controls.contactMobile.touched && addressForm.controls.contactMobile.errors?.['pattern']">
+
+                Enter valid 10 digit mobile number
+
+            </div>
+
+        </div>
+
+        <!-- FULL ADDRESS -->
+
+        <div class="form-group">
+
+            <label>
+                Full Address
+            </label>
+
+            <textarea formControlName="fullAddress">
+            </textarea>
+
+            <div class="error"
+                *ngIf="addressForm.controls.fullAddress.touched && addressForm.controls.fullAddress.invalid">
+
+                Full address is required
+
+            </div>
+
+        </div>
+
+        <!-- MAP BUTTON -->
+
+        <button type="button" class="map-btn" (click)="openMapPopup()">
+
+            <i class="ri-map-pin-line"></i>
+
+            Select Location On Map
+
+        </button>
+
+        <!-- MAP ADDRESS -->
+
+        <div class="form-group">
+
+            <label>
+                Map Address
+            </label>
+
+            <input (click)="openMapPopup()" type="text" readonly class="readonly-input" formControlName="mapAddress">
+
+            <div class="error"
+                *ngIf="addressForm.controls.mapAddress.touched && addressForm.controls.mapAddress.invalid">
+
+                Map location is required
+
+            </div>
+
+        </div>
+
+        <!-- CITY -->
+
+        <div class="form-group">
+
+            <label>
+                City
+            </label>
+
+            <select formControlName="city">
+
+                <option value="">
+                    Select City
+                </option>
+
+                <option *ngFor="let c of cities" [value]="c._id">
+
+                    {{c.cityName}}
+
+                </option>
+
+            </select>
+
+            <div class="error" *ngIf="addressForm.controls.city.touched && addressForm.controls.city.invalid">
+
+                City is required
+
+            </div>
+
+        </div>
+
+        <!-- STATE -->
+
+        <div class="form-group">
+
+            <label>
+                State
+            </label>
+
+            <select formControlName="state">
+
+                <option *ngFor="let s of states" [value]="s">
+
+                    {{s}}
+
+                </option>
+
+            </select>
+
+            <div class="error" *ngIf="addressForm.controls.state.touched && addressForm.controls.state.invalid">
+
+                State is required
+
+            </div>
+
+        </div>
+
+        <!-- PINCODE -->
+
+        <div class="form-group">
+
+            <label>
+                Pincode
+            </label>
+
+            <input type="text" formControlName="pincode">
+
+            <div class="error"
+                *ngIf="addressForm.controls.pincode.touched && addressForm.controls.pincode.errors?.['required']">
+
+                Pincode is required
+
+            </div>
+
+            <div class="error"
+                *ngIf="addressForm.controls.pincode.touched && addressForm.controls.pincode.errors?.['pattern']">
+
+                Enter valid 6 digit pincode
+
+            </div>
+
+        </div>
+
+        <!-- LANDMARK -->
+
+        <div class="form-group">
+
+            <label>
+                Landmark
+            </label>
+
+            <input type="text" formControlName="landmark">
+
+            <div class="error" *ngIf="addressForm.controls.landmark.touched && addressForm.controls.landmark.invalid">
+
+                Landmark is required
+
+            </div>
+
+        </div>
+
+        <!-- LABEL -->
+
+
+
+        <!-- BUTTONS -->
+
+        <div class="btn-row">
+            <!-- SAVE BUTTON TEXT -->
+
+            <button type="button" class="save-btn" (click)="saveAddress()">
+
+                {{isEditAddress ? 'Update' : 'Save'}}
+
+            </button>
+
+
+            <button type="button" class="cancel-btn" (click)="showAddForm=false;resetform()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- MAP POPUP -->
+
+<div class="map-popup" *ngIf="showMap">
+
+    <div class="map-box">
+
+        <!-- TOP -->
+
+        <div class="map-top">
+
+            <button type="button" (click)="useCurrentLocation()">
+
+                <i class="ri-navigation-line"></i>
+
+                Use My Current Location
+
+            </button>
+
+        </div>
+
+        <!-- SEARCH -->
+
+        <div class="map-search-wrap">
+
+            <div class="search-input-box">
+
+                <input type="text" placeholder="Search address" [(ngModel)]="searchQueryInput"
+                    (keyup)="onSearchChange($event)">
+
+                <!-- CLEAR -->
+
+                <button *ngIf="searchQueryInput" type="button" class="clear-search-btn" (click)="clearSearch()">
+
+                    <i class="ri-close-line"></i>
+
+                </button>
+
+            </div>
+
+            <!-- DROPDOWN -->
+
+            <div class="search-dropdown" *ngIf="searchResults.length">
+
+                <div class="search-item" *ngFor="let item of searchResults" (click)="selectLocation(item)">
+
+                    {{item.display_name}}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MAP -->
+
+        <div id="map"></div>
+
+        <!-- MAP FOOTER -->
+
+        <div class="map-footer">
+
+            <button type="button" class="map-next-btn" [disabled]="!locationSelected" (click)="confirmLocation()">
+
+                Next
+
+            </button>
+
+            <button type="button" class="map-close-btn" (click)="closePopup()">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>

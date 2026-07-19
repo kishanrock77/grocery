@@ -1,0 +1,311 @@
+.container {
+  padding: 20px;
+  background: #f4f6f9;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.add-btn {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background: #0056b3;
+}
+
+/* Filters */
+.filter-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.button-group {
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.search-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-btn:hover {
+  background: #218838;
+}
+
+/* Cards */
+.card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.sub-name {
+  color: #777;
+  font-size: 14px;
+}
+
+/* Actions */
+.actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.edit-btn {
+  background: #ffc107;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
+/* Status */
+.active {
+  color: green;
+  font-weight: bold;
+}
+
+/* Loader */
+.loader {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+}
+
+/* Empty State */
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-card {
+    flex-direction: column;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+
+/* Variant Card */
+.variant-card {
+  border: 2px dashed #007bff;
+  background: #f0f7ff;
+  position: relative;
+}
+
+/* Variant Badge */
+.variant-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #007bff;
+  color: #fff;
+  padding: 3px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Card Styling */
+.card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Buttons */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.edit-btn {
+  background: #ffc107;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.item-list-container {
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.item-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease-in-out;
+}
+
+.item-card:hover {
+  transform: translateY(-3px);
+}
+
+.item-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+}
+
+.item-status {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.active {
+  color: #000;
+  font-weight: bold;
+}
+
+.inactive {
+  color: #777;
+  font-weight: bold;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* Black Button */
+.show-btn {
+  background-color: #000;
+  color: #fff;
+}
+
+.show-btn:hover {
+  background-color: #333;
+}
+
+/* White Button */
+.hide-btn {
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #000;
+}
+
+.hide-btn:hover {
+  background-color: #000;
+  color: #fff;
+}

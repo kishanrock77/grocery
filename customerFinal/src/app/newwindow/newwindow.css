@@ -1,0 +1,58 @@
+/* 🔥 MAIN WRAPPER */
+.popup-wrapper {
+
+  position: fixed;
+  inset: 0;
+
+  z-index: 9999;
+
+  background: #fff;
+
+  overflow: hidden;
+}
+.popup-page{
+  opacity: 0;
+  pointer-events: none;
+}
+
+.popup-page.active{
+  opacity: 1;
+  pointer-events: auto;
+}
+.popup-page{
+  touch-action: pan-y;
+}
+/* 🔥 EACH PAGE */
+.popup-page {
+
+  position: absolute;
+  inset: 0;
+
+  background: #fff;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: touch;
+
+  animation: popupSlide .22s ease;
+}
+
+/* 🔥 ANIMATION */
+@keyframes popupSlide {
+
+  from {
+
+    transform: translateX(100%);
+    opacity: .98;
+
+  }
+
+  to {
+
+    transform: translateX(0);
+    opacity: 1;
+
+  }
+
+}

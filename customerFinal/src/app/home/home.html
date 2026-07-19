@@ -1,0 +1,561 @@
+<!-- ===================================================== -->
+<!-- HEADER -->
+<!-- ===================================================== -->
+<span *ngIf="showappupdatemessage">
+
+  <div class="app-update-box">
+
+    <div class="update-icon">
+      <i class="ri-refresh-line"></i>
+    </div>
+
+    <h3>New Update Available</h3>
+
+    <p>
+      Better performance, bug fixes and new features are available.
+      Please update the app to continue enjoying the best experience.
+    </p>
+
+    <div class="update-buttons">
+
+      <a href="https://play.google.com/store/apps/details?id=YOUR_APP_ID" target="_blank" class="playstore-btn">
+        <i class="ri-google-play-fill"></i>
+        Update on Play Store
+      </a>
+
+      <button class="ios-btn" (click)="common.alertmessage('iPhone app coming soon','info','info')">
+        <i class="ri-apple-fill"></i>
+        App Store
+      </button>
+
+    </div>
+
+  </div>
+
+</span>
+<span *ngIf="showappupdatemessage==false">
+
+  <div class="header">
+
+    <!-- TOP -->
+
+    <div class="top">
+
+      <!-- LOCATION -->
+
+      <app-areaforheader [comingfrom]="'home'" [selectedAreaname]="selectedArea?.areaName"></app-areaforheader>
+
+      <!-- RIGHT -->
+
+      <div class="header-right">
+
+        <!-- PROFILE -->
+
+
+        <div class="header-cart-btn" (click)="goToCart()">
+
+          <!-- ICON -->
+
+          <i class="ri-shopping-cart-line"></i>
+
+          <!-- COUNT -->
+
+          <span class="cart-count" *ngIf="this.common.countofcartitems > 0">
+
+            {{ this.common.countofcartitems }}
+
+          </span>
+
+        </div>
+        <div class="header-btn" (click)="goToAccount()">
+
+          <i class="ri-user-3-line"></i>
+
+        </div>
+        <!-- LOGOUT -->
+
+        <!-- <div class="header-btn" (click)="logout()">
+
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+
+          <path d="M16 17L21 12L16 7" stroke="#333" stroke-width="2" />
+
+          <path d="M21 12H9" stroke="#333" stroke-width="2" />
+
+          <path d="M13 21H5C4 21 3 20 3 19V5C3 4 4 3 5 3H13" stroke="#333" stroke-width="2" />
+
+        </svg>
+
+      </div> -->
+
+      </div>
+
+    </div>
+
+    <!-- BOY -->
+
+    <div class="header-boy">
+
+      <img src="boy.gif">
+
+    </div>
+
+    <!-- WELCOME -->
+
+    <div class="welcome">
+
+      <div class="welcome-small">
+
+        Welcome
+
+      </div>
+
+      <div class="welcome-name">
+
+        {{username || 'Guest'}}
+
+      </div>
+
+    </div>
+    <div class="offers-wrapper">
+
+      <!-- TOP TAG -->
+
+      <div class="offers-tag">
+
+        ✦ OFFERS FOR YOU ✦
+        <small style="font-size:5px" *ngIf="upadtingtoken">Updating token</small>
+      </div>
+
+      <!-- MAIN BOX -->
+
+      <div class="offers-section">
+
+        <div class="offers-scroll">
+
+          <!-- CARD 1 -->
+
+          <div class="offer-card">
+
+            <div class="offer-icon">
+
+              %
+
+            </div>
+
+            <div class="offer-content">
+
+              <div class="offer-title">
+
+                Get FLAT ₹20 OFF
+
+              </div>
+
+              <div class="offer-subtitle">
+
+                On your first order above ₹199
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- CARD 2 -->
+
+          <div class="offer-card">
+
+            <div class="offer-icon">
+
+              <i class="ri-truck-line"></i>
+
+            </div>
+
+            <div class="offer-content">
+
+              <div class="offer-title">
+
+                Enjoy FREE delivery
+
+              </div>
+
+              <div class="offer-subtitle">
+
+                On your first 10 orders
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+  <!-- ===================================================== -->
+  <!-- OFFERS SECTION -->
+  <!-- ===================================================== -->
+
+
+  <!-- ===================================================== -->
+  <!-- STICKY SEARCH + CATEGORY -->
+  <!-- ===================================================== -->
+
+
+
+  <!-- ===================================================== -->
+  <!-- HOME -->
+  <!-- ===================================================== -->
+
+  <div class="home">
+    <div class="slider" *ngIf="listbanner.length>0">
+
+      <img [src]="listbanner[current].image" class="banner" (click)="bannerurl(listbanner[current].url)">
+
+
+      <div class="dots">
+
+        <span *ngFor="let item of listbanner; let i=index" [class.active]="i==current" (click)="go(i)">
+        </span>
+
+      </div>
+
+
+    </div>
+    <div id="stickySentinel"></div>
+    <div class="sticky-search-wrapper" #stickyWrapper>
+
+      <!-- SEARCH -->
+      <br />
+      <div class="search" (click)="goToSearch()">
+
+        <i class="ri-search-line"></i>
+
+        <input placeholder="Search for atta, milk, fruits..." readonly />
+        <i class="ri-mic-line"></i>
+
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- LEVEL 1 SHIMMER -->
+      <!-- ===================================================== -->
+
+      <div class="level1" *ngIf="loadingCategories">
+
+        <div class="shimmer-cat" *ngFor="let i of [1,2,3,4,5,6]">
+
+        </div>
+
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- LEVEL 1 CATEGORY -->
+      <!-- ===================================================== -->
+
+      <div class="home-level1-scroll" *ngIf="!loadingCategories">
+
+        <!-- ALL -->
+
+        <div class="home-level1-chip" *ngIf="level1.length > 0" [class.active]="!selectedLevel1" (click)="selectAll()">
+
+          <img src="allcat.png">
+
+          <p>
+
+            All
+
+          </p>
+
+        </div>
+
+        <!-- LEVEL1 -->
+
+        <div class="home-level1-chip" *ngFor="let c of level1; trackBy: trackById"
+          [class.active]="selectedLevel1?._id === c._id" (click)="selectLevel1(c)">
+
+          <img [src]="
+          c.imagepath ||
+          'placeholder.png'
+        ">
+
+          <p>
+
+            {{ c.categoryName }}
+
+          </p>
+
+        </div>
+
+      </div>
+
+    </div>
+    <!-- ===================================================== -->
+    <!-- CATEGORY CONTENT -->
+    <!-- ===================================================== -->
+
+    <div class="content" #contentStart>
+
+      <!-- ================================================= -->
+      <!-- ALL MODE -->
+      <!-- ================================================= -->
+
+      <ng-container *ngIf="!selectedLevel1">
+
+        <div *ngFor="let l1 of getLevel1(); trackBy: trackById">
+
+          <!-- TITLE -->
+
+          <div class="section-title">
+
+            {{ l1.categoryName }}
+
+          </div>
+
+          <!-- LEVEL2 SHIMMER -->
+
+          <div class="level2-scroll" *ngIf="loadingCategories">
+
+            <div class="shimmer-card" *ngFor="let i of [1,2,3,4,5,6]">
+
+            </div>
+
+          </div>
+
+          <!-- LEVEL2 LIST -->
+
+          <div class="level2-scroll" *ngIf="!loadingCategories">
+
+            <div class="cat2" *ngFor="let l2 of getLevel2(l1._id)" (click)="goToProducts('l2_', l2)">
+
+              <img [src]="
+                l2.imagepath ||
+                'placeholder.png'
+              ">
+
+              <p>
+
+                {{ l2.categoryName }}
+
+              </p>
+
+            </div>
+
+          </div>
+
+          <!-- SEE ALL -->
+
+          <div class="see-all-bar" (click)="goToProducts('l1_', l1)">
+
+            See all products →
+
+          </div>
+
+        </div>
+
+      </ng-container>
+
+      <!-- ================================================= -->
+      <!-- FILTERED MODE -->
+      <!-- ================================================= -->
+
+      <ng-container *ngIf="selectedLevel1">
+
+        <!-- TITLE -->
+
+        <div class="section-title">
+
+          {{ selectedLevel1.categoryName }}
+
+        </div>
+
+        <!-- LEVEL2 -->
+
+        <div class="level2-scroll">
+
+          <div class="cat2" *ngFor="let l2 of getLevel2(selectedLevel1._id)" (click)="goToProducts('l2_', l2)">
+
+            <img [src]="
+              l2.imagepath ||
+              'placeholder.png'
+            ">
+
+            <p>
+
+              {{ l2.categoryName }}
+
+            </p>
+
+          </div>
+
+        </div>
+
+        <!-- SEE ALL -->
+
+        <div class="see-all-bar" (click)="goToProducts('l1_', selectedLevel1)">
+
+          See all products →
+
+        </div>
+
+      </ng-container>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STORES -->
+    <!-- ===================================================== -->
+
+    <div class="content">
+
+      <!-- TITLE -->
+
+      <div class="section-title">
+
+        Shop by Store
+
+      </div>
+
+      <!-- STORES SHIMMER -->
+
+      <div class="store-scroll" *ngIf="loadingStores">
+
+        <div class="store-card shimmer-card" *ngFor="let i of [1,2,3,4]">
+
+        </div>
+
+      </div>
+
+      <!-- STORES LIST -->
+
+      <div class="store-scroll" *ngIf="!loadingStores">
+
+        <div class="store-card" *ngFor="let s of stores; trackBy: trackById">
+
+          <span (click)="openStore(s._id)">
+
+            <img [src]="
+              s.images?.[0] ||
+              'placeholder.png'
+            ">
+
+            <div class="info">
+
+              <p class="name">
+
+                {{ s.storeName }}
+
+              </p>
+
+              <span class="type">
+
+                {{ s.storeType }}
+
+              </span>
+
+            </div>
+
+          </span>
+
+        </div>
+
+      </div>
+
+      <!-- SEE ALL STORE -->
+
+      <div class="see-all-bar" *ngIf="!loadingStores" (click)="gotostores()">
+
+        See all stores →
+
+      </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ITEMS -->
+    <!-- ===================================================== -->
+
+    <div class="home-items">
+
+      <ng-container *ngFor="let l1 of getLevel1(); trackBy: trackById">
+
+        <ng-container *ngIf="
+          !selectedLevel1 ||
+          selectedLevel1._id === l1._id
+        ">
+
+          <div class="level1-section">
+
+            <!-- HEADER -->
+
+            <div class="section-header">
+
+              <h2>
+
+                {{ l1.categoryName }}
+
+              </h2>
+
+              <span class="see-all" (click)="goToProducts('l1_', l1)">
+
+                See all →
+
+              </span>
+
+            </div>
+
+            <!-- ITEM SHIMMER -->
+
+            <div class="items-grid" *ngIf="loadingItems[l1._id]">
+
+              <div class="shimmer-card" *ngFor="let i of [1,2,3,4]" style="height:220px;">
+
+              </div>
+
+            </div>
+
+            <!-- ITEMS -->
+
+            <div class="items-grid" *ngIf="!loadingItems[l1._id]">
+
+              <app-item-card *ngFor="let item of getItems(l1._id)" [item]="item">
+
+              </app-item-card>
+
+            </div>
+
+            <!-- EMPTY -->
+
+            <div class="empty-items" *ngIf="
+              !loadingItems[l1._id] &&
+              getItems(l1._id).length === 0
+            ">
+
+              No items found
+
+            </div>
+
+            <!-- SEE ALL -->
+
+            <div class="see-all-bar" *ngIf="!loadingItems[l1._id]" (click)="goToProducts('l1_', l1)">
+
+              See all products →
+
+            </div>
+
+          </div>
+
+        </ng-container>
+
+      </ng-container>
+
+    </div>
+
+  </div>
+
+  <app-footer></app-footer>
+  <!-- use in pages -->
+  <app-address-reminder-popup></app-address-reminder-popup>
+</span>

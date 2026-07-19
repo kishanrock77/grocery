@@ -1,0 +1,582 @@
+<div class="item-card" *ngIf="!cartview">
+
+    <!-- veg / non-veg -->
+    <div class="type" *ngIf="item.vegtype!='na'" [ngClass]="item.vegtype">
+        <span></span>
+    </div>
+
+    <!-- ❤️ Wishlist -->
+    <!-- <div class="wishlist">
+        <i class="ri-heart-line" ></i>
+    </div> -->
+    <!-- ❤️ BIG POP HEART -->
+    <div class="big-heart" *ngIf="animateHeart">
+        <i class="ri-heart-fill"></i>
+    </div>
+
+    <!-- SMALL ICON -->
+    <div class="wishlist-icon" (click)="toggleWishlist($event)">
+
+        <i class="ri-heart-fill" [class.active]="isWishlisted(item._id)">
+        </i>
+
+    </div>
+    <!-- 🖼 Image -->
+    <div class="img-box" (touchstart)="onTouchStart($event)" (click)="openitemdetails()"
+        (touchmove)="onTouchMove($event)" (touchend)="onTouchEnd()">
+
+        <div class="slider" [style.transform]="'translateX(-' + currentImageIndex * 100 + '%)'">
+
+            <img *ngFor="let img of item.images" [src]="img" (error)="onImgError($event)" />
+
+        </div>
+
+        <!-- dots -->
+        <div class="dots" *ngIf="item.images?.length > 1">
+            <span *ngFor="let img of item.images; let i = index" [class.active]="i === currentImageIndex"
+                (click)="goTo(i)">
+            </span>
+        </div>
+
+    </div>
+    <!-- ⭐ rating -->
+    <div class="rating" (click)="openitemdetails()">
+        <ng-container *ngFor="let s of stars">
+            <i class="ri-star-fill star"></i>
+        </ng-container>
+        <span>({{ ratingCount }})</span>
+    </div>
+
+    <!-- 💰 -->
+    <p class="price" (click)="openitemdetails()">{{ priceRange }} 
+        <br/><span *ngIf=" item.size &&  item.unit" style="font-size: 12px;
+    font-weight: 400;">
+            ({{ item.size }} {{ item.unit }})
+        </span>
+    </p>
+    <!-- 🏷 -->
+    <p class="name" (click)="openitemdetails()">{{ item.itemName }}
+
+
+
+    </p>
+
+    <!-- variant info -->
+    <p class="variantmain" *ngIf="item.variantItems?.length > 0" (click)="openVariantPopup()">
+        Check {{ item.variantItems.length }} variants
+    </p>
+    <p class="variantmain" *ngIf="item.itemQuestions?.length > 0 && item.itemQuestions[0].options.length > 0"
+        (click)="openoptionPopup()">
+        Check {{ item.itemQuestions[0].options.length }} options
+    </p>
+    <p class="variantmain" *ngIf="item.addons?.length > 0" (click)="openAddonPopup()">
+        Check {{ item.addons.length }} Addons
+    </p>
+    <!-- 🔥 ADD BUTTON -->
+    <button *ngIf="!showQty" class="cart-btn" (click)=" $event.stopPropagation();addFirst()"
+        [disabled]="storestatus=='Closed'">
+        <i *ngIf="storestatus=='open'" class="ri-shopping-cart-line"></i>
+
+        {{storestatus=='Closed' ? 'Store closed':'Add'}}
+    </button>
+    <!-- STORE NAME -->
+
+
+    <!-- 🔢 QTY CONTROLS -->
+    <div class="qty-box" (click)=" $event.stopPropagation();" [style.opacity]="storestatus=='Closed' ? '0.6' : '1'"
+        *ngIf="showQty">
+        <button (click)="decrease()" [disabled]="storestatus=='Closed'"
+            [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+        <span>{{ quantity }}</span>
+        <button (click)="increase()" [disabled]="storestatus=='Closed'"
+            [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+
+    </div>
+
+    <div class="store-mini" *ngIf="item?.storedetails?.storeName" (click)="openStore()">
+
+        <i class="ri-store-2-fill"></i>
+
+        <span>
+            {{ item.storedetails.storeName }}
+        </span>
+
+    </div><small class="distanceminutes" (click)="openStore()" *ngIf="item.distanceData &&  selectedAddress">
+        <i class="ri-time-fill"></i>&nbsp;
+        <!-- {{item.distanceData.distanceinkm}}
+            KM - -->
+        {{item.distanceData.minuteorhr}}
+
+    </small>
+    <div class="storeclosedred" (click)="openStore()" *ngIf="storestatus=='Closed' && showQty">&nbsp;&nbsp;&nbsp;
+
+        Store closed
+    </div>
+    <div *ngIf="!(storestatus=='Closed' && showQty)">&nbsp;&nbsp;&nbsp;
+
+
+    </div>
+</div>
+
+<div *ngIf="cartview  && ( quantity>0 || fororderdetail)">
+    <!-- <div class="store-mini-cartview" (click)="openStore()" *ngIf="
+        item?.storedetails?.storeName
+        || item?.storeId?.storeName
+     ">
+
+        <i class="ri-store-2-fill"></i>
+
+        <span>
+            {{
+            item?.storedetails?.storeName
+            ||
+            item?.storeId?.storeName
+            }}
+        </span>
+
+    </div> -->
+    <div class="row">
+
+        <small class="distanceminutes" *ngIf="item.distanceData &&  selectedAddress">
+            <i class="ri-time-fill"></i>&nbsp;
+            <!-- {{item.distanceData.distanceinkm}}
+            KM - -->
+            {{item.distanceData.minuteorhr}}
+
+            <span *ngIf="fororderdetail==true">
+                &nbsp;after packeging
+            </span>
+        </small>
+
+
+    </div>
+
+    <div class="item-card_cartview">
+
+        <!-- LEFT IMAGE -->
+
+
+        <div class="image-section_cartview" (click)="openitemdetails()">
+            <span class="type2" *ngIf="item.vegtype!='na'" [ngClass]="item.vegtype">
+                <span></span>
+            </span>
+            <img [src]="item.images?.[0]" (error)="onImgError($event)" />
+
+        </div>
+
+        <!-- RIGHT CONTENT -->
+
+        <div class="content-section_cartview">
+
+            <!-- name -->
+
+            <div class="name_cartview">
+
+
+                {{ item.itemName }}
+            </div>
+
+
+
+            <p class="reorder" *ngIf="userType=='customer' && fororderdetail==true" (click)="openitemdetails()">
+                Re-order
+            </p>
+            <div class="move-wishlist" *ngIf="fororderdetail==false" (click)="movetowishlist.emit(item)">
+                <i class="ri-heart-line"></i>
+                Move to wishlist
+            </div>
+            <!-- if variants or options are there then we will not show price formula
+              here because it will be different  -->
+            <span *ngIf="!(item.variantItems?.length==0 && item.itemQuestions?.length==0)">
+
+
+                <p class="variantmain" *ngIf=" userType!='store' && fororderdetail==false" (click)="openVariantPopup()">
+                    Check details
+                </p>
+
+
+
+                <div class="price_cartview" *ngIf="userType!='store'">
+                    ₹{{ itemtotalforcart }}
+
+                </div>
+                <div class="price_cartview" *ngIf="userType=='store'">
+                    ₹{{ itemtotalforcartforstore }}
+                </div>
+            </span>
+
+            <span *ngIf="item.variantItems?.length==0 && item.itemQuestions?.length==0">
+
+
+                <!-- price -->
+
+                <div class="price_cartview" *ngIf="userType!='store'">
+
+                    ₹{{ item.appPrice || item.appPrice }}
+
+                    <span *ngIf="item.size && item.unit">
+
+                        ({{ item.size }} {{ item.unit }})
+
+                    </span>
+
+                </div>
+                <div class="price_cartview" *ngIf="userType=='store'">
+
+                    ₹{{ item.storePrice || item.storePrice }}
+
+                    <span *ngIf="item.size && item.unit">
+
+                        ({{ item.size }} {{ item.unit }})
+
+                    </span>
+                </div>
+
+                <!-- qty formula -->
+                <div class="formula_cartview" *ngIf="fororderdetail==true && userType!='store'">
+
+                    {{ item.quantity }}
+
+                    ×
+
+                    ₹{{ item.appPrice || item.appPrice }}
+
+                    =
+
+                    ₹{{
+                    item.quantity *
+                    (item.appPrice || item.appPrice)
+                    }}
+
+                </div>
+                <div class="formula_cartview" *ngIf="fororderdetail==true && userType=='store'">
+
+                    {{ item.quantity }}
+
+                    ×
+
+                    ₹{{ item.storePrice }}
+
+                    =
+
+                    ₹{{
+                    item.quantity *
+                    (item.storePrice )
+                    }}
+
+                </div>
+                <div class="formula_cartview" *ngIf="fororderdetail==false && userType!='store'">
+
+                    {{ quantity }}
+
+                    ×
+
+                    ₹{{ item.appPrice || item.appPrice }}
+
+                    =
+
+                    ₹{{
+                    quantity *
+                    (item.appPrice || item.appPrice)
+                    }}
+
+                </div>
+                <div class="formula_cartview" *ngIf="fororderdetail==false && userType=='store'">
+
+                    {{ quantity }}
+
+                    ×
+
+                    ₹{{ item.storePrice || item.storePrice }}
+
+                    =
+
+                    ₹{{
+                    quantity *
+                    (item.storePrice || item.storePrice)
+                    }}
+
+                </div>
+
+            </span>
+            <!-- variants -->
+
+            <div class="variant-area_cartview" style="display:none">
+
+                <span class="variant-tag_cartview" *ngIf="item.variantItems?.length > 0" (click)="openVariantPopup()">
+
+                    {{ item.variantItems.length }}
+                    variants
+
+                </span>
+
+                <span class="variant-tag_cartview"
+                    *ngIf="item.itemQuestions?.length > 0 && item.itemQuestions[0].options.length > 0"
+                    (click)="openoptionPopup()">
+
+                    options
+
+                </span>
+
+                <span class="variant-tag_cartview" *ngIf="item.addons?.length > 0" (click)="openAddonPopup()">
+
+                    addons
+
+                </span>
+
+            </div>
+
+            <span *ngIf="fororderdetail==false">
+
+
+                <span *ngIf="item.variantItems?.length==0 && item.itemQuestions?.length==0">
+                    <!-- bottom -->
+                    <br />
+                    <div class="bottom_cartview">
+
+                        <!-- move -->
+
+
+
+                        <!-- qty -->
+
+                        <div class="qty-box_cartview" *ngIf="showQty">
+
+                            <button (click)="decrease()" [disabled]="storestatus=='Closed'">
+
+                                -
+
+                            </button>
+
+                            <span>
+
+                                {{ quantity }}
+
+                            </span>
+
+                            <button (click)="increase()" [disabled]="storestatus=='Closed'">
+
+                                +
+
+                            </button>
+
+                        </div>
+                        <!-- STORE -->
+
+
+                    </div>
+                </span> </span>
+        </div>
+
+    </div>
+    <b>
+        {{ item.message_on_cake_for_customorder ? "Message on cake - "+ item.message_on_cake_for_customorder :"" }}
+
+    </b>
+</div>
+<!-- 🔥 POPUP -->
+<!-- 🔥 FULLSCREEN POPUP -->
+
+
+<div class="popup" (click)=" $event.stopPropagation();" *ngIf="showPopup">
+
+    <!-- overlay -->
+    <div class="overlay" (click)="closePopup()"></div>
+
+    <!-- wrapper -->
+    <div class="sheet-wrapper">
+
+        <div class="floating-close" (click)="closePopup()">✕</div>
+
+        <div class="sheet">
+
+            <!-- LOADING STATE -->
+            <div *ngIf="loadingVariants" class="loading">
+                <div class="spinner"></div>
+                <p>Loading options...</p>
+            </div>
+
+            <!-- ================= VARIANT FLOW ================= -->
+            <div *ngIf="popupType==='variant' && !loadingVariants">
+
+                <div *ngFor="let v of variantDetails" class="variant">
+
+                    <div class="row">
+
+                        <div class="left">
+
+                            <img [src]="v.images?.[0] || 'placeholder.png'" class="v-img" />
+
+                            <div class="v-info">
+                                <b>{{ v.itemName }}</b>
+                                <span> {{ v.itemSubName }}</span>
+                                <span *ngIf="!(v.itemQuestions.length  && v.itemQuestions[0].options.length)">₹{{
+                                    v.appPrice || v.appPrice }}</span>
+                            </div>
+
+                        </div>
+
+                        <!-- variant k bhi  options h to hum main variant ka price nahi dikayenge..na add kraynege -->
+
+                        <div class="qty" *ngIf="!(v.itemQuestions.length  && v.itemQuestions[0].options.length)">
+                            <button (click)="removeFromCart(v._id)" [disabled]="storestatus=='Closed'"
+                                [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+                            <span>{{ qtyMap[item._id + '_' + v._id + '_-1_-1'] || 0 }}</span>
+                            <button (click)="addToCart(v._id)" [disabled]="storestatus=='Closed'"
+                                [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+                        </div>
+
+                    </div>
+
+                    <!-- OPTIONS -->
+                    <div *ngIf="v.itemQuestions.length  && v.itemQuestions[0].options.length" class="sub sub2">
+                        <strong align="center"
+                            style="color:lightslategray;text-align:center">{{v.itemQuestions[0].title}}</strong>
+                        <div *ngFor="let op of v.itemQuestions[0].options; let i=index" class="row" style="    padding: 10px 0px 10px 0px;
+    border-bottom: 1px solid grey;">
+
+                            <div class="left">
+                                <div class="v-info">
+                                    <b>{{ op.label }}</b>
+                                    <span>₹{{ op.appPrice || op.appPrice }}</span>
+                                </div>
+                            </div>
+
+                            <div class="qty">
+                                <button (click)="removeFromCart(v._id,i)" [disabled]="storestatus=='Closed'"
+                                    [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+                                <span>{{ qtyMap[item._id + '_' + v._id + '_' + i + '_-1'] || 0 }}</span>
+                                <button (click)="addToCart(v._id,i)" [disabled]="storestatus=='Closed'"
+                                    [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ADDONS variants me ab addons nahi dalre -->
+                    <!-- <div *ngIf="v.addons?.length" class="sub sub2">
+
+                        <div *ngFor="let a of v.addons" class="row">
+
+                            <div class="left">
+                                <div class="v-info">
+                                    <b>{{ a.itemName }}</b>
+                                    <span>+₹{{ a.appPrice || a.appPrice }}</span>
+                                </div>
+                            </div>
+
+                            <div class="qty">
+                                <button (click)="removeFromCart(v._id,-1,a._id)" [disabled]="storestatus=='Closed'"
+                                    [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+                                <span>{{ qtyMap[item._id + '_' + v._id + '_-1_' + a._id] || 0 }}</span>
+                                <button (click)="addToCart(v._id,-1,a._id)" [disabled]="storestatus=='Closed'"
+                                    [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+                            </div>
+
+                        </div>
+
+                    </div> -->
+
+                </div>
+
+            </div>
+            <!-- MAIN ITEM DIRECT ADD -->
+            <div *ngIf="popupType=='options' || (item.itemQuestions.length>0 && variantDetails.length==0)" class="row"
+                style="padding:12px;border-bottom:1px solid #ddd;">
+
+                <div class="left">
+
+                    <img [src]="item.images?.[0] || 'placeholder.png'" class="v-img" />
+
+                    <div class="v-info">
+                        <b>{{ item.itemName }}</b>
+                        <span> {{ item.itemSubName }}</span>
+                        <!-- <span>₹{{ item.appPrice || item.appPrice }}</span> -->
+                    </div>
+
+                </div>
+                <!-- main iem ka bas naam dikhayenge  agar option h tanb bhi..
+                <div class="qty">
+
+                    <button (click)="removeFromCart(-1)" [disabled]="storestatus=='Closed'"
+                        [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">
+                        -
+                    </button>
+
+                    <span>
+                        {{ qtyMap[item._id + '_-1_-1_-1'] || 0 }}
+                    </span>
+
+                    <button (click)="addToCart(-1)" [disabled]="storestatus=='Closed'"
+                        [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">
+                        +
+                    </button>
+
+                </div> -->
+
+            </div>
+            <!-- ================= ADDON FLOW ================= -->
+
+            <div style="padding: 12px;"
+                *ngIf="(popupType=='variant' || popupType=='options' ) && item.itemQuestions.length &&  item.itemQuestions[0].options.length"
+                class="sub">
+                <strong align="center" style="color:lightslategray">{{item.itemQuestions[0].title}}</strong>
+                <div *ngFor="let op of item.itemQuestions[0].options; let i=index" class="row" style="    padding: 10px;
+    border-bottom: 1px solid grey;">
+
+                    <div class="left">
+                        <div class="v-info">
+                            <b>{{ op.label }}</b>
+                            <span>₹{{ op.appPrice || op.appPrice }}</span>
+                        </div>
+                    </div>
+
+                    <div class="qty">
+                        <button (click)="removeFromCart(-1,i)" [disabled]="storestatus=='Closed'"
+                            [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+                        <span>{{ qtyMap[item._id + '_' + -1 + '_' + i + '_-1'] || 0 }}</span>
+                        <button (click)="addToCart(-1,i)" [disabled]="storestatus=='Closed'"
+                            [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+                    </div>
+
+
+                </div>
+
+            </div>
+            <div *ngIf="(  popupType==='addon' ) && !loadingVariants">
+
+                <div *ngIf="addonsDetails?.length" class="addon-box">
+
+                    <h4 class="addon-title">Addons</h4>
+
+                    <div *ngFor="let a of addonsDetails" class="addon-row">
+
+                        <div class="addon-left">
+
+                            <img [src]="a.images?.[0] || 'placeholder.png'" />
+
+                            <div class="addon-info">
+                                <b>{{ a.itemName }}</b>
+                                <small>+₹{{ a.appPrice || a.appPrice }}</small>
+                            </div>
+
+                        </div>
+
+                        <div class="addon-right">
+
+                            <button (click)="changeAddonQty(a, -1)" [disabled]="storestatus=='Closed'"
+                                [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">-</button>
+                            <span>{{ getAddonQty(a._id) }}</span>
+                            <button (click)="changeAddonQty(a, +1)" [disabled]="storestatus=='Closed'"
+                                [style.cursor]="storestatus=='Closed' ? 'not-allowed' : 'pointer'">+</button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

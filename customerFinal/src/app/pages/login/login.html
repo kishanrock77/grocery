@@ -1,0 +1,433 @@
+<span *ngIf="showappupdatemessage">
+
+  <div class="app-update-box">
+
+    <div class="update-icon">
+      <i class="ri-refresh-line"></i>
+    </div>
+
+    <h3>New Update Available</h3>
+
+    <p>
+      Better performance, bug fixes and new features are available.
+      Please update the app to continue enjoying the best experience.
+    </p>
+
+
+    <div class="update-buttons">
+
+
+      <a href="https://play.google.com/store/apps/details?id=YOUR_APP_ID" target="_blank" class="playstore-btn">
+
+        <i class="ri-google-play-fill"></i>
+        Update on Play Store
+
+      </a>
+
+
+
+      <button class="ios-btn" (click)="common.alertmessage('iPhone app coming soon','info','info')">
+
+        <i class="ri-apple-fill"></i>
+        App Store
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+</span>
+
+
+
+
+
+<div class="page" *ngIf="!showappupdatemessage">
+
+
+
+  <!-- HERO -->
+
+  <div class="hero">
+
+
+
+
+    <img class="boy-img" src="loginbanner.jpg">
+
+
+
+  </div>
+
+
+
+
+
+
+  <!-- LOGIN CARD -->
+
+  <div class="card">
+
+
+    <br /><br />
+
+
+
+    <!-- LOGIN -->
+
+    <ng-container *ngIf="view==='login'">
+
+
+
+
+      <h2>
+        Welcome Back!
+      </h2>
+
+
+      <p class="welcome">
+        &nbsp;Login to continue your tasty journey 👋
+      </p>
+
+
+
+
+      <div class="input-group" [ngClass]="{
+'error':mobileTouched && !isValidMobile(mobile),
+'success':isValidMobile(mobile)
+}">
+
+
+        <span class="prefix">
+          +91
+        </span>
+
+
+
+        <input type="tel" maxlength="10" autocomplete="off" placeholder="Enter mobile number" [(ngModel)]="mobile"
+          (input)="onMobileChange()" (blur)="mobileTouched=true">
+
+
+        <span class="success-icon" *ngIf="isValidMobile(mobile)">
+          ✔
+        </span>
+
+
+      </div>
+
+
+
+
+
+
+
+      <div class="input-group">
+
+        <span class="prefix">
+          🔒
+        </span>
+        <input type="password" autocomplete="off" placeholder="Password" [(ngModel)]="password"
+          (blur)="pwdTouched=true">
+
+
+      </div>
+
+
+
+
+
+      <p class="forgot" (click)="mobile='';goToForgot()" style="margin-top: -11px;">
+
+        Forgot Password?
+
+      </p>
+
+
+
+
+
+      <button class="continue-btn" [disabled]="!isValidMobile(mobile)||!password||loading" (click)="login()">
+
+
+
+        Continue →
+
+        <span *ngIf="loading" class="spinner">
+
+        </span>
+
+
+
+      </button>
+
+
+
+
+
+
+
+
+
+
+
+      <p class="register">
+
+        New user?
+
+        <b (click)="goToRegister()">
+
+          Register
+
+        </b>
+
+
+      </p>
+
+
+
+
+    </ng-container>
+
+
+
+
+
+
+
+
+
+    <!-- FORGOT MOBILE -->
+
+
+    <ng-container *ngIf="view==='forgot-mobile'">
+
+
+      <h2>
+        Forgot Password
+      </h2>
+
+      <p class="welcome">
+        Reset your password
+      </p>
+
+
+
+      <div class="input-group">
+
+
+        <span class="prefix">
+          +91
+        </span>
+
+
+        <input type="tel" maxlength="10" placeholder="Enter mobile number" [(ngModel)]="mobile"
+          (input)="onMobileChange()">
+
+
+      </div>
+
+
+
+
+      <button class="continue-btn" [disabled]="!isValidMobile(mobile)||loading" (click)="sendForgotOtp()">
+
+
+
+        Send OTP
+
+
+
+      </button>
+
+
+
+
+
+      <p class="back" (click)="mobile='';password='';view='login'">
+
+        Back to Login
+
+      </p>
+
+
+
+    </ng-container>
+
+
+
+
+
+
+
+
+
+    <!-- OTP -->
+
+
+    <ng-container *ngIf="view==='forgot-otp'">
+
+
+      <h2>
+        Enter OTP
+      </h2>
+
+
+      <p class="subtitle" style="margin-top:1px">
+
+        Sent to +91 {{mobile}}
+
+      </p>
+
+
+
+
+      <div class="otp-container" style="margin-top:-5px">
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[0]" (input)="moveNext($event,0)"
+          (paste)="handlePaste($event)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[1]" (input)="moveNext($event,1)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[2]" (input)="moveNext($event,2)">
+
+
+
+        <input maxlength="1" type="number" [(ngModel)]="otpArray[3]" (input)="moveNext($event,3)">
+
+
+
+      </div>
+
+
+
+
+
+
+      <p class="back" style="margin-top:-15px" (click)="changeNumber()">
+
+        Change Number
+
+      </p>
+
+
+
+
+
+      <button class="continue-btn" [disabled]="isVerifying" (click)="verifyOtp()">
+
+
+
+        Verify OTP
+
+
+
+      </button>
+
+
+
+
+
+
+      <p class="resend" *ngIf="timer>0">
+
+        Resend OTP in {{timer}} sec
+
+      </p>
+
+
+
+      <p class="resend active" *ngIf="timer===0" (click)="resendOtp()">
+
+
+        Resend OTP
+
+
+      </p>
+
+
+
+
+    </ng-container>
+
+
+
+
+
+
+
+
+
+    <!-- RESET PASSWORD -->
+
+
+    <ng-container *ngIf="view==='reset-password'">
+
+
+      <h2>
+        Set New Password
+      </h2>
+
+
+
+      <div class="input-group">
+
+
+        <input type="password" placeholder="New Password" [(ngModel)]="newPassword">
+
+
+      </div>
+
+
+
+      <button class="continue-btn" (click)="resetPassword()">
+
+
+
+        Update Password
+
+
+      </button>
+
+
+
+    </ng-container>
+
+
+
+
+
+
+    <p class="terms" *ngIf="view==='login'">
+
+
+      By continuing, you agree to our
+      <span (click)="openetermandpoloicy('terms-and-conditions.html')">Terms of Service</span> & <span
+        (click)="openetermandpoloicy('privacy-policy.html')">Privacy Policy</span>
+ 
+
+    </p>
+
+
+
+
+
+    <small style="font-size:5px" *ngIf="upadtingtoken">
+
+      Updating token..
+
+    </small>
+
+
+
+
+  </div>
+
+</div>

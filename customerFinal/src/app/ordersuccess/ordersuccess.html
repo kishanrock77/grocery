@@ -1,0 +1,139 @@
+<app-subheader [showback]="true" [backurl]="''">
+</app-subheader>
+<div class="success-page">
+
+  <!-- LOADING -->
+
+  <div class="loading-box" *ngIf="loading">
+
+    <div class="loader"></div>
+
+    <p>Loading order...</p>
+
+  </div>
+
+  <!-- CONTENT -->
+
+  <div class="success-container" *ngIf="!loading && orderData">
+
+    <!-- SUCCESS ICON -->
+
+    <div class="success-icon">
+
+      ✓
+
+    </div>
+
+    <!-- TITLE -->
+
+    <h1 class="title">
+
+      Order Placed Successfully
+
+    </h1>
+
+    <p class="subtitle">
+
+      Thank you for shopping with us.
+
+    </p>
+
+    <!-- ORDER CARD -->
+
+    <div class="order-card">
+
+      <!-- ORDER ID -->
+
+      <div class="row">
+
+        <span class="label">
+
+          Order ID
+
+        </span>
+
+        <span class="value order-link" (click)="goToOrderDetails()">
+
+          #{{orderData?.mainorderid}}
+
+        </span>
+
+      </div>
+
+      <!-- PAYMENT -->
+
+      <div class="row">
+
+        <span class="label">
+
+          Payment Method
+
+        </span>
+
+        <span class="value">
+
+          {{orderData?.paymentmethod=='cod' ? 'Cash on Delivery' : 'Online Payment'}}
+
+        </span>
+
+      </div>
+      <div class="row">
+
+        <span class="label">
+
+          Order Time
+
+        </span>
+
+        <span class="status">
+
+          {{orderData?.orderdatetime | date:'medium'}}
+
+        </span>
+
+      </div>
+      <!-- TOTAL -->
+
+      <div class="row">
+
+        <span class="label">
+
+          Total Amount
+
+        </span>
+
+        <span class="value total">
+
+          ₹{{orderData?.totalamount }}
+
+        </span>
+
+      </div>
+
+      <!-- STATUS -->
+
+
+
+    </div>
+
+    <!-- BUTTONS -->
+
+    <div class="btns">
+
+      <button class="details-btn" (click)="goToOrderDetails()">
+
+        View Order Details
+
+      </button>
+
+      <button class="shop-btn" (click)="continueShopping()">
+
+        Continue Shopping
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

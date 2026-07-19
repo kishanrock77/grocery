@@ -1,0 +1,82 @@
+<!-- Sidebar -->
+
+<div class="page-loader" *ngIf="isLoading">
+  <div class="loader"></div>
+</div>
+
+<button class="sidebar-toggle-2" (click)="toggleSidebar()">
+  <i class="bi" [ngClass]="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+</button>
+
+<span  >
+   
+  <div class="store-status-buttons"  >
+
+    <button class="status-btn" style="margin-left: 50px;"
+      [ngClass]="{'active-open':currentUser.isAvailable==true}"
+      (click)="changeStatus(currentUser._id,true,'isAvailable')">
+      Available
+    </button>
+
+    <button class="status-btn" [ngClass]="{'active-close':currentUser.isAvailable==false}"
+      (click)="changeStatus(currentUser._id,false,'isAvailable')">
+    Not - Available
+    </button>
+
+    
+
+  </div>
+</span>
+
+
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <div class="sidebar-content">
+    <button class="sidebar-toggle" (click)="toggleSidebar()">
+      <i class="bi" [ngClass]="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+    </button>
+    <div class="sidebar-header">
+      <div class="sidebar-title">
+        <i class="bi bi-grid-fill sidebar-icon"></i>
+        <span>{{this.common.brandname}}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <ul (click)="toggleSidebar()">
+        <li>
+          <a routerLink="/deliveryboy-dashboard" routerLinkActive="active">
+            <i class="bi bi-shop"></i> <span> Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/orders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>New/In-progress Orders</span>
+          </a>
+        </li>
+
+        <li>
+          <a routerLink="/deliveredorders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>Delivered Orders</span>
+          </a>
+        </li>
+        <!-- delevy boy ko cancelled order nahi dikhana....order agar cancel bhi ho jaye..agar vo delevered h to dlevry boy k liye vo delevery me hi ayega <li>
+          <a routerLink="/cancelledorders" routerLinkActive="active">
+            <i class="bi bi-bag"></i> <span>Cancelled Orders</span>
+          </a>
+        </li> -->
+
+
+        <li>
+          <a style="cursor: pointer;" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i> <span>Logout</span>
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Toggle Button -->
+
+</aside>

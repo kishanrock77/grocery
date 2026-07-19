@@ -1,0 +1,142 @@
+.customer-page {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.search-box {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: white;
+  padding-bottom: 15px;
+}
+
+.search-box input {
+   
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #f5f7fb;
+  font-size: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.08);
+}
+ .customer-card {
+  background: #fff;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 16px
+    rgba(0,0,0,.08);
+}
+
+.customer-header {
+  display: flex;
+  justify-content:
+  space-between;
+  align-items: center;
+  padding: 18px;
+  cursor: pointer;
+}
+
+.customer-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.customer-header p {
+  margin: 4px 0;
+  color: #666;
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.stats span {
+  background: #f3f4f6;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.active {
+  background:
+  #d1fae5;
+  color: #065f46;
+}
+
+.inactive {
+  background:
+  #fee2e2;
+  color: #991b1b;
+}
+
+.customer-details {
+  background: #fafafa;
+  padding: 18px;
+}
+
+.info-row {
+  display: flex;
+  justify-content:
+  space-between;
+  margin-bottom: 10px;
+}
+
+.info-row label {
+  font-weight: 600;
+}
+
+.order-btn {
+  width: 100%;
+  margin-top: 15px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.customer-details {
+  padding: 20px;
+  background: #fafafa;
+}
+
+.customer-details p {
+  margin-bottom: 10px;
+}
+
+.order-btn {
+  margin-top: 15px;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  background: #0d6efd;
+  color: white;
+}
+
+.order-btn:hover {
+  transform: translateY(-1px);
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  font-weight: bold;
+}

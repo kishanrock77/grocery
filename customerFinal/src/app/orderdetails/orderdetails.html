@@ -1,0 +1,720 @@
+<app-subheader [showback]="true" [backurl]="''" *ngIf="userType=='customer'">
+
+</app-subheader>
+
+<div class="page-loader" *ngIf="loadingspinner">
+
+    <div class="loader"></div>
+
+</div>
+
+
+<div [class]=" storeSections.length ? 'page' : 'page2'">
+    <!-- SHIMMER LOADER -->
+
+    <div *ngIf="loading" class="checkout-shimmer">
+
+        <!-- topbar -->
+        <div class="shimmer-topbar shimmer"></div>
+
+        <!-- coupons -->
+        <div class="shimmer-card shimmer"></div>
+
+        <!-- cart items -->
+        <div class="shimmer-item" *ngFor="let x of [1,2,3]">
+
+            <div class="img shimmer"></div>
+
+            <div class="content">
+
+                <div class="line shimmer"></div>
+
+                <div class="line small shimmer"></div>
+
+                <div class="btn shimmer"></div>
+
+            </div>
+
+        </div>
+
+        <!-- billing -->
+        <div class="shimmer-card large shimmer"></div>
+
+    </div>
+
+    <!-- REAL PAGE -->
+
+    <div *ngIf="!loading">
+
+        <!-- pura existing page yaha -->
+
+
+        <!-- HEADER -->
+        <div class="topbar" *ngIf="userType!='customer'">
+
+
+
+            <div class="center">
+
+                Order Details
+
+            </div>
+
+            <!-- <div class="right">
+
+        <div class="search-btn" (click)="goToSearch()">
+
+          <i class="ri-search-line"></i>
+
+        </div>
+
+      </div> -->
+
+        </div>
+
+
+        <!-- ORDER DETAILS CARD -->
+        <br />
+        <div class="order-main-card" *ngIf="orderData && userType!=='store'">
+
+            <!-- TOP -->
+
+            <div class="order-top">
+
+                <div>
+                    <div class="order-id">
+                        {{orderData.mainorderid}}
+                    </div>
+
+                    <div class="order-date">
+                        {{orderData.orderdatetime | date:'medium'}}
+                    </div>
+                </div>
+
+                <!-- <div class="payment-badge">
+      {{orderData.paymentStatus}}
+    </div> -->
+
+            </div>
+
+            <!-- PRICE DETAILS -->
+
+            <div class="price-section">
+
+                <div class="price-row">
+                    <span>Items Total</span>
+                    <span>₹{{ itemTotal }}</span>
+                </div>
+
+                <div class="price-row" *ngIf="orderData.discountAmount">
+                    <span>Coupon Discount</span>
+                    <span class="green">
+                        - ₹{{orderData.discountAmount}}
+                    </span>
+                </div>
+
+                <div class="price-row" *ngIf="orderData.deliveryCharge">
+                    <span>Delivery Charge</span>
+                    <span>
+                        ₹{{orderData.deliveryCharge}}
+                    </span>
+                </div>
+
+                <div class="price-row" *ngIf="orderData.deliverydiscount">
+                    <span>Delivery Discount</span>
+                    <span class="green">
+                        - ₹{{orderData.deliverydiscount}}
+                    </span>
+                </div>
+
+                <div class="price-row" *ngIf="orderData.handlingCharge">
+                    <span>Handling Charge</span>
+                    <span>
+                        ₹{{orderData.handlingCharge}}
+                    </span>
+                </div>
+
+                <div class="price-row" *ngIf="orderData.amountfromwallet">
+                    <span>Wallet Used</span>
+                    <span class="green">
+                        - ₹{{orderData.amountfromwallet}}
+                    </span>
+                </div>
+
+                <div class="price-row total">
+                    <span>Total Amount</span>
+                    <span>₹{{orderData.totalamount}}</span>
+                </div>
+
+            </div>
+
+            <!-- EXTRA DETAILS -->
+
+            <div class="order-extra-details">
+
+                <div class="detail-box">
+                    <label>Payment Method</label>
+                    <p>{{orderData.paymentMethod | uppercase}}
+
+
+                        <small style="color:red"
+                            *ngIf="orderData.paymentMethod=='online' && orderData.paymentStatus == 'pending'">
+                            (Failed)
+                        </small>
+                    </p>
+                </div>
+                <div class="detail-box"
+                    *ngIf="orderData.paymentMethod=='online' && orderData.paymentStatus == 'pending'">
+                    <label>Change Payment Method </label>
+                    <p>
+
+                        <button (click)="changepaymentmethodtocod(orderData)" class="map-btn">
+
+                            <i class="ri-money-line"></i> Change to COD
+
+                        </button>
+
+
+
+                    </p>
+                </div>
+                <div class="detail-box">
+                    <label>Coupon</label>
+                    <p>{{orderData.couponcode || 'N/A'}}</p>
+                </div>
+
+                <div class="detail-box" *ngIf="orderData.transactionId">
+                    <label>Transaction ID</label>
+                    <p>{{orderData.transactionId || 'N/A'}}</p>
+                </div>
+
+                <div class="detail-box" *ngIf="orderData.totalamount>0">
+                    <label>Payment Status</label>
+
+                    <div class="sub-status" [ngClass]="{
+
+                pending:
+                orderData.paymentStatus == 'pending',
+
+                delivered:
+               orderData.paymentStatus !== 'pending' 
+ 
+
+              }">
+
+                        {{orderData.paymentStatus == 'pending' ? 'Pending':'Complete' }}
+
+                    </div>
+
+
+
+                    <p>
+
+                        <button
+                            *ngIf="orderData.totalamount > 0 && userType=='customer' && orderData.paymentStatus=='pending'"
+                            (click)="payNowforinprogressorder(orderData)" class="map-btn">
+
+                            <i class="ri-money-line"></i> Pay online
+
+                        </button>
+
+
+
+                    </p>
+                </div>
+
+
+            </div>
+            <br />
+            <!-- HISTORY ACCORDION -->
+            <div class="address-grid">
+
+                <div class="address-box">
+
+                    <strong>
+                        <small> <i class="ri-map-pin-2-line">
+
+                            </i> Delivery Address : </small>
+
+                        {{
+                        orderData.selectedaddress
+                        ?.contactName
+                        }}
+
+                        {{
+                        orderData.selectedaddress
+                        ?.contactMobile
+                        }}
+
+                        {{
+                        orderData.selectedaddress
+                        ?.fullAddress
+                        }}
+
+                        {{
+                        orderData.selectedaddress
+                        ?.cityName
+                        }}
+
+                        {{
+                        orderData.selectedaddress
+                        ?.state
+                        }}
+
+                        {{
+                        orderData.selectedaddress
+                        ?.pincode
+                        }}
+                        <br />
+
+                        <a class="map-btn"
+                            href="https://www.google.com/maps/search/?api=1&query={{orderData.selectedaddress.latitude}},{{orderData.selectedaddress.longitude}}"
+                            target="_blank">
+
+                            <i class="ri-map-line"></i> View Map
+
+                        </a>
+
+
+                    </strong>
+                </div>
+
+
+
+            </div>
+            <div class="history-wrapper">
+
+                <div class="history-header" (click)="showHistory = !showHistory">
+
+                    <span>Order History</span>
+
+                    <i class="fa-solid" [ngClass]="showHistory ? 'fa-chevron-up' : 'fa-chevron-down'">
+                    </i>
+
+                </div>
+
+                <div class="history-body" *ngIf="showHistory">
+
+                    <div class="history-item" *ngFor="let log of orderData.logs">
+
+                        <div class="history-dot"></div>
+
+                        <div class="history-content">
+
+                            <div class="history-title">
+                                {{log.message}}
+                            </div>
+
+                            <div class="history-meta">
+                                {{log.actionByType}}
+                                •
+                                {{log.createdAt | date:'medium'}}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+
+        <!-- ITEMS -->
+        <div class="section" *ngIf="storeSections.length">
+
+            <div class="heading" *ngIf="storeId!== '-1' || userType!=='store'">
+                Stores
+            </div>
+
+            <div class="cart-items-wrapper">
+
+                <!-- STORE LOOP -->
+                <span *ngFor="let store of storeSections">
+
+                    <div class="store-section" *ngIf="storeId== '-1' || storeId== store.storeId">
+
+                        <!-- ========================= -->
+                        <!-- STORE HEADER -->
+                        <!-- ========================= -->
+
+                        <div class="store-header" (click)="openStore(store)">
+
+                            <div class="store-name">
+
+                                <i class="ri-store-2-fill store-icon"></i>
+
+                                {{store.storeInfo?.storeName}}
+
+                                <small *ngIf="store.storeInfo?.finalopenstatus=='Closed'" class="storeclosedred2">
+
+                                    {{store.storeInfo?.finalopenstatus}}
+
+                                </small>
+
+                            </div>
+
+                            <div class="store-total" *ngIf="userType!=='store'">
+                                ₹{{store.storeTotal}}
+                            </div>
+                            <div class="store-total" *ngIf="userType=='store'">
+                                ₹{{store.storeTotaltoshowtostore}}
+                            </div>
+                        </div>
+
+                        <!-- ========================= -->
+                        <!-- SUB ORDER DETAILS -->
+                        <!-- ========================= -->
+                        <div class="suborder-card">
+
+                            <!-- TOP -->
+                            <div class="suborder-top">
+
+                                <div class="suborder-status" [ngClass]="{
+      'pending-status': store.suborderstatus == 'Pending',
+      'delivered-status': store.suborderstatus == 'Delivered',
+      'cancelled-status': store.suborderstatus == 'Cancelled',
+      'returned-status': store.suborderstatus == 'Returned'
+    }">
+                                    {{store.suborderstatus}}
+                                </div>
+
+                                <div class="suborder-id">
+                                    {{store.suborderid}}
+                                </div>
+
+                            </div>
+                            <span *ngIf="!(orderData.paymentMethod=='online' && orderData.paymentStatus == 'pending')">
+
+                                <div class="suborder-row-text">
+                                    {{store.statustext}}
+                                </div>
+                            </span>
+                            <span *ngIf=" (orderData.paymentMethod=='online' && orderData.paymentStatus == 'pending')">
+                              <div class="suborder-row-text">
+ Waiting for payment from customer side
+                              </div> 
+                            </span>
+                            <!-- CANCEL BUTTON -->
+
+                            <span *ngIf="!(orderData.paymentMethod=='online' && orderData.paymentStatus == 'pending')">
+                                <button class="cancel-order-btn" *ngIf="userType=='customer' && store.iscancellable"
+                                    (click)="cancelSubOrder(store)">
+
+                                    Cancel Order
+
+                                </button>
+
+                            </span>
+
+
+
+
+
+                            <div class="address-box" *ngIf="userType!=='store'">
+                                <!-- DELIVERY BOY -->
+
+
+                                <div class="sub-label">
+                                    Delivery Boy
+                                </div>
+
+                                <strong>
+                                    {{store.deliveryBoyName || 'Not Assigned'}},
+
+                                    {{store.deliveryBoyMobile || ''}}
+                                    <a *ngIf="store.deliveryBoyMobile" href="tel:{{store.deliveryBoyMobile}}"> <i
+                                            class="bi bi-phone"></i> </a>
+                                </strong>
+
+
+
+                                <!--                         
+ -->
+                                <a class="map-btn" *ngIf="store.deliveryBoyName && 
+                            (store.currentstatuskey=='pickedorder')" (click)="trackdeleveryboy(store.deliveryBoyId )">
+
+                                    Track location <i class="ri-map-pin-2-line"></i>
+
+                                </a>
+                            </div>
+                            <br />
+                            <!-- ADDRESS -->
+
+                            <!-- <div class="address-line">
+
+            <i class="ri-map-pin-2-line"></i>
+
+            <span>
+                {{store.storeInfo?.address}}  {{store.storeInfo?.city || 'N/A'}}
+            </span>
+
+        </div> -->
+
+
+
+                            <div class="address-box" *ngIf="userType!=='store'">
+
+                                <strong>
+                                    <small> <i class="ri-map-pin-2-line"></i> Store Address : </small>
+                                    {{store.storeInfo?.address}} {{store.storeInfo?.city || 'N/A'}}
+                                    <br />
+                                    {{store.storeInfo?.landmark}}
+                                </strong>
+
+                                <a class="map-btn" *ngIf="store.storeInfo?.address_map"
+                                    [href]="'https://www.google.com/maps/search/?api=1&query=' + store.storeInfo?.address_map"
+                                    target="_blank">
+
+                                    <i class="ri-map-line"></i>
+
+                                    View On Map
+
+                                </a>
+                            </div>
+
+
+
+
+
+
+                            <!-- VIEW MAP -->
+
+
+
+
+                            <!-- HISTORY -->
+                            <br />
+                            <div class="suborder-history">
+
+                                <div class="history-head" (click)="store.showLogs = !store.showLogs">
+
+                                    <span>
+                                        Order History
+                                    </span>
+
+                                    <i class="ri-arrow-down-s-line" [class.rotate]="store.showLogs">
+                                    </i>
+
+                                </div>
+
+                                <div class="history-body" *ngIf="store.showLogs">
+
+                                    <div class="history-item" *ngFor="let log of store.logs">
+
+                                        <div class="history-dot"></div>
+
+                                        <div class="history-content">
+
+                                            <div class="history-message">
+                                                {{log.message}}
+                                            </div>
+
+                                            <div class="history-time">
+
+                                                {{log.createdAt | date:'dd MMM yyyy'}}
+
+                                                •
+
+                                                {{log.createdAt | date:'hh:mm a'}}
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- ========================= -->
+                        <!-- ITEMS -->
+                        <!-- ========================= -->
+                        <div class="headingITEMS">
+                            Items
+                        </div>
+                        <div class="cart-single-item" *ngFor="let item of store.items">
+
+                            <app-item-card #itemCardRef [fororderdetail]="true" [userType]="userType"
+                                [item]="item.itemInfo" [itemtotalforcartforstore]="item.itemTotaltoshowtostore"
+                                [itemtotalforcart]="item.itemTotal" [cartview]="true"
+                                [storestatus]="store.storeInfo?.finalopenstatus">
+
+                            </app-item-card>
+
+                            <!-- EXTRAS -->
+
+                            <div class="cart-extras-wrapper" *ngIf="item.extras?.length">
+
+                                <div class="cart-extra-card" *ngFor="let ex of item.extras; let i = index">
+
+                                    <!-- LEFT -->
+                                    <div class="extra-left">
+
+                                        <!-- IMAGE -->
+                                        <div class="extra-img" *ngIf="ex.image">
+
+                                            <div class="type" *ngIf="ex.vegtype != 'na'" [ngClass]="ex.vegtype">
+
+                                                <span></span>
+
+                                            </div>
+
+                                            <img [src]="ex.image" loading="lazy">
+
+                                        </div>
+
+                                        <!-- CONTENT -->
+                                        <div class="extra-content">
+
+                                            <div class="extra-title">
+                                                {{ ex.title }}
+                                            </div>
+
+                                            <div class="extra-meta" *ngIf="userType!=='store'">
+
+                                                {{ ex.qty }}
+
+                                                ×
+
+                                                ₹{{ ex.price }}
+
+                                            </div>
+                                            <div class="extra-meta" *ngIf="userType=='store'">
+
+                                                {{ ex.qty }}
+
+                                                ×
+
+                                                ₹{{ ex.storePrice }}
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <!-- RIGHT -->
+                                    <div class="extra-right">
+
+                                        <div class="extra-total" *ngIf="userType!='store'">
+                                            ₹{{ ex.total }}
+                                        </div>
+                                        <div class="extra-total" *ngIf="userType=='store'">
+                                            ₹{{ ex.totalToshowtostore }}
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </span>
+
+            </div>
+
+        </div>
+        <div class="cartempty" *ngIf="loading==false && !storeSections.length && setmeafetr2sectrue">
+
+            <div class="empty-icon">
+                <i class="ri-shopping-cart-line"></i>
+            </div>
+
+            <h2>Order Not Found</h2>
+
+            <p>
+                Browse our delicious collection of fresh groceries, snacks,
+                drinks, fruits & daily essentials waiting for you.
+            </p>
+
+            <a (click)="gotohome()" class="browse-btn">
+                <i class="ri-store-2-line"></i>
+                Browse Items
+            </a>
+
+        </div>
+        <!-- coupon input wala old div hatao -->
+
+
+        <span *ngIf="storeId== '-1' && userType!=='store' && itemTotal>0">
+            <!-- BILL -->
+
+            <div class="billing" *ngIf="storeSections.length">
+
+                <div class="row">
+                    <span>Item total</span>
+                    <span>₹{{ itemTotal }}</span>
+                </div>
+
+                <div class="row">
+                    <span>Discount {{this.orderData.couponcode ? '('+this.orderData.couponcode+')' : ''}} </span>
+
+
+
+                    <span>-₹{{ couponDiscount }} </span>
+                </div>
+
+                <div class="row">
+                    <span>Delivery charge</span>
+
+                    <span>
+                        +₹{{ deliveryCharge }}
+
+
+                    </span>
+                </div>
+
+                <div class="row">
+                    <span>Delivery discount</span>
+                    <span>-₹{{ deliveryDiscount }}</span>
+                </div>
+
+                <div class="row">
+                    <span>Handling charge</span>
+                    <span>+₹{{ handlingCharge }}</span>
+                </div>
+
+
+
+                <div class="row" *ngIf="amountfromwallet">
+                    <span>Wallet Used</span>
+                    <span class="green">
+                        - ₹{{ amountfromwallet}}
+                    </span>
+                </div>
+
+
+                <div class="grand">
+
+                    <span>Grand Total</span>
+
+                    <span>
+                        ₹{{ grandTotal }}
+                    </span>
+
+                </div>
+
+                <div class="saving">
+
+                    Total saving ₹{{ totalSaving }}
+
+                </div>
+
+            </div>
+        </span>
+
+
+    </div>
+</div>

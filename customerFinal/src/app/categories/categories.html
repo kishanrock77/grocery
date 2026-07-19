@@ -1,0 +1,296 @@
+<app-subheader [showback]="true" [backurl]="''">
+</app-subheader>
+
+<div class="page">
+
+  <!-- ================================= -->
+  <!-- SEARCH -->
+  <!-- ================================= -->
+
+  <div class="search-wrapper" [class.sticky]="stickySearch">
+
+    <div class="search-box" [class.cccc]="searchFocused === true" >
+
+      <i class="ri-search-line"></i>
+
+      <input type="text" placeholder="Search categories..."
+        (focus)="searchFocused = true" (blur)="searchFocused = false" [(ngModel)]="searchText">
+
+      <i class="ri-close-line clear-icon" *ngIf="searchText" (click)="clearSearch()">
+
+      </i>
+
+    </div>
+
+  </div>
+
+  <!-- ================================= -->
+  <!-- SHIMMER -->
+  <!-- ================================= -->
+
+  <ng-container *ngIf="isLoading">
+
+    <!-- LEVEL1 SHIMMER -->
+
+    <div class="home-level1-scroll" style="padding-bottom:20px;">
+
+      <div class="home-level1-chip shimmer-card" *ngFor="
+          let x of [1,2,3,4,5]
+        ">
+
+        <div class="shimmer shimmer-circle">
+        </div>
+
+        <div class="shimmer shimmer-text">
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SECTION SHIMMER -->
+
+    <div class="section" *ngFor="
+        let x of [1,2,3]
+      ">
+
+      <!-- HEADING -->
+
+      <div class="shimmer shimmer-heading">
+      </div>
+
+      <!-- GRID -->
+
+      <div class="grid">
+
+        <div class="level3-card shimmer-card" *ngFor="
+            let y of [1,2,3,4,5,6]
+          ">
+
+          <div class="shimmer shimmer-img">
+          </div>
+
+          <div class="shimmer shimmer-text2">
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </ng-container>
+
+  <!-- ================================= -->
+  <!-- REAL DATA -->
+  <!-- ================================= -->
+
+  <ng-container *ngIf="!isLoading">
+
+    <!-- ================================= -->
+    <!-- LEVEL 1 -->
+    <!-- ================================= -->
+
+    <div class="home-level1-scroll" *ngIf="!searchText" style="margin-bottom:20px">
+
+      <!-- ALL -->
+
+      <div class="home-level1-chip" [class.active]="
+          !selectedLevel1
+        " (click)="selectAll()">
+
+        <img src="allcat.png">
+
+        <p>
+
+          All
+
+        </p>
+
+      </div>
+
+      <!-- LEVEL1 -->
+
+      <div class="home-level1-chip" *ngFor="
+          let c of level1
+        " [class.active]="
+          selectedLevel1?._id
+          === c._id
+        " (click)="selectLevel1(c)">
+
+        <img [src]="
+            c.imagepath ||
+            'placeholder.png'
+          ">
+
+        <p>
+
+          {{c.categoryName}}
+
+        </p>
+
+      </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- SEARCH MODE -->
+    <!-- ================================= -->
+
+    <div *ngIf="searchText">
+
+      <div class="search-grid" style="
+          padding:
+          0px 10px 0px 10px;
+        ">
+
+        <div class="level3-card" *ngFor="
+            let c of
+            getFilteredLevel2();
+
+            trackBy:
+            trackById
+          " (click)="
+            gotocategoryplusitemlist(c)
+          ">
+
+          <img [src]="
+              c.imagepath ||
+              'placeholder.png'
+            ">
+
+          <p>
+
+            {{c.categoryName}}
+
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- EMPTY -->
+
+      <div class="empty" *ngIf="
+          getFilteredLevel2()
+          .length === 0
+        ">
+
+        No category found
+
+      </div>
+
+    </div>
+
+    <!-- ================================= -->
+    <!-- DEFAULT MODE -->
+    <!-- ================================= -->
+
+    <ng-container *ngIf="!searchText">
+
+      <!-- ================================= -->
+      <!-- ALL MODE -->
+      <!-- ================================= -->
+
+      <ng-container *ngIf="!selectedLevel1">
+
+        <div class="section" *ngFor="
+            let l1 of level1
+          ">
+
+          <!-- HEADING -->
+
+          <div class="heading">
+
+            {{l1.categoryName}}
+
+          </div>
+
+          <!-- GRID -->
+
+          <div class="grid">
+
+            <div class="level3-card" *ngFor="
+                let l2 of
+                getLevel2(l1._id)
+              " (click)="
+                gotocategoryplusitemlist(l2)
+              ">
+
+              <img [src]="
+                  l2.imagepath ||
+                  'placeholder.png'
+                ">
+
+              <p>
+
+                {{l2.categoryName}}
+
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </ng-container>
+
+      <!-- ================================= -->
+      <!-- FILTER MODE -->
+      <!-- ================================= -->
+
+      <ng-container *ngIf="selectedLevel1">
+
+        <div class="section">
+
+          <!-- HEADING -->
+
+          <div class="heading">
+
+            {{selectedLevel1.categoryName}}
+
+          </div>
+
+          <!-- GRID -->
+
+          <div class="grid">
+
+            <div class="level3-card" *ngFor="
+                let l2 of
+                getLevel2(
+                  selectedLevel1._id
+                )
+              " (click)="
+                gotocategoryplusitemlist(l2)
+              ">
+
+              <img [src]="
+                  l2.imagepath ||
+                  'placeholder.png'
+                ">
+
+              <p>
+
+                {{l2.categoryName}}
+
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </ng-container>
+
+    </ng-container>
+
+  </ng-container>
+
+</div>
+
+<app-footer>
+</app-footer>
+<!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

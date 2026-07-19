@@ -1,0 +1,7 @@
+<app-sidebar *ngIf="auth.isloggedIn() && auth.getSession().userType === 'admin'"></app-sidebar>
+<app-sidebar
+    *ngIf="auth.isloggedIn() && auth.getSession().userType === 'store' && auth.getSession().storeId"></app-sidebar>
+<app-sidebar-delivery *ngIf="auth.isloggedIn() && auth.getSession().userType === 'deliveryboy'"></app-sidebar-delivery>
+
+<router-outlet></router-outlet>
+<app-toaster></app-toaster>

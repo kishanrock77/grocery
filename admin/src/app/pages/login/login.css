@@ -1,0 +1,204 @@
+/* ================================
+   Login Container Styling
+================================ */
+.login-container {
+  background: #ffffff;
+  padding: 30px 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 50px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Subtitle */
+.login-subtitle {
+  text-align: center;
+  color: #555;
+  font-size: 0.9rem;
+  margin-top: -10px;
+  font-weight: 400;
+}
+
+.login-subtitle strong {
+  color: #28a745;
+  font-weight: 600;
+}
+
+/* Heading */
+.login-title {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.login-icon {
+  font-size: 1.5rem;
+}
+
+/* ================================
+   User Type Buttons
+================================ */
+.user-type-selection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: nowrap; /* Ensures all buttons stay in one line */
+}
+
+/* Common Button Style */
+.user-btn {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 6px 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.user-btn i {
+  font-size: 0.9rem;
+}
+
+/* Hover Effect */
+.user-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ================================
+   Button Colors
+================================ */
+
+/* Admin */
+.admin-btn {
+  background-color: #e0f0ff;
+  color: #357ab8;
+}
+
+.admin-btn.active {
+  background-color: #357ab8;
+  color: #ffffff;
+}
+
+/* Delivery Boy */
+.delivery-btn {
+  background-color: #e8f9e8;
+  color: #28a745;
+}
+
+.delivery-btn.active {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+/* Store Owner */
+.store-btn {
+  background-color: #fff3e0;
+  color: #fb8c00;
+}
+
+.store-btn.active {
+  background-color: #fb8c00;
+  color: #ffffff;
+}
+
+/* ================================
+   Form Styling
+================================ */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 91%;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+  outline: none;
+}
+
+/* Signup Link */
+.signup-link {
+  text-align: right;
+  margin-bottom: 15px;
+}
+
+.signup-link a {
+  text-decoration: none;
+  color: #4a90e2;
+  font-size: 0.9rem;
+  transition: color 0.3s;
+}
+
+.signup-link a:hover {
+  color: #2f6bbd;
+  text-decoration: underline;
+}
+
+/* Submit Button */
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #4a90e2, #357ab8);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-weight: 600;
+  color: #fff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+/* ================================
+   Responsive Design
+================================ */
+@media (max-width: 500px) {
+  .login-container {
+    padding: 20px;
+    margin: 30px 15px;
+  }
+
+  .user-type-selection {
+    gap: 5px;
+  }
+
+  .user-btn {
+    font-size: 0.7rem;
+    padding: 5px 6px;
+  }
+
+  .user-btn i {
+    font-size: 0.8rem;
+  }
+}

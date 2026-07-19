@@ -1,0 +1,608 @@
+<!-- itemdetails.html -->
+
+<div class="details-page" *ngIf="!loading && itemData">
+
+    <!-- ========================= -->
+    <!-- TOP BAR -->
+    <!-- ========================= -->
+
+    <div class="topbar">
+
+        <div class="icon-btn" (click)="goBack()">
+
+            <i class="ri-arrow-left-line"></i>
+
+        </div>
+
+        <div class="top-right">
+
+            <div class="icon-btn" (click)="goToSearch()">
+
+                <i class="ri-search-line"></i>
+
+            </div>
+
+            <div class="icon-btn wishlist" (click)="toggleWishlist()">
+
+                <i class="ri-heart-fill" [class.active]="isWishlisted(itemData._id)">
+                </i>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- CONTENT -->
+    <!-- ========================= -->
+
+    <div class="content custom-scroll-container">
+
+        <!-- ========================= -->
+        <!-- IMAGE -->
+        <!-- ========================= -->
+
+        <div class="slider-section">
+
+            <div class="type" *ngIf="itemData.vegtype!='na'" [ngClass]="itemData.vegtype">
+
+                <span></span>
+
+            </div>
+
+
+
+            <div class="main-slider">
+
+                <div class="slider-track" [style.transform]="'translateX(-'+currentImageIndex*100+'%)'">
+
+                    <img *ngFor="let img of itemData.images" [src]="img">
+
+                </div>
+
+            </div>
+
+            <div class="dots" *ngIf="itemData.images?.length > 1">
+
+                <span *ngFor="let img of itemData.images; let i=index" [class.active]="i===currentImageIndex"
+                    (click)="goTo(i)">
+                </span>
+
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- DETAILS -->
+        <!-- ========================= -->
+
+        <div class="details-box">
+
+            <h1 class="name">
+                {{itemData.itemName}}
+            </h1>
+
+            <p class="itemSubName">
+                {{itemData.itemSubName}}
+            </p>
+            <small style="    color: #6b7280;
+    font-size: 15px;" *ngIf="itemData.distanceData &&  selectedAddress">
+                <i class="ri-time-fill"></i>&nbsp;
+                <!-- {{item.distanceData.distanceinkm}}
+            KM - -->
+                {{itemData.distanceData.minuteorhr}}
+
+            </small>
+            <div class="price-row">
+
+                <div class="price">
+                    {{ itemData.priceRange }}
+                </div>
+
+                <div class="unit" *ngIf="itemData.size && itemData.unit">
+
+                    {{itemData.size}} {{itemData.unit}}
+
+                </div>
+
+            </div>
+
+            <!-- MAIN QTY -->
+
+            <!-- MAIN QTY -->
+            <div class="main-cart-row" *ngIf="!(variantDetails?.length==0 && itemData.itemQuestions?.length==0)">
+                <button class="add-btn-main" (click)="scrolltooptionsorvariant()">
+
+                    {{variantDetails?.length ? 'Check variants' : 'Check options'}}
+                </button>
+
+            </div>
+            <div class="main-cart-row" *ngIf="variantDetails?.length==0 && itemData.itemQuestions?.length==0">
+
+                <button *ngIf="!qtyMap[itemData._id + '_-1_-1_-1']" class="add-btn-main"
+                    [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                    [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed' ? '0.5' : '1'" [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed'
+        ? 'not-allowed'
+        : 'pointer'" [style.background]="itemData.storedetails?.finalopenstatus=='Closed'
+        ? '#d1d5db'
+        : ''" (click)="addToCart(-1,-1,-1)">
+
+                    {{
+                    itemData.storedetails?.finalopenstatus=='Closed'
+                    ? 'Store Closed'
+                    : 'Add to cart'
+                    }}
+
+                </button>
+
+                <div class="qty-box" *ngIf="qtyMap[itemData._id + '_-1_-1_-1']" [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed'
+        ? '0.6'
+        : '1'">
+
+                    <button (click)="removeFromCart(-1,-1,-1)"
+                        [disabled]="itemData.storedetails?.finalopenstatus=='Closed'" [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed'
+            ? 'not-allowed'
+            : 'pointer'">
+
+                        -
+
+                    </button>
+
+                    <span>
+
+                        {{ qtyMap[itemData._id + '_-1_-1_-1'] || 0 }}
+
+                    </span>
+
+                    <button (click)="addToCart(-1,-1,-1)" [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                        [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed'
+            ? 'not-allowed'
+            : 'pointer'">
+
+                        +
+
+                    </button>
+
+                </div>
+
+                <small style="color:red;" *ngIf="
+        itemData.storedetails?.finalopenstatus=='Closed'
+        &&
+        qtyMap[itemData._id + '_-1_-1_-1']
+        ">
+
+                    &nbsp;&nbsp;&nbsp; Store closed
+
+                </small>
+
+            </div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- STORE -->
+        <!-- ========================= -->
+
+        <div class="store-box" (click)="openStore(itemData.storedetails._id)">
+
+            <div class="store-left">
+
+                <img [src]="itemData.storedetails?.images[0] || 'placeholder.png'">
+
+                <div>
+
+                    <p class="store-title">
+                        Sold By
+                    </p>
+                    <h3>
+                        {{itemData.storedetails?.storeName}}
+                    </h3>
+                    <div class="time-overlay">
+                        <i class="ri-time-line"></i> {{ itemData.storedetails?.openingTime | time12 }}
+                        -
+                        {{ itemData.storedetails?.closingTime | time12 }}
+                    </div>
+                </div>
+
+            </div>
+
+            <i class="ri-arrow-right-s-line"></i>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- DESCRIPTION -->
+        <!-- ========================= -->
+
+        <div class="section">
+
+            <h2>Description</h2>
+
+            <p class="desc">
+
+                {{itemData.description || 'No description available'}}
+
+            </p>
+
+        </div>
+        <div class="cake-message-box" *ngIf="isCake">
+
+            <h3>🎂 Write on Cake</h3>
+
+            <p>Make your cake special with a custom message</p>
+
+
+            <textarea [(ngModel)]="cakeMessage"  maxlength="30" (input)="countCharacters()" placeholder="Example: Happy Birthday My Love ❤️">
+  </textarea>
+
+
+            <div class="bottom">
+
+                <span class="count">
+                  {{characterCount}} / 30 characters
+                </span>
+
+                <span>
+                    ✨ Sweet Memories
+                </span>
+
+            </div>
+
+        </div>
+        <!-- ========================= -->
+        <!-- MAIN OPTIONS -->
+        <!-- ========================= -->
+        <span id="idtorechscroll"></span>
+        <div class="section" *ngIf="itemData.itemQuestions?.length">
+
+            <h2>
+
+                {{itemData.itemQuestions[0].title}}
+
+            </h2>
+
+            <div class="option-list">
+                <small style="color: red;" *ngIf="itemData.storedetails?.finalopenstatus=='Closed' ">&nbsp;&nbsp;&nbsp;
+                    Store
+                    closed
+                </small>
+                <div class="option-card" *ngFor="
+                     let op of itemData.itemQuestions[0].options;
+                     let i=index
+                     ">
+
+                    <div class="option-left">
+
+                        <h4>{{op.label}}</h4>
+
+                        <p>
+                            ₹{{op.appPrice || op.appPrice}}
+                        </p>
+
+                    </div>
+
+                    <div class="qty-box"
+                        [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed' ? '0.6' : '1'">
+
+                        <button (click)="removeFromCart(-1,i,-1)"
+                            [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                            [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                            -
+
+                        </button>
+
+                        <span>
+
+                            {{
+                            qtyMap[
+                            itemData._id + '_-1_' + i + '_-1'
+                            ] || 0
+                            }}
+
+                        </span>
+
+                        <button (click)="addToCart(-1,i,-1)"
+                            [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                            [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                            +
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================= -->
+        <!-- ADDONS -->
+        <!-- ========================= -->
+
+
+
+        <!-- ========================= -->
+        <!-- VARIANTS -->
+        <!-- ========================= -->
+
+        <div class="section" *ngIf="variantDetails?.length">
+
+            <h2>Variants</h2>
+
+            <div class="variant-list">
+                <small style="color: red;" *ngIf="itemData.storedetails?.finalopenstatus=='Closed' ">&nbsp;&nbsp;&nbsp;
+                    Store
+                    closed
+                </small>
+                <div class="variant-card" *ngFor="let v of variantDetails">
+                    <div class="typeunder" *ngIf="v.vegtype!='na'" [ngClass]="v.vegtype">
+
+                        <span></span>
+
+                    </div>
+                    <!-- TOP -->
+
+                    <div class="variant-top">
+
+                        <img [src]="v.images?.[0] || 'placeholder.png'">
+
+                        <div class="variant-info">
+
+                            <h4>{{v.itemName}}</h4>
+
+                            <p class="itemSubName">{{v.itemSubName}}</p>
+
+                            <span *ngIf="!(v.itemQuestions.length  && v.itemQuestions[0].options.length)">
+
+                                ₹{{v.appPrice || v.appPrice}}
+
+                            </span>
+
+                        </div>
+
+                        <div class="qty-box" *ngIf="!(v.itemQuestions.length  && v.itemQuestions[0].options.length)"
+                            [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed' ? '0.6' : '1'">
+
+                            <button (click)="removeFromCart(v._id)"
+                                [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                -
+
+                            </button>
+
+                            <span>
+
+                                {{
+                                qtyMap[
+                                itemData._id + '_' + v._id + '_-1_-1'
+                                ] || 0
+                                }}
+
+                            </span>
+
+                            <button (click)="addToCart(v._id)"
+                                [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                +
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- VARIANT OPTIONS -->
+                    <small style="color: red;"
+                        *ngIf="itemData.storedetails?.finalopenstatus=='Closed' ">&nbsp;&nbsp;&nbsp;
+                        Store
+                        closed
+                    </small>
+                    <div class="variant-options" *ngIf="v.itemQuestions?.length">
+
+                        <div class="variant-option" *ngFor="
+                             let op of v.itemQuestions[0].options;
+                             let i=index
+                             ">
+
+                            <div>
+
+                                <b>{{op.label}}</b>
+
+                                <span>
+
+                                    ₹{{op.appPrice || op.appPrice}}
+
+                                </span>
+
+                            </div>
+
+                            <div class="qty-box"
+                                [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed' ? '0.6' : '1'">
+
+                                <button (click)="removeFromCart(v._id,i)"
+                                    [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                    [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                    -
+
+                                </button>
+
+                                <span>
+
+                                    {{
+                                    qtyMap[
+                                    itemData._id +
+                                    '_' +
+                                    v._id +
+                                    '_' +
+                                    i +
+                                    '_-1'
+                                    ] || 0
+                                    }}
+
+                                </span>
+
+                                <button (click)="addToCart(v._id,i)"
+                                    [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                    [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                    +
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        <div class="section" *ngIf="addonsDetails?.length">
+
+            <div class="title-row">
+
+                <h2>Addons</h2>
+
+            </div>
+
+            <div class="addon-list">
+                <small style="color: red;" *ngIf="itemData.storedetails?.finalopenstatus=='Closed' ">&nbsp;&nbsp;&nbsp;
+                    Store
+                    closed
+                </small>
+
+                <div class="variant-card" *ngFor="let a of addonsDetails">
+                    <div class="typeunder" *ngIf="a.vegtype!='na'" [ngClass]="a.vegtype">
+
+                        <span></span>
+
+                    </div>
+                    <div class="variant-top">
+                        <img [src]="a.images?.[0] || 'placeholder.png'">
+
+                        <div class="addon-info">
+
+                            <h4>{{a.itemName}}</h4>
+
+                            <p class="itemSubName">{{a.itemSubName}}</p>
+
+                            <span>
+
+                                +₹{{a.appPrice || a.appPrice}}
+
+                            </span>
+
+                        </div>
+
+                        <div class="qty-box"
+                            [style.opacity]="itemData.storedetails?.finalopenstatus=='Closed' ? '0.6' : '1'">
+
+                            <button (click)="removeFromCart(-1,-1,a._id)"
+                                [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                -
+
+                            </button>
+
+                            <span>
+
+                                {{
+                                qtyMap[
+                                itemData._id + '_-1_-1_' + a._id
+                                ] || 0
+                                }}
+
+                            </span>
+
+                            <button (click)="addToCart(-1,-1,a._id)"
+                                [disabled]="itemData.storedetails?.finalopenstatus=='Closed'"
+                                [style.cursor]="itemData.storedetails?.finalopenstatus=='Closed' ? 'not-allowed' : 'pointer'">
+
+                                +
+
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+
+
+        <!-- ========================= -->
+        <!-- RELATED -->
+        <!-- ========================= -->
+
+        <div class="section" *ngIf="relatedItems?.length">
+
+            <div class="title-row">
+
+                <h2>More Similar Products</h2>
+
+                <span class="see-more" (click)="openCategoryItems()">
+
+                    See More →
+
+                </span>
+
+            </div>
+
+            <div class="related-grid">
+
+                <app-item-card *ngFor="let item of relatedItems" [item]="item" (click)="changemaitem(item)"
+                    [storestatus]="item.storedetails?.finalopenstatus" [donotdoinsidecardonclick]='true'>
+                </app-item-card>
+
+            </div>
+
+        </div>
+
+        <button class="custom-content-button " (click)="opencustomorder()">
+            To Place Custom Order Click Here
+            <span>→</span>
+        </button>
+        <br><br><br><br>
+
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- LOADING -->
+<!-- ========================= -->
+
+<div class="loading-page" *ngIf="loading">
+
+    <div class="shimmer shimmer-banner"></div>
+
+    <div class="shimmer shimmer-line big"></div>
+
+    <div class="shimmer shimmer-line"></div>
+
+    <div class="shimmer shimmer-line small"></div>
+
+    <div class="shimmer shimmer-card"></div>
+
+    <div class="shimmer shimmer-card"></div>
+
+</div>
+
+<app-footer [alwayshide]="true" [pagenow]="'itemdetails'">
+</app-footer><!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

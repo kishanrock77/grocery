@@ -1,0 +1,602 @@
+<div class="page-loader" *ngIf="loadingspinner">
+
+  <div class="loader"></div>
+
+</div>
+
+
+<div [class]="wishlistItems.length || storeSections.length ? 'page' : 'page2'">
+  <!-- SHIMMER LOADER -->
+
+  <div *ngIf="loading" class="checkout-shimmer">
+
+    <!-- topbar -->
+    <div class="shimmer-topbar shimmer"></div>
+
+    <!-- coupons -->
+    <div class="shimmer-card shimmer"></div>
+
+    <!-- cart items -->
+    <div class="shimmer-item" *ngFor="let x of [1,2,3]">
+
+      <div class="img shimmer"></div>
+
+      <div class="content">
+
+        <div class="line shimmer"></div>
+
+        <div class="line small shimmer"></div>
+
+        <div class="btn shimmer"></div>
+
+      </div>
+
+    </div>
+
+    <!-- billing -->
+    <div class="shimmer-card large shimmer"></div>
+
+  </div>
+
+  <!-- REAL PAGE -->
+
+  <div *ngIf="!loading">
+
+    <!-- pura existing page yaha -->
+
+
+    <!-- HEADER -->
+    <div class="topbar">
+
+      <div class="left">
+
+        <i class="ri-arrow-left-line" (click)="goBack()">
+        </i>
+
+      </div>
+
+      <div class="center">
+
+        Checkout
+
+      </div>
+
+      <div class="right">
+
+        <div class="search-btn" (click)="goToSearch()">
+
+          <i class="ri-search-line"></i>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- COUPON -->
+    <div class="coupon-wrapper" #couponSection *ngIf="storeSections.length && availableCoupons.length">
+
+      <div class="coupon-heading">
+
+        Coupons available for you
+
+      </div>
+
+      <div class="coupon-scroll">
+
+        <div class="coupon-box" *ngFor="
+          let c of availableCoupons
+        " (click)="applyCoupon(c)">
+
+          <div class="apply">
+
+            Apply Coupon
+
+          </div>
+
+          <div class="code">
+
+            {{ c.couponName }}
+
+          </div>
+
+          <div class="save">
+
+            Save
+
+            {{ c.discountValue }}
+
+            {{ c.discountType=='percent'
+            ? '%'
+            : '₹'
+            }}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+    <!-- WISHLIST -->
+
+    <div class="wishlist-section" *ngIf="wishlistItems.length">
+
+      <div class="heading">
+
+        Saved for later <span class="btn-loader" *ngIf="loadingwishlistitems"></span>
+
+      </div>
+
+      <div class="wishlist-scroll">
+
+        <div class="wishlist-item" *ngFor="let item of wishlistItems">
+
+          <app-item-card [item]="item" [cartview]="false" [storestatus]="
+
+            item.storeId
+            ?.finalopenstatus
+
+          ">
+
+          </app-item-card>
+
+        </div>
+
+      </div>
+
+    </div>
+    <!-- ITEMS -->
+    <div class="section" *ngIf="storeSections.length">
+
+      <div class="heading">
+
+        Items in cart
+
+      </div>
+
+      <div class="cart-items-wrapper">
+
+        <!-- STORE LOOP -->
+        <div class="store-section" *ngFor="let store of storeSections">
+
+          <!-- STORE HEADER -->
+          <div class="store-header" (click)="openStore(store)">
+
+            <div class="store-name">
+
+
+              <i class="ri-store-2-fill" style=" color:#facc15;
+
+    font-size:13px;
+
+    flex-shrink:0;"></i> {{store.storeInfo?.storeName}}
+
+
+              <small *ngIf="store.storeInfo?.finalopenstatus=='Closed'" class="storeclosedred2">
+                &nbsp;&nbsp;{{store.storeInfo?.finalopenstatus}}&nbsp;&nbsp;
+
+              </small>
+            </div>
+
+            <div class="store-total">
+
+              ₹{{store.storeTotal}}
+
+            </div>
+
+          </div>
+
+          <!-- ITEMS -->
+          <div class="cart-single-item" *ngFor="let item of store.items">
+
+            <app-item-card #itemCardRef [item]="item.itemInfo" [itemtotalforcart]="item.itemTotal" [cartview]="true"
+              [storestatus]="
+          store.storeInfo?.finalopenstatus
+        " (movetowishlist)="
+          moveToWishlist($event)
+        ">
+            </app-item-card>
+
+            <!-- MAIN ITEM TOTAL -->
+
+            <!-- <div class="item-total-line" *ngIf=" item.mainQty">
+
+              {{item.mainQty}}
+              ×
+              ₹{{item.mainPrice}}
+
+              =
+
+              <b>
+                ₹{{item.mainTotal}}
+              </b>
+
+            </div> -->
+
+            <!-- EXTRAS -->
+
+            <!-- EXTRAS -->
+
+            <!-- EXTRAS -->
+
+            <div class="cart-extras-wrapper" *ngIf="item.extras?.length">
+
+              <div class="cart-extra-card" *ngFor="let ex of item.extras; let i = index">
+
+                <!-- LEFT -->
+                <div class="extra-left">
+
+                  <!-- IMAGE -->
+                  <div class="extra-img" *ngIf="ex.image">
+
+                    <!-- VEG TYPE -->
+                    <div class="type" *ngIf="ex.vegtype != 'na'" [ngClass]="ex.vegtype">
+
+                      <span></span>
+
+                    </div>
+
+                    <img [src]="ex.image" loading="lazy">
+
+                  </div>
+
+                  <!-- CONTENT -->
+                  <div class="extra-content">
+
+                    <div class="extra-title">
+                      {{ ex.title }}
+                    </div>
+
+                    <div class="extra-meta">
+                      {{ ex.qty }}
+                      ×
+                      ₹{{ ex.price }}
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <!-- RIGHT -->
+                <div class="extra-right">
+
+                  <!-- TOTAL -->
+                  <div class="extra-total">
+                    ₹{{ ex.total }}
+                  </div>
+
+                  <!-- QTY -->
+                  <div class="extra-qty-box">
+
+                    <button (click)="itemCardRef.decrease(ex.extratype)">
+
+                      -
+
+                    </button>
+
+                    <span>
+                      {{ ex.qty }}
+                    </span>
+
+                    <button (click)="itemCardRef.increase(ex.extratype)">
+
+                      +
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+    <div class="cartempty" *ngIf="loading==false && !storeSections.length ">
+
+      <div class="empty-icon">
+        <i class="ri-shopping-cart-line"></i>
+      </div>
+
+      <h2>Your cart feels lonely</h2>
+
+      <p>
+        Browse our delicious collection of fresh groceries, snacks,
+        drinks, fruits & daily essentials waiting for you.
+      </p>
+
+      <a (click)="gotohome()" class="browse-btn">
+        <i class="ri-store-2-line"></i>
+        Browse Items
+      </a>
+
+    </div>
+    <!-- coupon input wala old div hatao -->
+
+    <div *ngIf="storeSections.length && !selectedCoupon" class="coupon-row" #couponInputWrapper>
+
+      <input type="text" [(ngModel)]="couponCode" placeholder="Enter coupon code" (focus)="onCouponFocus()" />
+      <button class="apply-btn" (click)="applyCouponCode()" [disabled]="loadingcoupon">
+
+        <span class="btn-loader" *ngIf="loadingcoupon"></span>
+
+        <span *ngIf="!loadingcoupon">
+          Apply
+        </span>
+
+      </button>
+
+
+    </div>
+
+    <!-- BILL -->
+    <div class="billing" *ngIf="storeSections.length">
+
+      <div class="row">
+        <span>Item total</span>
+        <span>₹{{ itemTotal }}</span>
+      </div>
+
+      <div class="row">
+        <span>Discount {{first50Discount>0 ? '(First 20)' : ''}}
+
+          {{couponDiscount>0 ? '('+selectedCoupon.couponName+')' : ''}}
+
+        </span>
+
+        <span>-₹{{ couponDiscount + first50Discount}} </span>
+      </div>
+
+      <div class="row">
+        <span>Delivery charge</span>
+
+        <span>
+          +₹{{ deliveryCharge }}
+
+
+        </span>
+      </div>
+
+      <div class="row">
+        <span>Delivery discount</span>
+        <span>-₹{{ deliveryDiscount }}</span>
+      </div>
+
+      <div class="row">
+        <span>Handling charge</span>
+        <span>+₹{{ handlingCharge }}</span>
+      </div>
+      <div class="row">
+        <span>Amount from wallet</span>
+        <span>-₹{{ amountfromwallet }}</span>
+      </div>
+
+
+      <div class="grand">
+
+        <span>Grand Total</span>
+
+        <span>
+          ₹{{ grandTotal }}
+        </span>
+
+      </div>
+
+      <div class="saving">
+
+        Total saving ₹{{ totalSaving }}
+
+      </div>
+
+    </div>
+
+    <!-- NOTE -->
+    <div class="instruction" *ngIf="storeSections.length">
+
+      <textarea [(ngModel)]="deliveryInstruction" placeholder="Delivery instruction">
+
+    </textarea>
+
+    </div>
+
+    <!-- POLICY -->
+    <!-- POLICY -->
+
+    <div class="policy" *ngIf="storeSections.length">
+
+      <div class="policy-box">
+
+        <div class="policy-title">
+
+          <i class="ri-close-circle-line"></i>
+
+          Cancellation policy
+
+        </div>
+
+        <p>
+          Item packaging start hone ke baad
+          order cancel nahi kar sakte.
+        </p>
+
+      </div>
+
+      <div class="policy-box">
+
+        <div class="policy-title">
+
+          <i class="ri-arrow-go-back-line"></i>
+
+          Return policy
+
+        </div>
+
+        <p>
+          Khane wale items, return nahi honge.
+          Baaki items ka return
+          store policy par depend karta hai.
+          <span *ngIf="!fullreadreturn" style="cursor: pointer;color: green;"
+            (click)="fullreadreturn=!fullreadreturn">Read more...</span>
+          <span *ngIf="fullreadreturn">
+            Return karne par apka amount apke wallet me add kiya jayega,
+            jise aap next order me use kar sakte hai. Return ke liye aapko store se contact karna hoga,
+            store return accept karta hai ya nahi ye unki policy par depend karega. Return pickup charges store ke, apke
+            ghar se
+            distance ke hisab se decide honge, jo ki apke wallet se deduct kiye jayenge. Return pickup charges minimum
+            ₹20
+            honge.
+          </span>
+
+          <span *ngIf="fullreadreturn" style="cursor: pointer;color: red;" (click)="fullreadreturn=!fullreadreturn">
+            Show less
+          </span>
+        </p>
+
+      </div>
+
+      <div class="policy-box">
+
+        <div class="policy-title">
+
+          <i class="ri-gift-line"></i>
+
+          Gifting policy
+
+        </div>
+
+        <p>
+          Store jaisa pack karega
+          waise hi deliver hoga.
+        </p>
+
+      </div>
+
+    </div>
+    <div *ngIf=" storeSections.length">
+      <br /><br /><br /><br /><br />
+    </div>
+
+    <!-- ADDRESS -->
+    <div class="address-footer" *ngIf="storeSections.length" [class.address-error]="showAddressError">
+
+      <div class="icon">
+
+        <i [class]="getAddressIcon()">
+        </i>
+
+      </div>
+
+      <div class="address">
+
+        <div *ngIf="selectedAddress">
+
+          <b style="    font-size: 13px;">
+            Delivery Address <div class="map-btn" style="float:right;margin-top:-3px" (click)="openaddressaddselect()">
+
+              <i class="ri-map-pin-line"></i>
+
+              Change address
+
+            </div>
+          </b>
+
+          <p>
+
+            {{
+            selectedAddress
+            ?.contactName
+            }}
+
+            {{
+            selectedAddress
+            ?.contactMobile
+            }}
+
+            {{
+            selectedAddress
+            ?.fullAddress
+            }}
+
+            {{
+            selectedAddress
+            ?.cityName
+            }}
+
+            {{
+            selectedAddress
+            ?.state
+            }}
+
+            {{
+            selectedAddress
+            ?.pincode
+            }}
+
+            <a href="https://www.google.com/maps/search/?api=1&query={{selectedAddress.latitude}},{{selectedAddress.longitude}}"
+              target="_blank" style="text-decoration:none;color:#2563eb;">
+
+              View Map
+
+            </a>
+
+          </p>
+
+
+
+        </div>
+
+        <div *ngIf="!selectedAddress" class="select-address-btn" (click)="openaddressaddselect()">
+
+          Select / Add address
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- PLACE ORDER -->
+    <div class="bottom-fixed" *ngIf="storeSections.length   ">
+
+      <div class="payment-toggle" *ngIf=" this.amountfromwallet < this.grandTotalBeforewllet">
+
+        <button class="payment-btn" [class.active]="paymentMethod=='cod'" (click)="paymentMethod='cod'">
+
+          Cash
+
+        </button>
+
+        <button class="payment-btn" [class.active]="paymentMethod=='online'" (click)="paymentMethod='online'">
+
+          Online
+
+        </button>
+
+      </div>
+
+      <button class="place-btn" (click)="placeOrder()" [disabled]="placingorder || (grandTotal==0 && this.amountfromwallet < this.grandTotalBeforewllet)">
+
+        <div class="price-section">
+          <span class="total-label">Total</span>
+          <span class="total-price">₹{{ grandTotal }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="order-section">
+          <span>Place Order</span>
+        </div>
+
+      </button>
+    </div>
+  </div>
+</div>

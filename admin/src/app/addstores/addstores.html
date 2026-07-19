@@ -1,0 +1,268 @@
+<div [class.blur]="locationDenied">
+
+
+
+  <div class="add-store-container">
+
+    <div class="page-loader" *ngIf="isLoading">
+      <div class="loader"></div>
+    </div>
+
+    <h2 class="page-title">
+      <i class="bi bi-shop"></i>
+      {{isEdit ? 'Edit Store' : 'Add Store'}}
+    </h2>
+
+    <form [formGroup]="storeForm" (ngSubmit)="submitStore()">
+
+      <div class="form-grid">
+
+        <!-- STORE NAME -->
+        <div class="form-group">
+          <label>Store Name *</label>
+          <input type="text" formControlName="storeName">
+          <div class="error" *ngIf="storeForm.controls.storeName.touched && storeForm.controls.storeName.invalid">
+            Store name is required
+          </div>
+        </div>
+
+        <!-- STORE TYPE -->
+        <div class="form-group">
+          <label>Store Type *</label>
+
+          <select formControlName="storeType">
+            <option value="">Select Type</option>
+            <option>Grocery</option>
+            <option>Instamart</option>
+            <option>Restaurant</option>
+            <option>Fruit Shop</option>
+            <option>Hardware</option>
+            <option>Software</option>
+            <option>Bakery</option>
+            <option>Dairy</option>
+            <option>Other</option>
+          </select>
+          <div class="error" *ngIf="storeForm.controls.storeType.touched && storeForm.controls.storeType.invalid">
+            Store type is required
+          </div>
+        </div>
+
+        <!-- OWNER NAME -->
+
+        <div class="form-group" *ngIf="usertype == 'admin'">
+          <label>Owner *</label>
+
+          <select formControlName="ownerid">
+            <option value="">Select Owner</option>
+            <option *ngFor="let obj of storeownerlist" value="{{obj._id}}">{{obj.name}}</option>
+
+          </select>
+          <div class="error" *ngIf="storeForm.controls.ownerid.touched && storeForm.controls.ownerid.invalid">
+            Owner is required
+          </div>
+        </div>
+
+
+        <!-- CITY -->
+        <div class="form-group">
+          <label>City *</label>
+
+          <select formControlName="city">
+            <option value="">Select City</option>
+            <option *ngFor="let city of cityarr">{{city}}</option>
+          </select>
+          <div class="error" *ngIf="storeForm.controls.city.touched && storeForm.controls.city.invalid">
+            City is required
+          </div>
+        </div>
+
+        <!-- ADDRESS -->
+        <div class="form-group full">
+          <label>Address *</label>
+          <input type="text" formControlName="address">
+          <div class="error" *ngIf="storeForm.controls.address.touched && storeForm.controls.address.invalid">
+            Address is required
+          </div>
+        </div>
+
+        <!-- LANDMARK -->
+        <div class="form-group full">
+          <label>Landmark *</label>
+          <input type="text" formControlName="landmark">
+          <div class="error" *ngIf="storeForm.controls.landmark.touched && storeForm.controls.landmark.invalid">
+            Landmark is required
+          </div>
+        </div>
+
+        <!-- OPEN TIME -->
+        <div class="form-group">
+          <label>Opening Time *</label>
+          <input type="time" formControlName="openingTime">
+          <div class="error" *ngIf="storeForm.controls.openingTime.touched && storeForm.controls.openingTime.invalid">
+            Opening time is required
+          </div>
+        </div>
+
+        <!-- CLOSE TIME -->
+        <div class="form-group">
+          <label>Closing Time *</label>
+          <input type="time" formControlName="closingTime">
+          <div class="error" *ngIf="storeForm.controls.closingTime.touched && storeForm.controls.closingTime.invalid">
+            Closing time is required
+
+          </div>
+        </div>
+
+
+        <div class="form-group" *ngIf="usertype == 'admin'">
+          <label>Increase item price by(%) *</label>
+          <input type="number" formControlName="increasepriceby">
+          <div class="error"
+            *ngIf="storeForm.controls.increasepriceby.touched && storeForm.controls.increasepriceby.invalid">
+            Increase % is required
+          </div>
+        </div>
+
+
+        <div class="form-group" *ngIf="usertype == 'admin'">
+          <label>Commission for admin(%) *</label>
+          <input type="number" formControlName="commissionforadmin">
+          <div class="error"
+            *ngIf="storeForm.controls.commissionforadmin.touched && storeForm.controls.commissionforadmin.invalid">
+            Commission is required
+          </div>
+        </div>
+        <button type="button" style=" cursor: pointer; background-color: white; border: 1px solid grey;"
+          (click)="openMapPopup()">
+          Select Location From Map
+        </button>
+
+        <div class="form-group full">
+          <label>Address on map*</label>
+          <input type="text" formControlName="address_map">
+          <div class="error" *ngIf="storeForm.controls.address_map.touched && storeForm.controls.address_map.invalid">
+            Map Address is required
+          </div>
+        </div>
+        <!-- WEEKOFF -->
+        <div class="form-group full">
+
+          <label>Week Off</label>
+
+          <div class="weekoff-grid">
+
+            <label *ngFor="let day of weekDays">
+
+              <input type="checkbox" [value]="day" [checked]="weekOff.includes(day)" (change)="toggleWeekOff($event)">
+
+              {{day}}
+
+            </label>
+
+          </div>
+
+        </div>
+
+        <!-- IMAGES -->
+
+        <div class="form-group full">
+
+          <label>Store Images (Max 2)</label>
+
+          <input type="file" accept="image/*" (change)="onImageSelect($event)">
+
+          <div class="error" *ngIf="imageError">
+            {{imageError}}
+          </div>
+
+          <div class="image-preview">
+            <div class="img-box" *ngFor="let img of previewImages2; let i=index">
+
+              <img [src]=" img">
+
+              <span (click)="removeImage2(i)">✕</span>
+
+            </div>
+            <div class="img-box" *ngFor="let img of previewImages; let i=index">
+
+              <img [src]="img">
+
+              <span (click)="removeImage(i)">✕</span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <button class="submit-btn" type="submit">
+        {{isEdit ? 'Update Store' : 'Create Store'}}
+      </button>
+
+      <button class="cancel-btn" type="button" routerLink="/storelist">
+        Cancel
+      </button>
+
+    </form>
+
+  </div>
+
+  <div class="map-popup" *ngIf="showMap">
+
+    <div class="map-box">
+      <div class="map-controls">
+
+        <button type="button" (click)="useCurrentLocation()">
+          📍 Use My Location
+        </button>
+
+      </div>
+      <div class="search-box">
+        <div class="form-group">
+          <input type="text" placeholder="Search location" [(ngModel)]="searchQueryInput"
+            (keyup)="onSearchChange($event)">
+        </div>
+        <div class="search-dropdown" *ngIf="searchResults.length">
+
+          <div class="search-item" *ngFor="let item of searchResults" (click)="selectLocation(item)">
+            {{item.display_name}}
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div id="map"></div>
+      <br /> <br />
+      <button (click)="confirmLocation()" style=" cursor: pointer; background-color: white; border: 1px solid grey;">Use
+        This Location</button>
+
+      &nbsp;&nbsp;<button (click)="closePopup()" style="color: white; cursor: pointer; 
+    background-color: red; border: 1px solid white;">Close</button>
+
+
+
+    </div>
+
+  </div>
+</div>
+<div class="location-block" *ngIf="locationDenied">
+
+  <div class="box">
+
+    <h3>Location Permission Required</h3>
+
+    <p>Please allow location access to continue</p>
+    <p>
+      Go to browser settings → allow location → refresh page
+    </p>
+    <button (click)="checkLocationPermission()">
+      Try Again
+    </button>
+
+  </div>
+
+</div>

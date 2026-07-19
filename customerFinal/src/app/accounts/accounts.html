@@ -1,0 +1,68 @@
+<app-subheader [showback]="true" [backurl]="''">
+</app-subheader>
+ 
+
+<div class="items-header fancy">
+    <img class="profile-avatar" [src]="userdetails?.profilePic || 'https://ui-avatars.com/api/?name=' + (userdetails?.name || 'User') + '&background=ffc928&color=111'" alt="Profile picture" />
+    <h2>{{userdetails.name}}
+    <br /> {{userdetails.mobile}}</h2>
+</div>
+ 
+<!-- ACCOUNT BOXES -->
+<div class="page">
+    <div class="account-grid">
+
+        <div class="account-card" routerLink="/edit-profile">
+            <div class="icon-wrap">
+                <i class="ri-user-settings-line"></i>
+            </div>
+            <p>Your Profile</p>
+        </div>
+
+        <div class="account-card" routerLink="/orderlist/-1">
+            <div class="icon-wrap">
+                <i class="ri-file-list-3-line"></i>
+            </div>
+            <p>Your Orders</p>
+        </div>
+
+        <div class="account-card" (click)="openwallet()">
+            <div class="icon-wrap">
+                <i class="ri-wallet-3-line"></i>
+            </div>
+            <p>Wallet Money</p>
+        </div>
+
+        <div class="account-card " routerLink="/wishlist">
+            <div class="icon-wrap  ">
+                <i class="ri-heart-3-line" style="color:#ff4d6d"></i>
+            </div>
+            <p>Wishlist Items</p>
+        </div>
+
+        <div class="account-card" (click)="openaddressaddselect()">
+            <div class="icon-wrap">
+                <i class="ri-map-pin-user-line"></i>
+            </div>
+            <p>Select/Add Address</p>
+        </div>
+        <div class="account-card" (click)="opencustomorder()">
+            <div class="icon-wrap">
+               <i class="ri-file-list-3-line"></i>
+            </div>
+            <p>Custom Orders</p>
+        </div>
+
+        <div class="account-card logout-card" (click)="logout()">
+            <div class="icon-wrap">
+                <i class="ri-logout-box-r-line"></i>
+            </div>
+            <p>Logout</p>
+        </div>
+
+    </div>
+</div>
+<app-footer>
+</app-footer>
+<!-- use in pages -->
+<app-address-reminder-popup></app-address-reminder-popup>

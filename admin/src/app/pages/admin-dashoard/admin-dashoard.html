@@ -1,0 +1,173 @@
+<br />
+<div class="spinner-overlay" *ngIf="loading">
+  <div class="spinner"></div>
+</div>
+<h2 align="center">Dashboard
+  <button class="refresh-btn" (click)="getDashboard()">
+
+    <i class="bi bi-arrow-repeat"></i>
+
+
+  </button>
+</h2>
+<div class="metric-grid">
+
+  <div class="mini-card link-card" routerLink="/orders">
+
+    <b>Pending Orders</b>
+  </div>
+
+  <div class="mini-card link-card" routerLink="/deliveredorders">
+
+    <b> Delivered Orders</b>
+  </div>
+
+  <div *ngIf="usertype === 'admin'" class="mini-card link-card" routerLink="/custom-order">
+
+    <b> Custom Orders</b>
+  </div>
+
+
+
+
+  <div class="mini-card link-card" routerLink="/cancelledorders">
+
+    <b> Cancelled Orders</b>
+  </div>
+</div><br />
+<hr />
+<h3 align="center">Statistics</h3>
+
+<div class="cards-wrapper">
+
+  <div class="dashboard-card" *ngFor="let key of sections">
+
+    <!-- Accordion Header -->
+
+    <div class="accordion-header" (click)="toggleSection(key)">
+
+      <span>
+        {{labels[key]}}
+      </span>
+
+      <span class="accordion-icon">
+
+        <i class="bi" style="font-size:21px" [ngClass]="dashboard[key]?.open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+      </span>
+
+    </div>
+
+    <!-- Accordion Body -->
+
+    <div class="accordion-body" *ngIf="dashboard[key]?.open">
+
+      <div class="metric-grid">
+
+        <div class="mini-card  ">
+          <span>Total Delivered Count</span>
+          <b>{{ dashboard?.[key]?.deliveredCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card">
+          <span>Total Delivered Amount</span>
+          <b>₹{{ dashboard?.[key]?.deliveredAmount || 0 }}</b>
+
+         
+
+        </div>
+
+        <div class="mini-card amount-card">
+          <span>Total Delivered Amount COD</span>
+          <b>₹{{ dashboard?.[key]?.deliveredAmount_cod || 0 }}</b>
+
+        
+
+        </div>
+        <div class="mini-card amount-card">
+          <span>Total Delivered Amount Online</span>
+          <b>₹{{ dashboard?.[key]?.deliveredAmount_online || 0 }}</b>
+
+        
+
+        </div>
+
+        <div class="mini-card profit" *ngIf="usertype=='admin'">
+          <span>Total Profit</span>
+          <b>₹{{ dashboard?.[key]?.profit || 0 }}</b>
+        </div>
+        <div class="mini-card customer-card" *ngIf="usertype=='admin'  ">
+          <span>Customers Joined</span>
+          <b>{{ dashboard?.[key]?.customerJoined || 0 }}</b>
+        </div>
+        <div class="mini-card customer-card" *ngIf="!(usertype=='admin'  )">
+
+        </div>
+        <div class="mini-card">
+          <span>Settled Count</span>
+          <b>{{ dashboard?.[key]?.settledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card">
+          <span>Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.settledAmount || 0 }}</b>
+        </div>
+
+        <div class="mini-card">
+          <span>Non Settled Count</span>
+          <b>{{ dashboard?.[key]?.nonSettledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card">
+          <span>Non Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.nonSettledAmount || 0 }}</b>
+        </div>
+
+        <div class="mini-card" *ngIf="usertype=='admin'">
+          <span>DB Settled Count</span>
+          <b>{{ dashboard?.[key]?.dbSettledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card" *ngIf="usertype=='admin'">
+          <span>DB Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.dbSettledAmount || 0 }}</b>
+        </div>
+
+        <div class="mini-card" *ngIf="usertype=='admin'">
+          <span>DB Non Settled Count</span>
+          <b>{{ dashboard?.[key]?.dbNonSettledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card" *ngIf="usertype=='admin'">
+          <span>DB Non Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.dbNonSettledAmount || 0 }}</b>
+        </div>
+
+        <div class="mini-card" *ngIf="usertype=='admin'">
+          <span>Store Settled Count</span>
+          <b>{{ dashboard?.[key]?.storeSettledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card" *ngIf="usertype=='admin'">
+          <span>Store Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.storeSettledAmount || 0 }}</b>
+        </div>
+
+        <div class="mini-card" *ngIf="usertype=='admin'">
+          <span>Store Non Settled Count</span>
+          <b>{{ dashboard?.[key]?.storeNonSettledCount || 0 }}</b>
+        </div>
+
+        <div class="mini-card amount-card" *ngIf="usertype=='admin'">
+          <span>Store Non Settled Amount</span>
+          <b>₹{{ dashboard?.[key]?.storeNonSettledAmount || 0 }}</b>
+        </div>
+
+
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

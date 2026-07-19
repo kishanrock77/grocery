@@ -1,0 +1,903 @@
+/* PAGE */
+
+.order-page {
+
+    padding: 15px;
+
+    padding-bottom: 120px;
+
+    width: 100%;
+
+    max-width: 700px;
+
+    margin: auto;
+
+    box-sizing: border-box;
+
+    background: #fafafa;
+
+}
+
+
+
+
+
+/* HEADER */
+
+
+.top-header {
+
+    height: 60px;
+
+    background: #fff;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    border-bottom: 1px solid #eee;
+
+}
+
+
+
+.back-btn {
+
+    position: absolute;
+
+    left: 15px;
+
+    width: 40px;
+
+    height: 40px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #f3f4f6;
+
+    font-size: 20px;
+
+}
+
+
+
+
+
+.title {
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+}
+
+
+
+
+
+/* CARD */
+
+
+.card {
+
+    background: #fff;
+
+    border-radius: 18px;
+
+    padding: 18px;
+
+    margin-bottom: 18px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    border: 1px solid #eee;
+
+}
+
+
+
+
+
+.section-title {
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    margin-bottom: 15px;
+
+    color: #111827;
+
+}
+
+
+
+
+
+/* TYPE BOX */
+
+
+.type-box {
+
+    display: flex;
+
+    gap: 10px;
+
+    width: 100%;
+
+}
+
+
+
+.type-box label {
+
+    flex: 1;
+
+    height: 70px;
+
+    border: 1px solid #ddd;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    border-radius: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+}
+
+
+
+.type-box label.active {
+
+
+
+    border: 1px solid #facc15;
+
+    color: #facc15;
+
+}
+
+
+
+
+
+/* FORM */
+
+
+.form-group {
+
+    margin-bottom: 22px;
+
+    width: 100%;
+
+}
+
+
+
+.form-group label {
+
+    display: block;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    margin-bottom: 8px;
+
+}
+
+
+
+
+
+input,
+textarea,
+select {
+
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    border: 1px solid #d1d5db;
+
+    border-radius: 14px;
+
+    padding: 12px;
+
+    font-size: 14px;
+
+    background: #fff;
+
+    outline: none;
+
+}
+
+
+
+input {
+
+    height: 48px;
+
+}
+
+
+
+textarea {
+
+    height: 100px;
+
+    resize: none;
+
+}
+
+
+
+
+input:focus,
+textarea:focus,
+select:focus {
+
+    border-color: #16a34a;
+
+}
+
+
+
+
+
+/* UPLOAD */
+
+
+.upload-box {
+
+    height: 120px;
+
+    border: 2px dashed #d1d5db;
+
+    border-radius: 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    cursor: pointer;
+
+    background: #fff;
+
+}
+
+
+
+.upload-box i {
+
+    font-size: 35px;
+
+    color: #16a34a;
+
+    margin-bottom: 10px;
+
+}
+
+
+
+.upload-box span {
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #6b7280;
+
+}
+
+
+
+.upload-box input {
+
+    display: none;
+
+}
+
+
+
+
+
+
+
+/* OPTIONS */
+
+
+.option-wrap {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+}
+
+
+
+.option-card {
+
+
+    padding: 12px 16px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 14px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    background: white;
+
+}
+
+
+
+.option-card.active {
+
+
+    background: #fff;
+
+    color: black;
+
+    border-color: #facc15;
+
+}
+
+
+
+/* WEIGHT */
+
+
+.weight-box {
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 12px;
+
+    width: 100%;
+
+}
+
+
+
+.weight-card {
+
+
+    height: 48px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 14px;
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+
+    cursor: pointer;
+
+
+    position: relative;
+
+    box-sizing: border-box;
+
+
+    text-align: center;
+
+}
+
+
+
+.weight-card input {
+
+    display: none;
+
+}
+
+.preview-box {
+
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 15px;
+
+    flex-wrap: wrap;
+
+
+}
+
+
+
+.preview-img {
+
+
+    width: 90px;
+
+    height: 90px;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    border: 1px solid #ddd;
+
+
+}
+
+
+
+.preview-img img {
+
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+
+}
+
+
+
+.preview-box {
+
+
+    display: flex;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+    margin-top: 15px;
+
+
+}
+
+
+
+.preview-img {
+
+
+    width: 90px;
+
+    height: 90px;
+
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    position: relative;
+
+    border: 1px solid #ddd;
+
+
+}
+
+
+
+.preview-img img {
+
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+
+}
+
+
+
+.remove-img {
+
+
+    position: absolute;
+
+    top: 5px;
+
+    right: 5px;
+
+
+    width: 26px;
+
+    height: 26px;
+
+
+    border: none;
+
+    border-radius: 50%;
+
+
+    background: #dc2626;
+
+    color: #fff;
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
+    font-size: 16px;
+
+
+}
+
+.pdf-preview {
+
+
+    margin-top: 15px;
+
+    padding: 12px;
+
+    background: #fef2f2;
+
+    border-radius: 12px;
+
+    color: #dc2626;
+
+    font-weight: 600;
+
+    display: flex;
+
+    gap: 8px;
+
+    align-items: center;
+
+
+}
+
+.error-box {
+
+    background: #fee2e2;
+
+    color: #b91c1c;
+
+    padding: 12px;
+
+    border-radius: 12px;
+
+    margin-bottom: 15px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+}
+
+.weight-card.active {
+
+
+    background: #facc15;
+
+    color: black;
+
+    border-color: #facc15;
+
+
+}
+
+
+
+@media(max-width:600px) {
+
+
+    .weight-box {
+
+
+        grid-template-columns: repeat(2, 1fr);
+
+
+    }
+
+
+
+    .weight-card {
+
+
+        height: 19px;
+
+
+    }
+
+
+}
+
+
+
+
+
+/* MEDICINE */
+
+
+.medicine-box {
+
+    background: #f9fafb;
+
+    padding: 12px;
+
+    border-radius: 15px;
+
+    margin-bottom: 12px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+}
+
+
+
+
+
+.medicine-row {
+
+
+    display: flex;
+
+    gap: 10px;
+
+    width: 100%;
+
+    align-items: center;
+
+    box-sizing: border-box;
+
+}
+
+
+
+
+
+.medicine-row input {
+
+
+    flex: 1;
+
+    min-width: 0;
+
+}
+
+
+
+
+
+.delete-btn {
+
+
+    height: 45px;
+
+    min-width: 45px;
+
+    border: none;
+
+    border-radius: 12px;
+
+    background: #fee2e2;
+
+    color: #dc2626;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+}
+
+
+
+
+
+.add-btn {
+
+    height: 27px;
+    /* padding: 0 22px; */
+    border-radius: 10px;
+    border: 1px solid #16a34a;
+    background: #f0fdf4;
+    color: #166534;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+}
+
+
+
+
+
+/* FOOTER */
+
+
+.footer {
+
+
+    position: fixed;
+
+    bottom: 0;
+
+    left: 0;
+
+    right: 0;
+
+    background: #fff;
+
+    border-top: 1px solid #eee;
+
+    padding: 12px 15px;
+
+    z-index: 999;
+
+    box-sizing: border-box;
+
+}
+
+
+
+
+
+.submit {
+
+
+    width: 100%;
+
+    height: 52px;
+
+    border: none;
+
+    border-radius: 15px;
+
+    background: #16a34a;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+}
+
+
+
+
+
+/* MOBILE */
+
+
+@media(max-width:600px) {
+
+
+
+    .order-page {
+
+        padding: 12px;
+
+        padding-bottom: 130px;
+
+    }
+
+
+
+    .type-box label {
+
+
+        height: 60px;
+
+        font-size: 13px;
+
+    }
+
+
+
+    .medicine-row {
+
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+
+    .medicine-row input {
+
+        width: 100%;
+
+    }
+
+
+
+    .delete-btn {
+
+
+        width: 100%;
+
+    }
+
+
+
+    .weight-box {
+
+
+        grid-template-columns: repeat(2, 1fr);
+
+    }
+
+
+
+    .option-card {
+
+        padding: 10px 14px;
+
+    }
+
+
+
+    .footer {
+
+        padding-bottom: 15px;
+
+    }
+
+
+}
