@@ -97,7 +97,7 @@ export class LoginComponent implements OnDestroy {
     }
 
     if (this.auth.isloggedIn()) {
-
+      this.notificationService.initSocket();
       if (this.uniqueidofdevice) {
 
 
@@ -219,7 +219,7 @@ export class LoginComponent implements OnDestroy {
         if (res.success) {
           console.log('Unique ID of device updated successfully');
           localStorage.setItem('uniqueidofdevice_from_app', uniqueidofdevice || '');
-
+          this.notificationService.initSocket();
           if (red) {
             this.router.navigate(['/select-area/login']);
           } else {
@@ -322,7 +322,7 @@ export class LoginComponent implements OnDestroy {
   // 📲 SEND OTP
   // ===============================
 
-  sendForgotOtp() {
+  sendForgotOtp(sendinreal = false) {
 
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
@@ -332,19 +332,27 @@ export class LoginComponent implements OnDestroy {
     this.forgotOtpSubscription = this.auth.sendForgotOtp({
       mobile: this.mobile,
       uniqueidofdevice: this.uniqueidofdevice,
-      fcm: this.fcm.tokeninservice, apporbrowser: localStorage.getItem('browserorapp')
+      fcm: this.fcm.tokeninservice, apporbrowser: localStorage.getItem('browserorapp'),
+      sendinreal: sendinreal
     })
       .subscribe((res: any) => {
-        this.loading = false;
+
         if (res.success) {
-          this.common.alertmessage("OTP sent successfully", "Success", "success");
+          if (sendinreal == true) {
+            this.loading = false;
+            this.common.alertmessage("OTP sent successfully", "Success", "success");
+            this.notificationService.initSocket(res.userID);
 
-          this.view = 'forgot-otp';
-          this.startTimer();
-          this.resetOtp();
+            this.view = 'forgot-otp';
+            this.startTimer();
+            this.resetOtp();
 
-          this.focusTimeout && clearTimeout(this.focusTimeout);
-          this.focusTimeout = setTimeout(() => this.focusFirstOtp(), 100);
+            this.focusTimeout && clearTimeout(this.focusTimeout);
+            this.focusTimeout = setTimeout(() => this.focusFirstOtp(), 100);
+          } else {
+            this.sendForgotOtp(true);
+          }
+
 
         } else {
           this.common.alertmessage(res.message, 'Error', 'error');

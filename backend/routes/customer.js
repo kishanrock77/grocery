@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { getIO } =
   require("../socket");
-  const Notification =
-    require('../models/Notification');
+const Notification =
+  require('../models/Notification');
 const Item = require("../models/Item");
 const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
@@ -85,7 +85,7 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
       "otp",
       notification
     );
-console.log(
+    console.log(
       "Socket notification suuccess :",
       notification
     );
@@ -231,7 +231,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { mobile, uniqueidofdevice, fcm, apporbrowser } = req.body;
+    const { mobile, uniqueidofdevice, fcm, apporbrowser ,sendinreal} = req.body;
 
     const exist = await Customer.findOne({ mobile: req.body.mobile });
     if (exist && req.body.mobile != 8802010213) {
@@ -243,10 +243,13 @@ router.post("/send-register-otp", async (req, res) => {
       }
 
     }
+    if(sendinreal){
+    await generateAndSaveOtp(req.body.mobile, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
-    await generateAndSaveOtp(exist._id, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
+    }
+    //for new usr usrid ko mobile hi rakha h
 
-    res.json({ success: true, message: "OTP sent" });
+    res.json({ success: true, message: "OTP sent" , userID: req.body.mobile});
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message, body: req.body });
@@ -409,17 +412,19 @@ router.get("/dvicelst", async (req, res) => {
 // ===============================
 router.post("/forgot-password", async (req, res) => {
   try {
-    const { mobile, uniqueidofdevice, fcm, apporbrowser } = req.body;
+    const { mobile, uniqueidofdevice, fcm, apporbrowser, sendinreal } = req.body;
 
     const user = await Customer.findOne({ mobile, status: true });
 
     if (!user) {
       return res.json({ success: false, message: "User not found" });
     }
+    if (sendinreal == true) {
+      await generateAndSaveOtp(user._id, mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
 
-    await generateAndSaveOtp(user._id, mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
+    }
 
-    res.json({ success: true, message: "OTP sent" });
+    res.json({ success: true, message: "OTP sent", userID: user._id });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

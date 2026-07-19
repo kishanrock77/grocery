@@ -32,7 +32,7 @@ export class NotificationService {
   // SOCKET INIT
   // ============================
 
-  initSocket() {
+  initSocket(userIdparam = null) {
 
     this.socket = io(this.uri);
 
@@ -42,11 +42,16 @@ export class NotificationService {
         'Socket connected:',
         this.socket.id
       );
+      let userId;;
+      if (userIdparam == null) {
+        userId =
+          localStorage.getItem(
+            'userId'
+          );
+      } else {
+        userId = userIdparam;
+      }
 
-      const userId =
-        localStorage.getItem(
-          'userId'
-        );
 
       if (userId) {
 
@@ -73,7 +78,6 @@ export class NotificationService {
     this.socket.on(
       'newNotification',
       (data: any) => {
-                alert(data.title + ': ' + data.message);
 
         console.log(
           'New Notification:',
@@ -118,7 +122,6 @@ export class NotificationService {
     this.socket.on(
       'otp',
       (data: any) => {
-        alert(data.title + ': ' + data.message);
         console.log(
           'New OTP:',
           data

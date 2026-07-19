@@ -6,6 +6,7 @@ import { FcmService } from '../../services/fcm';
 
 import { AuthService } from '../../services/auth';
 import { Common } from '../../services/common';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'signup-page',
@@ -18,11 +19,15 @@ export class Signup {
   uniqueidofdevice: any = '';
   constructor(
     private auth: AuthService, private fcm: FcmService,
-    private common: Common,
+    private common: Common, private notificationService:
+      NotificationService,
     private router: Router
   ) {
 
+    this.notificationService
+      .requestPermission();
     if (this.auth.isloggedIn()) {
+      this.notificationService.initSocket();
       if (this.auth.isAreaSelected()) {
         this.router.navigate(['/home']);
       } else {
@@ -87,21 +92,30 @@ export class Signup {
   }
   // 📲 SEND OTP
   loading: boolean = false;
-  sendOtp() {
+  sendOtp(sendinreal = false) {
     this.loading = true;
     this.auth.sendRegisterOtp({
       mobile: this.mobile,
       uniqueidofdevice: this.uniqueidofdevice,
-      fcm: this.fcm.tokeninservice, apporbrowser: localStorage.getItem('browserorapp')
+      fcm: this.fcm.tokeninservice, apporbrowser: localStorage.getItem('browserorapp'),
+      sendinreal: sendinreal
     }).subscribe((res: any) => {
-      this.loading = false;
+
       if (res.success) {
-        this.view = 'otp';
-        this.startTimer();
+        if (sendinreal == true) {
+          this.loading = false;
+          this.view = 'otp';
+          this.startTimer();
+          this.notificationService.initSocket(res.userID);
+
+        } else {
+          this.sendOtp(true);
+        }
+
       } else {
         this.common.alertmessage(res.message, 'warning', 'warning');
       }
-    },(err:any)=>{
+    }, (err: any) => {
       this.loading = false;
       this.common.alertmessage(err.error?.message || 'Failed to send OTP', 'Error', 'error');
     });
