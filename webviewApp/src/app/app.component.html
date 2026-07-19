@@ -1,159 +1,173 @@
 <!-- =========================
 LOADER
-========================= -->
 
-<div
-  class="header-boy"
-  *ngIf="loading"
->
+========================= --> 
+<span *ngIf="isOffline==false">
 
-  <img src="/assets/boy.gif">
+  <div class="header-boy" *ngIf="loading && showPermissionScreen==false">
 
-</div>
+    <img src="/assets/boy.gif">
 
-<div
-  class="top"
-  *ngIf="loading"
->
+  </div>
 
-  <h1 class="logo">
+  <div class="top" *ngIf="loading && showPermissionScreen==false">
 
-    <i>
-      fast <span>Bite</span>
-    </i>
+    <h1 class="logo">
 
-  </h1>
+      <i>
+        fast <span>Bite</span>
+      </i>
 
-  <strong
-    style="margin-top: -10px;"
-  >
+    </h1>
 
-    Delivery in Minutes
+    <strong style="margin-top: -10px;">
 
-  </strong>
+      Delivery in Minutes
 
-</div>
+    </strong>
 
-<!-- =========================
+  </div>
+
+  <!-- =========================
 PERMISSION SCREEN
 ========================= -->
 
-<div
-  class="permission-screen"
-  *ngIf="showPermissionScreen && !loading"
->
+  <div class="permission-screen" *ngIf="showPermissionScreen && !loading">
 
-  <div class="permission-card">
+    <div class="permission-card">
 
-    <div class="top">
+      <div class="top">
 
-      <h1 class="logo">
+        <h1 class="logo">
 
-        <i>
-          fast <span>Bite</span>
-        </i>
+          <i>
+            fast <span>Bite</span>
+          </i>
 
-      </h1>
+        </h1>
 
-      <strong
-        style="margin-top: -10px;"
-      >
+        <strong style="margin-top: -10px;">
 
-        Delivery in Minutes
+          Delivery in Minutes
 
-      </strong>
+        </strong>
 
-    </div>
+      </div>
 
-    <h2>
-      Permissions Required
-    </h2>
+      <h2>
+        Permissions Required
+      </h2>
 
-    <p>
+      <p>
 
-      App properly use karne ke liye
-      neeche di gayi permissions allow karni hongi.
+        App properly use karne ke liye
+        neeche di gayi permissions allow karni hongi.
 
-    </p>
+      </p>
 
-    <!-- =========================
+
+      <div class="permission-item">
+
+        <span>
+
+          🔔 Notification <small *ngIf="errnotification" style="color: red; margin-top: 5px;">
+            Try again
+          </small>
+
+        </span>
+
+        <button *ngIf="!permissions.notification" (click)="allowNotification()">
+
+
+
+          {{ notloading ? 'Allowing...' : 'Allow' }}
+        </button>
+
+        <span class="approved" *ngIf="permissions.notification">
+
+          Approved
+
+        </span>
+
+      </div>
+      <!-- =========================
     LOCATION
     ========================= -->
 
-    <div class="permission-item">
+      <div class="permission-item">
 
-      <span>
+        <span>
 
-        📍 Location
+          📍 Location <small *ngIf="!permissions.location && err" style="color: red; margin-top: 5px;">
+            Try again
+          </small>
 
-      </span>
+        </span>
 
-      <button
-        *ngIf="!permissions.location"
-        (click)="allowLocation()"
-      >
+        <button *ngIf="!permissions.location" (click)="allowLocation()">
 
-        Allow
 
-      </button>
+          {{ locloading ? 'Allowing...' : 'Allow' }}
+        </button>
 
-      <span
-        class="approved"
-        *ngIf="permissions.location"
-      >
+        <span class="approved" *ngIf="permissions.location">
 
-        Approved
+          Approved
 
-      </span>
+        </span>
 
-    </div>
-
-    <!-- =========================
+      </div>
+      <small *ngIf="err" style="color: red; margin-top: 5px;">
+        {{err}}
+      </small>
+      <!-- =========================
     MICROPHONE
     ========================= -->
 
-    <div class="permission-item">
+      <div class="permission-item">
 
-      <span>
+        <span>
 
-        🎤 Microphone
+          🎤 Microphone <small *ngIf="errm" style="color: red; margin-top: 5px;">
+            Try again
+          </small>
 
-      </span>
+        </span>
 
-      <button
-        *ngIf="!permissions.microphone"
-        (click)="allowMicrophone()"
-      >
+        <button *ngIf="!permissions.microphone" (click)="allowMicrophone()">
 
-        Allow
 
-      </button>
+          {{ micloading ? 'Allowing...' : 'Allow' }}
 
-      <span
-        class="approved"
-        *ngIf="permissions.microphone"
-      >
+        </button>
 
-        Approved
+        <span class="approved" *ngIf="permissions.microphone">
 
-      </span>
+          Approved
+
+        </span>
+
+      </div>
 
     </div>
 
   </div>
 
-</div>
-
-<!-- =========================
+  <!-- =========================
 WEBSITE
 ========================= -->
 
-<iframe
-  *ngIf="safeUrl"
-  [src]="safeUrl"
-  (load)="onLoad()"
-  allow="geolocation; microphone; camera"
-  allowfullscreen
-  class="fastBite"
->
-</iframe>
+  <iframe *ngIf="safeUrl && !isOffline" [src]="safeUrl" (load)="onLoad()" allow="geolocation; microphone; camera"
+    allowfullscreen class="fastBite">
+  </iframe>
+
+</span>
+<div class="offline-popup" *ngIf="isOffline">
+  <div class="offline-box">
+    <h3>📶 No Internet</h3>
+    <p>Internet Not Connected</p>
+  </div>
+</div>
+
+ 
+ 

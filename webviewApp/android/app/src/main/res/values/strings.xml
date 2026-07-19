@@ -1,7 +1,21 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources>
+  <resources>
     <string name="app_name">fastBite</string>
     <string name="title_activity_main">fastBite</string>
     <string name="package_name">com.webview.app</string>
     <string name="custom_url_scheme">com.webview.app</string>
-</resources>
+    <string name="server_client_id">
+53907603345-77b74cahufec62hap6odhsfiv6oa4rir.apps.googleusercontent.com
+</string>
+</resources>   
+
+<!--  
+<resources>
+    <string name="app_name">fastBiteStoreDelivery</string>
+    <string name="title_activity_main">fastBiteStoreDelivery</string>
+    <string name="package_name">com.webview.app</string>
+    <string name="custom_url_scheme">com.webview.app</string>
+</resources>   -->
+
+
+

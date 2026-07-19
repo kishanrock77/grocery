@@ -1,34 +1,66 @@
-const axios = require('axios');
 
-const AUTH_KEY = process.env.MSG91_AUTH_KEY;
-const TEMPLATE_ID = process.env.MSG91_TEMPLATE_ID;
+ 
+ const axios = require("axios");
 
-async function sendOtp(mobile, otp) {
+const AUTH_KEY =  '521230AQMfDBMK6a41edccP1';
+const INTEGRATED_NUMBER = "917827382317";
+const TEMPLATE_NAME = "creation";
+
+async function sendOtp(mobile, otp, type) {
   try {
-
     const response = await axios.post(
-      'https://control.msg91.com/api/v5/otp',
+      "https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/",
       {
-        template_id: TEMPLATE_ID,
-        mobile: `91${mobile}`,
-        otp: otp
+        integrated_number: INTEGRATED_NUMBER,
+        content_type: "template",
+        payload: {
+          messaging_product: "whatsapp",
+          type: "template",
+          template: {
+            name: TEMPLATE_NAME,
+            language: {
+              code: "en",
+              policy: "deterministic"
+            },
+            namespace: null,
+            to_and_components: [
+              {
+                to: [`91${mobile}`],
+                components: {
+                  header_1: {
+                    type: "image",
+                    value: "https://your-domain.com/images/header.jpg"
+                  },
+                  body_1: {
+                    type: "text",
+                    value: otp.toString()
+                  },
+                  body_2: {
+                    type: "text",
+                    value: type
+                  }
+                }
+              }
+            ]
+          }
+        }
       },
       {
         headers: {
           authkey: AUTH_KEY,
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         }
       }
     );
 
+    console.log("WhatsApp Response:", response.data);
     return response.data;
 
   } catch (error) {
     console.error(
-      'MSG91 Error:',
+      "MSG91 Error:",
       error.response?.data || error.message
     );
-
     throw error;
   }
 }

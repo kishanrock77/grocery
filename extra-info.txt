@@ -1,0 +1,2 @@
+ssh -i grocerykeypair.pem ubuntu@13.233.29.35
+

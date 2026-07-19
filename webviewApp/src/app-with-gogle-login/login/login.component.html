@@ -1,0 +1,110 @@
+<div *ngIf="isOffline==false" class="page">
+
+
+    <div class="hero">
+
+        <img src="/assets/loginbanner.jpg" class="boy-img">
+
+    </div>
+
+
+
+
+
+    <div class="card" *ngIf="!isloggedin">
+
+        <br>
+        <br>
+
+        <h2>
+
+            Welcome 👋
+
+        </h2>
+
+        <p class="welcome">
+
+            Login to continue your tasty journey
+
+        </p>
+
+        <div class="google-login-container">
+
+            <button class="google-btn" (click)="googleLogin()" [disabled]="loading">
+
+                <img src="/assets/google.png" alt="Google">
+
+                <span *ngIf="!loading">
+                    Continue with Google
+                </span>
+
+                <span *ngIf="loading">
+                    Please wait...
+                </span>
+
+            </button>
+
+        </div>
+
+        <!-- <button class="google-btn" (click)="loginWithGoogle()" [disabled]="loading">
+
+      <img src="google.png">
+
+      <span>
+
+        Continue with Google
+
+      </span>
+
+    </button> -->
+
+
+
+
+        <div *ngIf="loading" class="loading">
+
+            <div class="spinner"></div>
+
+        </div>
+
+        <p class="terms">
+
+            By continuing, you agree to our
+
+            <span (click)="openetermandpoloicy('terms-and-conditions.html')">
+
+                Terms
+
+            </span>
+
+            &
+
+            <span (click)="openetermandpoloicy('privacy-policy.html')">
+
+                Privacy Policy
+
+            </span>
+
+        </p>
+
+
+
+
+        
+    </div>
+    <iframe *ngIf="safeUrl && !isOffline && isloggedin" [src]="safeUrl" (load)="onLoad()" allow="geolocation; microphone; camera"
+            allowfullscreen class="fastBite">
+        </iframe>
+</div>
+<div class="offline-popup" *ngIf="isOffline">
+    <div class="offline-box">
+        <h3>📶 No Internet</h3>
+        <p>Internet Not Connected</p>
+    </div>
+</div>
+
+
+
+
+
+<!-- MOBILE POPUP -->

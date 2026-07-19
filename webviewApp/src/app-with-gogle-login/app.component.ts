@@ -47,12 +47,12 @@ export class AppComponent {
     private sanitizer: DomSanitizer, public fcm: FcmService
   ) {
 
-    // if (localStorage.getItem('userapp')) {
-    //   this.hidemycontent = true;
-    // } else {
-    //   this.hidemycontent = false;
+    if (localStorage.getItem('userapp')) {
+      this.hidemycontent = true;
+    } else {
+      this.hidemycontent = false;
 
-    // }
+    }
 
   }
   deviceInfo: any;
@@ -61,10 +61,10 @@ export class AppComponent {
     window.addEventListener('message', (event: any) => {
 
       if (event.data?.type === 'LOGOUT') {
-        //localStorage.removeItem('userapp');
+        localStorage.removeItem('userapp');
          
-       // this.hidemycontent = true;
-      //  this.router.navigate(['/login']);
+        this.hidemycontent = true;
+        this.router.navigate(['/login']);
 
       }
 
@@ -330,7 +330,7 @@ export class AppComponent {
       if (localStorage.getItem('userapp')) {
         this.hidemycontent = false;
 
-        this.loadwebsite()
+        this.loadwebsite(JSON.parse(localStorage.getItem('userapp') || '{}'))
       } else {
         this.hidemycontent = true;
 
@@ -451,7 +451,7 @@ export class AppComponent {
   // LOAD WEBSITE
   // ====================================
 
-  async loadwebsite() {
+  async loadwebsite(user: any) {
 
     let finalUrl = this.baseUrl;
 
@@ -490,7 +490,7 @@ export class AppComponent {
       }
 
       finalUrl =
-        `${this.baseUrl}?v=1&uniqueidofdevice=${this.deviceInfo.identifier}&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
+        `${this.baseUrl}?v=1&isalreadyloggedin=true&_id=${user._id}&uniqueidofdevice=${this.deviceInfo.identifier}&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
 
     } catch (e) {
 
