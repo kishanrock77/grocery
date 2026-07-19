@@ -66,7 +66,8 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
   try {
 
     const io = getIO();
-    console.log('io auth otp: ' + io);
+    console.log('io auth otp: userId ' + userId);
+    console.log(io)
     io.to(
       userId.toString()
     ).emit(
