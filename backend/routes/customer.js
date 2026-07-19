@@ -24,7 +24,7 @@ const googleClient =
 // ===============================
 // 🧪 COMMON OTP FUNCTION
 // ===============================
-const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, token, apporbrowser) => {
+const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofdevice, token, apporbrowser) => {
 
   //verify register forgot
   let otp;
@@ -61,19 +61,45 @@ const generateAndSaveOtp = async (mobile, type = "register", uniqueidofdevice, t
   } else {
     await sendFCM(token, "OTP for FastBite " + type, txttowhatsapp);
   }
+  try {
+
+    const io = getIO();
+    console.log('io auth: ' + io);
+    io.to(
+      userId.toString()
+    ).emit(
+      "otp",
+      {
+        "userId": userId,
+        "userType": "Customer",
+        "title": "OTP for FastBite " + type,
+        "message": txttowhatsapp,
+
+      }
+    );
+
+  }
+  catch (err) {
+
+    console.log(
+      "Socket notification error:",
+      err.message
+    );
+
+  }
   console.log('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
 
-    console.log('apporbrowser', apporbrowser,  'token',   token);
-    console.log('uniqueidofdevice', uniqueidofdevice,  'token',   token);
+  console.log('apporbrowser', apporbrowser, 'token', token);
+  console.log('uniqueidofdevice', uniqueidofdevice, 'token', token);
 
-  console.log(`OTP ${otp} sent to ${mobile}`, uniqueidofdevice,  token,   "OTP for FastBite " + type,   txttowhatsapp);
+  console.log(`OTP ${otp} sent to ${mobile}`, uniqueidofdevice, token, "OTP for FastBite " + type, txttowhatsapp);
 };
-async function sendFCM( 
+async function sendFCM(
   token,
   title,
   body
 
- ) {
+) {
 
   try {
 
@@ -113,12 +139,12 @@ async function sendFCM(
   }
 
 }
-async function sendFCMApp( uniqueidofdevice, tokennotinuse, title, body
+async function sendFCMApp(uniqueidofdevice, tokennotinuse, title, body
 
 ) {
 
   try {
-    console.log('uniqueidofdevice', uniqueidofdevice,  'sendFCMApp',   title,   body);
+    console.log('uniqueidofdevice', uniqueidofdevice, 'sendFCMApp', title, body);
 
     if (!uniqueidofdevice) {
       return;
@@ -205,7 +231,7 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
 
-    await generateAndSaveOtp(req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
+    await generateAndSaveOtp(exist._id, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -378,7 +404,7 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    await generateAndSaveOtp(mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
+    await generateAndSaveOtp(user._id, mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
 
     res.json({ success: true, message: "OTP sent" });
 
@@ -430,7 +456,13 @@ router.post("/resend-otp", async (req, res) => {
       });
     }
 
-    await generateAndSaveOtp(mobile, type, uniqueidofdevice, fcm, apporbrowser);
+    const user = await Customer.findOne({ mobile, status: true });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+
+    await generateAndSaveOtp(user._id, mobile, type, uniqueidofdevice, fcm, apporbrowser);
 
     res.json({
       success: true,

@@ -255,7 +255,7 @@ async function saveNotification({
       user?.uniqueidofdevice;
     token =
       user?.fcmToken;
-  console.log("Customer " + user);
+    console.log("Customer " + user);
 
   }
 
@@ -318,7 +318,7 @@ async function saveNotification({
     body: message, storeOwnerDoc
 
   });
-  
+
   console.log('title 322: ' + title);
   await sendFCM({
     token,
@@ -336,14 +336,14 @@ async function saveNotification({
   try {
 
     const io = getIO();
- console.log('io 322: ' + io);
+    console.log('io 322: ' + io);
     io.to(
       userId.toString()
     ).emit(
       "newNotification",
       notification
     );
-     
+
   }
   catch (err) {
 

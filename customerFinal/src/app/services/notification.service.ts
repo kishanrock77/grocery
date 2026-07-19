@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Common } from './common';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +21,8 @@ export class NotificationService {
   notifications$ =
     this.notifications.asObservable();
 
-  constructor() {
+  constructor(
+    private common: Common) {
 
     this.initSocket();
 
@@ -71,11 +73,54 @@ export class NotificationService {
     this.socket.on(
       'newNotification',
       (data: any) => {
-
         console.log(
           'New Notification:',
           data
         );
+        this.common.alertmessage(data.title + ': ' + data.message, 'info', 'info');
+
+        const current =
+          this.notifications.value;
+
+        this.notifications.next([
+          data,
+          ...current
+        ]);
+
+        // sound
+        this.playSound();
+
+        // browser popup
+
+        if (
+          'Notification' in window &&
+          Notification.permission ===
+          'granted'
+        ) {
+
+          new Notification(
+            data.title,
+            {
+              body:
+                data.message,
+              icon:
+                'logo.png'
+            }
+          );
+
+        }
+
+      }
+    );
+
+    this.socket.on(
+      'otp',
+      (data: any) => {
+        console.log(
+          'New OTP:',
+          data
+        );
+        this.common.alertmessage(data.title + ': ' + data.message, 'info', 'info');
 
         const current =
           this.notifications.value;
@@ -163,7 +208,7 @@ export class NotificationService {
 
       const audio =
         new Audio(
-          'notification.mp3'
+          'notification.wav'
         );
 
       audio.load();

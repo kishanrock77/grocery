@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth';
 import { Common } from '../../services/common';
 import { FcmService } from '../../services/fcm';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -43,12 +44,15 @@ export class LoginComponent implements OnDestroy {
   resetPasswordSubscription?: Subscription;
   focusTimeout?: ReturnType<typeof setTimeout>;
   constructor(
-    private auth: AuthService,
+    private auth: AuthService, private notificationService:
+      NotificationService,
     public common: Common, private fcm: FcmService,
     private router: Router
   ) {
 
 
+    this.notificationService
+      .requestPermission();
     const urlParams = new URLSearchParams(window.location.search);
     const versionfromapp = urlParams.get('v');
     let angularversion = '1'
@@ -105,8 +109,8 @@ export class LoginComponent implements OnDestroy {
 
 
             this.upadtedeviceuniqueid(this.uniqueidofdevice, false);
-          } else { 
-            if (this.auth.isAreaSelected()) { 
+          } else {
+            if (this.auth.isAreaSelected()) {
               this.router.navigate(['/home']);
             } else {
               this.router.navigate(['/select-area/login']);
