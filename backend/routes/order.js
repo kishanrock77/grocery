@@ -318,6 +318,8 @@ async function saveNotification({
     body: message, storeOwnerDoc
 
   });
+  
+  console.log('title 322: ' + title);
   await sendFCM({
     token,
 
