@@ -333,34 +333,34 @@ async function saveNotification({
 
 
 
-  // try {
+  try {
 
-  //   const io = getIO();
+    const io = getIO();
 
-  //   io.to(
-  //     userId.toString()
-  //   ).emit(
-  //     "newNotification",
-  //     notification
-  //   );
-  //   await Notification.create({
+    io.to(
+      userId.toString()
+    ).emit(
+      "newNotification",
+      notification
+    );
+    await Notification.create({
 
-  //     userId,
-  //     userType,
-  //     title: 'newNotification' + title,
-  //     message: 'newNotification' + message,
-  //     relatedOrderId
+      userId,
+      userType,
+      title: 'newNotification' + title,
+      message: 'newNotification' + message,
+      relatedOrderId
 
-  //   });
-  // }
-  // catch (err) {
+    });
+  }
+  catch (err) {
 
-  //   //console.log(
-  //     "Socket notification error:",
-  //     err.message
-  //   );
+    console.log(
+      "Socket notification error:",
+      err.message
+    );
 
-  // }
+  }
 
 }
 
