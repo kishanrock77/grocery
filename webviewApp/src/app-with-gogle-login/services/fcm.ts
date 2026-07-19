@@ -9,7 +9,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
+import { LocalNotifications } from '@capacitor/local-notifications';
 @Injectable({
   providedIn: 'root'
 })
@@ -50,6 +50,7 @@ export class FcmService {
       );
 
     }
+  await LocalNotifications.requestPermissions();
 
     await PushNotifications.register();
 
@@ -101,7 +102,12 @@ const audio = new Audio('assets/notification.wav');
   }
 
  async callme(deviceInfo: any) {
-
+await LocalNotifications.createChannel({
+  id: 'orders',
+  name: 'Orders',
+  importance: 5,
+  sound: 'notification'
+});
   try {
 
 
@@ -155,15 +161,25 @@ const audio = new Audio('assets/notification.wav');
 
 
     await PushNotifications.addListener(
-      'pushNotificationReceived',
-      (notification: PushNotificationSchema)=>{
+  'pushNotificationReceived',
+  async (notification: PushNotificationSchema) => {
 
+    console.log('Foreground Notification', notification);
 
-        this.playNotificationSound();
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: Date.now(),
+          title: notification.title || '',
+          body: notification.body || '',
+          channelId: 'orders',
+          smallIcon: 'ic_stat_fastbite'
+        }
+      ]
+    });
 
-
-      }
-    );
+  }
+);
 
 
 

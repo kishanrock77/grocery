@@ -93,25 +93,20 @@ export class LoginComponent implements OnDestroy {
     }
 
     if (this.auth.isloggedIn()) {
-      alert(1)
 
       if (this.uniqueidofdevice) {
-  alert(11)
+
 
 
         if (localStorage.getItem('uniqueidofdevice_from_app')) {
-            alert(12)
+
 
           if (localStorage.getItem('uniqueidofdevice_from_app') != this.uniqueidofdevice) {
-              alert(13)
+
 
             this.upadtedeviceuniqueid(this.uniqueidofdevice, false);
-          } else {
-              alert(14)
-
-            if (this.auth.isAreaSelected()) {
-                alert(15)
-
+          } else { 
+            if (this.auth.isAreaSelected()) { 
               this.router.navigate(['/home']);
             } else {
               this.router.navigate(['/select-area/login']);
@@ -231,14 +226,14 @@ export class LoginComponent implements OnDestroy {
             }
           }
         } else {
-         // this.common.alertmessage(res.message || "Failed to update device", "error", "error");
+          // this.common.alertmessage(res.message || "Failed to update device", "error", "error");
         }
       },
       (err) => {
         this.upadtingtoken = false;
         console.error('Failed to update device id:', err);
         const errorMessage = this.getErrorMessage(err);
-       // this.common.alertmessage("Failed to update device id: " + userId + " - " + errorMessage, "error", "error");
+        // this.common.alertmessage("Failed to update device id: " + userId + " - " + errorMessage, "error", "error");
       },
       () => {
         console.log('Device update completed');

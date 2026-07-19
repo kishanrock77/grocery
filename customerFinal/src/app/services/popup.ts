@@ -54,15 +54,15 @@ export class PopupService {
       }
       this.common.browserorapp = localStorage.getItem('browserorapp');
     }
-    if (this.common.browserorapp == 'browser' && force != 'app') {
+    // if (this.common.browserorapp == 'browser' && force != 'app') {
 
-      window.open(
-        '/' + component + '/' + data,
-        '_blank'
-      );
+    //   window.open(
+    //     '/' + component + '/' + data,
+    //     '_blank'
+    //   );
 
-      return;
-    }
+    //   return;
+    // }
 
     // =========================
     // APP POPUP MODE

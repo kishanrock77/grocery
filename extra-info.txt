@@ -1,2 +1,9 @@
 ssh -i grocerykeypair.pem ubuntu@13.233.29.35
 
+ng build --configuration production
+npx cap sync android
+
+npx cap copy android
+
+npx cap open android
+

@@ -62,9 +62,9 @@ export class AppComponent {
 
       if (event.data?.type === 'LOGOUT') {
         //localStorage.removeItem('userapp');
-         
-       // this.hidemycontent = true;
-      //  this.router.navigate(['/login']);
+
+        // this.hidemycontent = true;
+        //  this.router.navigate(['/login']);
 
       }
 
@@ -324,18 +324,18 @@ export class AppComponent {
     if (allGranted) {
 
       this.showPermissionScreen = false;
-
+      this.loadwebsite()
       //login pe login karo
 
-      if (localStorage.getItem('userapp')) {
-        this.hidemycontent = false;
+      // if (localStorage.getItem('userapp')) {
+      //   this.hidemycontent = false;
 
-        this.loadwebsite()
-      } else {
-        this.hidemycontent = true;
+      //   this.loadwebsite()
+      // } else {
+      //   this.hidemycontent = true;
 
-        this.router.navigate(['/login']);
-      }
+      //   this.router.navigate(['/login']);
+      // }
 
     }
 
@@ -504,9 +504,9 @@ export class AppComponent {
           finalUrl
         );
 
-    setTimeout(() => {
-      this.loading = false;
-    }, 1000);
+    // setTimeout(() => {
+    //   this.loading = false;
+    // }, 1000);
 
 
   }

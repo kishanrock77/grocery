@@ -103,18 +103,18 @@ async function saveLog(
 
 }
 
-async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOwnerDoc
+async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body, storeOwnerDoc
 
 }) {
 
   try {
 
-   console.log("storeOwnerDoc "+title);
-     console.log(storeOwnerDoc);
-    
+    console.log("storeOwnerDoc " + title);
+    console.log(storeOwnerDoc);
+
     if (!uniqueidofdevice) {
 
-       console.log('uniqueidofdevice not found - '+title);
+      console.log('uniqueidofdevice not found - ' + title);
       return;
     }
     //Notifytoken collection me uniqueidofdevice ke basis pe token nikalna h and fir us token pe notification send karna h
@@ -157,8 +157,8 @@ async function sendFCMApp({ uniqueidofdevice, tokennotinuse, title, body,storeOw
     console.log('FCM FULL ERROR app 157');
     console.log(err);
     console.log(err.code);
-  console.log(err.message);
-  console.log(err.errorInfo);
+    console.log(err.message);
+    console.log(err.errorInfo);
   }
 
 }
@@ -196,7 +196,7 @@ async function sendFCM({
         }
       }
     });
-     console.log(
+    console.log(
       'FCM Sent web'
     );
 
@@ -222,9 +222,9 @@ async function saveNotification({
   relatedOrderId
 
 }) {
-       console.log("userType " + userType);
+  console.log("userType " + userType);
 
-  let storeOwnerDoc ;
+  let storeOwnerDoc;
   if (!userId) {
     return;
   }
@@ -255,6 +255,7 @@ async function saveNotification({
       user?.uniqueidofdevice;
     token =
       user?.fcmToken;
+  console.log("Customer " + user);
 
   }
 
@@ -277,9 +278,9 @@ async function saveNotification({
     userType == 'Store'
   ) {
 
-     console.log("store owner id is " + userId);
+    console.log("store owner id is " + userId);
 
-      storeOwnerDoc =
+    storeOwnerDoc =
       await StoreOwner.findById(
         userId
       );
@@ -306,13 +307,15 @@ async function saveNotification({
 
   }
   title = "Hi " + userType + " - " + title;
+
+  console.log('title 311: ' + title);
   await sendFCMApp({
     uniqueidofdevice,
     token,
 
     title,
 
-    body: message,storeOwnerDoc
+    body: message, storeOwnerDoc
 
   });
   await sendFCM({
@@ -720,7 +723,7 @@ router.post(
           // SHOW ON FRONT
 
           if (
-            item.showOnFront == false &&  item.isitfromcustom == false
+            item.showOnFront == false && item.isitfromcustom == false
           ) {
 
             return res.status(400).json({
@@ -2599,7 +2602,7 @@ router.get(
 
     catch (error) {
 
-       console.log(
+      console.log(
         'role-orders-delivered error',
         error
       );
@@ -3041,7 +3044,7 @@ router.get(
 
     catch (error) {
 
-   console.log(
+      console.log(
         'role-orders-cancelled error',
         error
       );
@@ -3820,50 +3823,50 @@ async function getDashboardStats({
     ] = order;
   });
 
-let deliveredAmount = 0;
+  let deliveredAmount = 0;
 
-let deliveredAmount_cod = 0;
+  let deliveredAmount_cod = 0;
 
-let deliveredAmount_online = 0;
-
-
-Object.values(uniqueMainOrders)
-.forEach(order => {
+  let deliveredAmount_online = 0;
 
 
- 
-  let amount =
-    Number(order.totalamount || 0);
-
-
-  deliveredAmount += amount;
+  Object.values(uniqueMainOrders)
+    .forEach(order => {
 
 
 
-  if(
-    order.paymentMethod &&
-    order.paymentMethod.toLowerCase() === "cod"
-  ){
-
-    deliveredAmount_cod += amount;
-
-  }
+      let amount =
+        Number(order.totalamount || 0);
 
 
-  else if(
-
-    order.paymentMethod &&
-
-    order.paymentMethod.toLowerCase() !== "cod"
-
-  ){
-
-    deliveredAmount_online += amount;
-
-  }
+      deliveredAmount += amount;
 
 
-});
+
+      if (
+        order.paymentMethod &&
+        order.paymentMethod.toLowerCase() === "cod"
+      ) {
+
+        deliveredAmount_cod += amount;
+
+      }
+
+
+      else if (
+
+        order.paymentMethod &&
+
+        order.paymentMethod.toLowerCase() !== "cod"
+
+      ) {
+
+        deliveredAmount_online += amount;
+
+      }
+
+
+    });
 
   let settledCount = 0;
   let settledAmount = 0;
@@ -4046,10 +4049,10 @@ Object.values(uniqueMainOrders)
 
     profit,
 
-  deliveredAmount_cod,
+    deliveredAmount_cod,
 
 
-  deliveredAmount_online,
+    deliveredAmount_online,
     settledCount,
     settledAmount,
 
