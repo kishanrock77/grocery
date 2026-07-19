@@ -336,22 +336,14 @@ async function saveNotification({
   try {
 
     const io = getIO();
-
+ console.log('io 322: ' + io);
     io.to(
       userId.toString()
     ).emit(
       "newNotification",
       notification
     );
-    await Notification.create({
-
-      userId,
-      userType,
-      title: 'newNotification' + title,
-      message: 'newNotification' + message,
-      relatedOrderId
-
-    });
+     
   }
   catch (err) {
 
