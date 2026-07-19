@@ -73,6 +73,8 @@ export class NotificationService {
     this.socket.on(
       'newNotification',
       (data: any) => {
+                alert(data.title + ': ' + data.message);
+
         console.log(
           'New Notification:',
           data
@@ -116,6 +118,7 @@ export class NotificationService {
     this.socket.on(
       'otp',
       (data: any) => {
+        alert(data.title + ': ' + data.message);
         console.log(
           'New OTP:',
           data

@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const { getIO } =
+  require("../socket");
 const Item = require("../models/Item");
 const mongoose = require("mongoose");
 const Customer = require("../models/Customer");
@@ -56,15 +58,15 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
 
   //await sendOtp(mobile, otp, type);
   //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);
-  if (apporbrowser == 'app') {
-    await sendFCMApp(uniqueidofdevice, token, "OTP for FastBite " + type, txttowhatsapp);
-  } else {
-    await sendFCM(token, "OTP for FastBite " + type, txttowhatsapp);
-  }
+  // if (apporbrowser == 'app') {
+  //   await sendFCMApp(uniqueidofdevice, token, "OTP for FastBite " + type, txttowhatsapp);
+  // } else {
+  //   await sendFCM(token, "OTP for FastBite " + type, txttowhatsapp);
+  // }
   try {
 
     const io = getIO();
-    console.log('io auth: ' + io);
+    console.log('io auth otp: ' + io);
     io.to(
       userId.toString()
     ).emit(
