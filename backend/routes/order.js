@@ -197,7 +197,7 @@ async function sendFCM({
       }
     });
     console.log(
-      'FCM Sent web'
+      'FCM Sent web 200'
     );
 
   }

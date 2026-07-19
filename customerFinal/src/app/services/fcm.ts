@@ -174,9 +174,9 @@ export class FcmService {
       }
       this.tokeninservice = token;
 
- console.log(
-          'tokeninservice',this.tokeninservice
-        );
+      console.log(
+        'tokeninservice', this.tokeninservice
+      );
 
     });
 

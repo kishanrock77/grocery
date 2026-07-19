@@ -17,6 +17,37 @@ export class FcmService {
 
   uri: string = environment.commonURL;
 
+  private async showLocalNotification(title: string, body: string) {
+    try {
+      const permission = await LocalNotifications.checkPermissions();
+
+      if (permission.display !== 'granted') {
+        const requested = await LocalNotifications.requestPermissions();
+
+        if (requested.display !== 'granted') {
+          return;
+        }
+      }
+
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: Date.now(),
+            title: title || 'New update',
+            body: body || 'You have a new message',
+            channelId: 'orders',
+            smallIcon: 'ic_stat_fastbite',
+            schedule: {
+              at: new Date(Date.now() + 1000)
+            }
+          }
+        ]
+      });
+    } catch (error) {
+      console.error('Local notification error', error);
+    }
+  }
+
   constructor(
     private http: HttpClient
   ) { }
@@ -101,22 +132,18 @@ const audio = new Audio('assets/notification.wav');
 
   }
 
- async callme(deviceInfo: any) {
-await LocalNotifications.createChannel({
-  id: 'orders',
-  name: 'Orders',
-  importance: 5,
-  sound: 'notification'
-});
-  try {
+  async callme(deviceInfo: any) {
+    try {
+      await LocalNotifications.createChannel({
+        id: 'orders',
+        name: 'Orders',
+        importance: 5,
+        sound: 'notification'
+      });
 
-
-    await PushNotifications.removeAllListeners();
-
-
-    await PushNotifications.addListener(
-      'registrationError',
-      (error) => {
+      await PushNotifications.addListener(
+        'registrationError',
+        (error) => {
 
         console.log(
           'FCM Registration Error',
@@ -161,25 +188,17 @@ await LocalNotifications.createChannel({
 
 
     await PushNotifications.addListener(
-  'pushNotificationReceived',
-  async (notification: PushNotificationSchema) => {
+      'pushNotificationReceived',
+      async (notification: PushNotificationSchema) => {
+        console.log('Foreground Notification', notification);
 
-    console.log('Foreground Notification', notification);
+        const payload = (notification as any).data || {};
+        const title = notification.title || payload.title || payload.messageTitle || 'New update';
+        const body = notification.body || payload.body || payload.message || 'You have a new notification';
 
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          id: Date.now(),
-          title: notification.title || '',
-          body: notification.body || '',
-          channelId: 'orders',
-          smallIcon: 'ic_stat_fastbite'
-        }
-      ]
-    });
-
-  }
-);
+        await this.showLocalNotification(title, body);
+      }
+    );
 
 
 

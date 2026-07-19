@@ -29,6 +29,7 @@ export class AppComponent {
   safeUrl!: SafeResourceUrl;
 
   loading = true;
+  iframeLoading = false;
 
   showPermissionScreen = false;
   //  baseUrl = 'https://app.fastbite.food/login';
@@ -453,6 +454,9 @@ export class AppComponent {
 
   async loadwebsite() {
 
+    this.loading = true;
+    this.iframeLoading = true;
+
     let finalUrl = this.baseUrl;
 
     try {
@@ -513,7 +517,11 @@ export class AppComponent {
 
   onLoad() {
 
-    this.loading = false;
+    this.iframeLoading = false;
+
+    setTimeout(() => {
+      this.loading = false;
+    }, 400);
 
   }
 

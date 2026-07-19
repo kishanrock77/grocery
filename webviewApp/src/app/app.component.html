@@ -4,13 +4,13 @@ LOADER
 ========================= --> 
 <span *ngIf="isOffline==false">
 
-  <div class="header-boy" *ngIf="loading && showPermissionScreen==false">
+  <div class="header-boy" *ngIf="(loading || iframeLoading) && showPermissionScreen==false">
 
     <img src="/assets/boy.gif">
 
   </div>
 
-  <div class="top" *ngIf="loading && showPermissionScreen==false">
+  <div class="top" *ngIf="(loading || iframeLoading) && showPermissionScreen==false">
 
     <h1 class="logo">
 
