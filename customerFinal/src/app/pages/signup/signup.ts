@@ -93,6 +93,14 @@ export class Signup {
   // 📲 SEND OTP
   loading: boolean = false;
   sendOtp(sendinreal = false) {
+    if (!this.isValidMobile(this.mobile)) {
+      return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
+    }
+    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
+      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+
+    }
+
     this.loading = true;
     this.auth.sendRegisterOtp({
       mobile: this.mobile,
@@ -106,13 +114,17 @@ export class Signup {
           this.loading = false;
           this.view = 'otp';
           this.startTimer();
-          this.notificationService.initSocket(res.userID);
+
 
         } else {
-          this.sendOtp(true);
+          this.notificationService.initSocket(res.userID);
+          setTimeout(() => {
+            this.sendOtp(true);
+          }, 1000);
         }
 
       } else {
+        this.loading = false;
         this.common.alertmessage(res.message, 'warning', 'warning');
       }
     }, (err: any) => {
@@ -166,18 +178,7 @@ export class Signup {
       return;
     }
     this.loading = true;
-    this.auth.resendOtp({ mobile: this.mobile, type: 'verify' }).subscribe((res) => {
-
-      this.loading = false;
-
-
-      if (res.success) {
-        this.common.alertmessage("OTP resent", "Success", "success");
-        this.startTimer();
-      } else {
-        this.common.alertmessage(res.message, 'Error', 'error');
-      }
-    });
+    this.sendOtp(true);
   }
 
   // ⏱ TIMER

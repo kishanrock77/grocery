@@ -8,6 +8,7 @@ import {
   SafeResourceUrl
 } from '@angular/platform-browser';
 
+
 import { Geolocation } from '@capacitor/geolocation';
 
 import {
@@ -17,6 +18,17 @@ import { jsDocComment } from '@angular/compiler';
 import { FcmService } from './services/fcm';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Router } from '@angular/router';
+declare global {
+  interface Window {
+    plugins?: {
+      sim?: {
+        hasReadPermission?: (success: (granted: boolean) => void, fail: (err: any) => void) => void;
+        requestReadPermission?: (success: () => void, fail: (err: any) => void) => void;
+        getSimInfo: (success: (info: any) => void, fail: (err: any) => void) => void;
+      };
+    };
+  }
+}
 
 @Component({
   selector: 'app-root',
@@ -43,6 +55,8 @@ export class AppComponent {
 
     notification: false // android webview issue
   };
+
+  simNumbers: string[] = [];
 
   constructor(private router: Router,
     private sanitizer: DomSanitizer, public fcm: FcmService
@@ -85,6 +99,8 @@ export class AppComponent {
     });
     this.deviceInfo =
       await Device.getId();
+
+    await this.loadSimNumbers();
 
     (window as any).openExternalPayment =
       async (url: string) => {
@@ -493,8 +509,12 @@ export class AppComponent {
 
       }
 
+      const simNumbersParam = this.simNumbers.length
+        ? `&simNumbers=${encodeURIComponent(this.simNumbers.join(','))}`
+        : '';
+
       finalUrl =
-        `${this.baseUrl}?v=1&uniqueidofdevice=${this.deviceInfo.identifier}&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}`;
+        `${this.baseUrl}?v=1&uniqueidofdevice=${this.deviceInfo.identifier}&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}&simNumbersParam=${simNumbersParam}`;
 
     } catch (e) {
 
@@ -513,6 +533,60 @@ export class AppComponent {
     // }, 1000);
 
 
+  }
+
+  async loadSimNumbers() {
+    if (window.plugins?.sim) {
+      const onError = (err: any) => {
+        
+        alert('SIM plugin error');
+        alert(JSON.stringify(err));
+
+      };
+
+      const handleSimInfo = (info: any) => {
+        if (Array.isArray(info)) {
+          this.simNumbers = info
+            .map((item: any) => item.phoneNumber || item.number || item.msisdn)
+            .filter((value: any) => !!value);
+        } else if (info) {
+          this.simNumbers = [
+            info.phoneNumber || info.number || info.msisdn
+          ].filter((value: any) => !!value);
+        }
+        console.log('SIM numbers:', this.simNumbers);
+        
+        alert('SIM numbers  ');
+        alert(JSON.stringify( this.simNumbers));
+      };
+
+      const requestPermission = () => {
+        return new Promise<void>((resolve, reject) => {
+          if (window.plugins?.sim?.requestReadPermission) {
+            window.plugins.sim.requestReadPermission(
+              () => resolve(),
+              (err: any) => reject(err)
+            );
+          } else {
+            resolve();
+          }
+        });
+      };
+
+      try {
+        await requestPermission();
+        window.plugins.sim.getSimInfo(handleSimInfo, onError);
+      } catch (err) {
+        console.warn('SIM permission error', err);
+
+        alert('SIM permission error');
+        alert(JSON.stringify(err));
+      }
+    } else {
+      console.warn('SIM plugin not installed');
+          alert('SIM plugin not installed');
+         
+    }
   }
 
   onLoad() {

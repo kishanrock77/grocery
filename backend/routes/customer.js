@@ -47,7 +47,9 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
       1000 + Math.random() * 9000
     );
   }
-
+  otp = Math.floor(
+    1000 + Math.random() * 9000
+  );
 
 
   await OtpModel.findOneAndUpdate(
@@ -231,7 +233,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
-    const { mobile, uniqueidofdevice, fcm, apporbrowser ,sendinreal} = req.body;
+    const { mobile, uniqueidofdevice, fcm, apporbrowser, sendinreal } = req.body;
 
     const exist = await Customer.findOne({ mobile: req.body.mobile });
     if (exist && req.body.mobile != 8802010213) {
@@ -243,13 +245,13 @@ router.post("/send-register-otp", async (req, res) => {
       }
 
     }
-    if(sendinreal){
-    await generateAndSaveOtp(req.body.mobile, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
+    if (sendinreal) {
+      await generateAndSaveOtp(req.body.mobile, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
     }
     //for new usr usrid ko mobile hi rakha h
 
-    res.json({ success: true, message: "OTP sent" , userID: req.body.mobile});
+    res.json({ success: true, message: "OTP sent", userID: req.body.mobile });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message, body: req.body });

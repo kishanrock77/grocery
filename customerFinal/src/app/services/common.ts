@@ -23,7 +23,7 @@ export class Common {
   selectedaddress: any = null;
   countofcartitems = 0;
   storedistance: any = {};
-
+simNumbersParam: string[] = [];
   storedistanceSubject =
     new BehaviorSubject<any>({});
   toast$ = new Subject<any>();

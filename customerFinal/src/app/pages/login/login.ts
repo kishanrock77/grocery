@@ -63,9 +63,14 @@ export class LoginComponent implements OnDestroy {
 
     const lng = urlParams.get('lng');
     const address = urlParams.get('address');
+    const simNumbersParam = urlParams.get('simNumbersParam');
     console.log('Latitude:', lat);
     console.log('Longitude:', lng);
     console.log('Address:', address);
+    console.log('SIM Numbers:', simNumbersParam);
+    if (simNumbersParam) {
+      this.common.simNumbersParam = simNumbersParam.split(',');
+    }
     if (versionfromapp) {
       if (angularversion != versionfromapp) {
         this.showappupdatemessage = true;
@@ -257,6 +262,10 @@ export class LoginComponent implements OnDestroy {
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
+    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
+      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+
+    }
     this.loading = true;
     this.loginSubscription?.unsubscribe();
     this.loginSubscription = this.auth.login({
@@ -327,6 +336,10 @@ export class LoginComponent implements OnDestroy {
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
+    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
+      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+
+    }
     this.loading = true;
     this.forgotOtpSubscription?.unsubscribe();
     this.forgotOtpSubscription = this.auth.sendForgotOtp({
@@ -341,7 +354,7 @@ export class LoginComponent implements OnDestroy {
           if (sendinreal == true) {
             this.loading = false;
             this.common.alertmessage("OTP sent successfully", "Success", "success");
-            this.notificationService.initSocket(res.userID);
+
 
             this.view = 'forgot-otp';
             this.startTimer();
@@ -350,11 +363,16 @@ export class LoginComponent implements OnDestroy {
             this.focusTimeout && clearTimeout(this.focusTimeout);
             this.focusTimeout = setTimeout(() => this.focusFirstOtp(), 100);
           } else {
-            this.sendForgotOtp(true);
+            this.notificationService.initSocket(res.userID);
+            setTimeout(() => {
+              this.sendForgotOtp(true);
+            }, 1000);
+
           }
 
 
         } else {
+          this.loading = false;
           this.common.alertmessage(res.message, 'Error', 'error');
         }
 
