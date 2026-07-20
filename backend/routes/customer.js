@@ -58,7 +58,7 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
     { upsert: true, new: true }
   );
   //verify forgot register
-  let txttowhatsapp = "Use OTP -" + otp + " to " + type + " in FastBite App.";
+  let txttowhatsapp = "Use OTP - " + otp + " to verify mobile  in FastBite App.";
 
   //await sendOtp(mobile, otp, type);
   //await sendOtp('mobile', 'Friend', 'mobile with ' + otp + ' for ' + type);

@@ -1,7 +1,9 @@
 package com.webview.app;
 
-
 import android.content.Intent;
+import com.google.android.gms.auth.api.identity.GetPhoneNumberHintIntentRequest;
+import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.auth.api.identity.SignInClient;
 import android.net.Uri;
 import android.os.Bundle;
 import android.speech.RecognizerIntent;
@@ -32,6 +34,8 @@ public class MainActivity extends BridgeActivity {
   private static final int VOICE_REQUEST_CODE = 999;
 
   private static final int FILE_REQUEST_CODE = 200;
+private static final int PHONE_HINT_REQUEST_CODE = 300;
+
 
 
 
@@ -200,6 +204,58 @@ public class MainActivity extends BridgeActivity {
 
 
 
+// =========================
+// PHONE NUMBER HINT BRIDGE
+// =========================
+
+webView.addJavascriptInterface(new Object(){
+
+    @JavascriptInterface
+    public void getPhoneNumber(){
+
+        runOnUiThread(() -> {
+
+            GetPhoneNumberHintIntentRequest request =
+                    GetPhoneNumberHintIntentRequest.builder()
+                    .build();
+
+
+            Identity.getSignInClient(MainActivity.this)
+            .getPhoneNumberHintIntent(request)
+            .addOnSuccessListener(result -> {
+
+                try {
+
+                    startIntentSenderForResult(
+                            result.getIntentSender(),
+                            PHONE_HINT_REQUEST_CODE,
+                            null,
+                            0,
+                            0,
+                            0,
+                            null
+                    );
+
+                } catch(Exception e){
+
+                    e.printStackTrace();
+
+                }
+
+            })
+            .addOnFailureListener(e -> {
+
+                e.printStackTrace();
+
+            });
+
+
+        });
+
+    }
+
+
+},"PhoneHint");
 
 
 
@@ -451,6 +507,49 @@ public class MainActivity extends BridgeActivity {
 
 
 
+// =========================
+// PHONE NUMBER RESULT
+// =========================
+
+if(
+    requestCode == PHONE_HINT_REQUEST_CODE
+    && resultCode == RESULT_OK
+    && data != null
+){
+
+    String phoneNumber =
+        data.getStringExtra(
+        "com.google.android.gms.auth.api.identity.EXTRA_PHONE_NUMBER"
+        );
+
+
+if(phoneNumber == null){
+
+    phoneNumber =
+        data.getStringExtra("phone_number");
+
+}
+
+
+    if(phoneNumber != null){
+
+        String js =
+        "window.dispatchEvent("+
+        "new CustomEvent('PHONE_NUMBER',"+
+        "{detail:"+JSONObject.quote(phoneNumber)+"})"+
+        ")";
+
+
+        webView.evaluateJavascript(
+                js,
+                null
+        );
+
+    }
+
+    return;
+
+}
 
 
 

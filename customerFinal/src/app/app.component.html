@@ -1,8 +1,7 @@
- 
 <!-- SHOW APP -->
 <!-- <div *ngIf="isMobilePortrait"> -->
 
-  <router-outlet></router-outlet>
+<router-outlet></router-outlet>
 <app-newwindow></app-newwindow>
 
 <app-toaster></app-toaster>
@@ -32,9 +31,46 @@
 
 <!-- CONFIRM OVERLAY -->
 
-<div
-  class="confirm-overlay"
-  *ngIf="common.showConfirm">
+<div class="confirm-overlay" *ngIf="common.showpopupforotp">
+
+  <!-- BOX -->
+
+  <div class="confirm-box">
+
+    <!-- ICON -->
+
+
+    <!-- TITLE -->
+
+
+    <!-- MESSAGE -->
+
+    <div class="confirm-title">
+      {{ common.showpopupforotp_title }}
+    </div>
+    <div class="confirm-message">
+      {{ common.showpopupforotp_message}}
+    </div>
+    <!-- ACTIONS -->
+
+    <div class="confirm-actions">
+
+      <button class="yes-btn" (click)="common.closeotppopup()">
+
+        OK
+
+      </button>
+
+
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div class="confirm-overlay" *ngIf="common.showConfirm">
 
   <!-- BOX -->
 
@@ -48,7 +84,7 @@
 
     <!-- TITLE -->
 
-    
+
     <!-- MESSAGE -->
 
     <div class="confirm-title">
@@ -58,26 +94,21 @@
     <!-- ACTIONS -->
 
     <div class="confirm-actions">
- <button
-        class="yes-btn"
-        (click)="common.confrimok()">
+      <button class="yes-btn" (click)="common.confrimok()">
 
         Confirm
 
       </button>
-      <button
-        class="cancel-btn"
-        (click)="common.confirmcalcel()">
+      <button class="cancel-btn" (click)="common.confirmcalcel()">
 
         Cancel
 
       </button>
 
-     
+
 
     </div>
 
   </div>
 
 </div>
-

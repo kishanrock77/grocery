@@ -126,7 +126,7 @@ export class NotificationService {
           'New OTP:',
           data
         );
-        this.common.alertmessage(data.title + ': ' + data.message, 'info', 'info');
+        this.common.popupforotp(data.title, data.message );
 
         const current =
           this.notifications.value;

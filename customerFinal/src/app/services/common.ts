@@ -7,8 +7,8 @@ import { Subject } from 'rxjs';
   providedIn: 'root',
 })
 export class Common {
-  
-  browserorapp: any | undefined ;
+
+  browserorapp: any | undefined;
   websuburi: string = environment.websuburi;
   weburi: string = environment.weburi;
   uri: string = environment.commonURL;
@@ -23,7 +23,7 @@ export class Common {
   selectedaddress: any = null;
   countofcartitems = 0;
   storedistance: any = {};
-simNumbersParam: string[] = [];
+  simNumbersParam: string[] = [];
   storedistanceSubject =
     new BehaviorSubject<any>({});
   toast$ = new Subject<any>();
@@ -31,7 +31,18 @@ simNumbersParam: string[] = [];
   //   return JSON.parse(localStorage.getItem('cartArray') || '[]');
   // }
 
-
+  showpopupforotp = false;
+  showpopupforotp_title = ''; showpopupforotp_message = '';
+  popupforotp(title: any, message: any) {
+    this.showpopupforotp = true;
+    this.showpopupforotp_title = title;
+    this.showpopupforotp_message = message;
+  }
+  closeotppopup(){
+     this.showpopupforotp = false;
+    this.showpopupforotp_title = '';
+    this.showpopupforotp_message = '';
+  }
 
   speak(text: string) {
 
@@ -75,7 +86,7 @@ simNumbersParam: string[] = [];
     type: 'success' | 'warning' | 'error' | 'info' = 'info'
   ) {
 
-   // this.speak(message);
+    // this.speak(message);
     //window.alert(message);
     this.toast$.next({
 
