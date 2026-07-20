@@ -19,6 +19,15 @@ import { FcmService } from './services/fcm';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Router } from '@angular/router';
 
+declare global {
+  interface Window {
+    PhoneHint?: {
+      getPhoneNumber: () => void;
+    };
+    onPhoneNumberHint?: (value: string) => void;
+  }
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -47,6 +56,8 @@ export class AppComponent {
 
   simNumbers: string[] = [];
   mobileNumber = '';
+  phoneHintAvailable = false;
+  phoneHintRequesting = false;
 
   private phoneResolver?: (value: string) => void;
   constructor(private router: Router,
@@ -61,19 +72,47 @@ export class AppComponent {
     // }
 
   }
-  deviceInfo: any;
+  deviceInfo: any; eevvphn:any;
   async ngOnInit() {
 
     window.addEventListener('message', (event: any) => {
-
       if (event.data?.type === 'LOGOUT') {
-        //localStorage.removeItem('userapp');
-
-        // this.hidemycontent = true;
-        //  this.router.navigate(['/login']);
-
+        return;
       }
 
+      const rawMessageValue =
+        event.data?.phoneNumber ||
+        event.data?.number ||
+        event.data?.value ||
+        event.detail ||
+        '';
+
+      if (rawMessageValue) {
+        console.log('PHONE_NUMBER message received', rawMessageValue);
+        this.handlePhoneNumberHint(rawMessageValue);
+        return;
+      }
+
+      if (event.data?.type === 'PHONE_NUMBER') {
+        const rawValue = event.data.phoneNumber || event.data.number || event.data.value || event.detail || '';
+        console.log('PHONE_NUMBER message received (type)', rawValue);
+        this.handlePhoneNumberHint(rawValue);
+      }
+    });
+
+    window.onPhoneNumberHint = (value: string) => {
+      console.log('onPhoneNumberHint callback received', value);
+      this.handlePhoneNumberHint(value);
+    };
+
+    window.addEventListener('PHONE_NUMBER', (event: any) => {
+      const rawValue = event.detail || event.data?.phoneNumber || event.data?.number || '';
+      console.log('Custom PHONE_NUMBER event received', rawValue);
+      this.handlePhoneNumberHint(rawValue);
+      if (this.phoneResolver) {
+        this.phoneResolver(this.mobileNumber);
+        this.phoneResolver = undefined;
+      }
     });
 
     const status = await Network.getStatus();
@@ -88,36 +127,24 @@ export class AppComponent {
       }
 
     });
-    this.deviceInfo =
-      await Device.getId();
-    window.addEventListener(
-      'PHONE_NUMBER',
-      (event: any) => {
+    try {
+      this.deviceInfo = await Device.getId();
+    } catch (e) {
+      console.warn('Device.getId failed', e);
+      this.deviceInfo = { identifier: '' };
+    }
 
-        console.log(
-          'Phone number received:',
-          event.detail
-        );
+    const storedNumber = localStorage.getItem('mobileNumber');
+    if (storedNumber) {
+      this.mobileNumber = storedNumber;
+      this.phoneHintAvailable = true;
+    } else {
+      this.phoneHintAvailable = !!window.PhoneHint?.getPhoneNumber;
+    }
 
-        this.mobileNumber =
-          event.detail.replace('+91', '').replace(/\s/g, '');
-
-
-        if (this.phoneResolver) {
-
-          this.phoneResolver(
-            this.mobileNumber
-          );
-
-          this.phoneResolver = undefined;
-
-        }
-
-      }
-    );
-
-    this.mobileNumber =
-      await this.loadPhoneNumber();
+    this.loading = false;
+    this.iframeLoading = false;
+    this.showPermissionScreen = true;
 
     (window as any).openExternalPayment =
       async (url: string) => {
@@ -251,9 +278,15 @@ export class AppComponent {
       }
 
     });
-    await this.checkPermissions();
     try {
+      await this.checkPermissions();
+    } catch (error) {
+      console.warn('Permission initialization failed', error);
+      this.loading = false;
+      this.showPermissionScreen = true;
+    }
 
+    try {
       await PushNotifications.createChannel({
         id: 'orders',
         name: 'New Orders',
@@ -284,7 +317,9 @@ export class AppComponent {
 
   async checkPermissions() {
 
-    this.loading = true;
+    // keep permission screen visible while checking
+    this.loading = false;
+    this.showPermissionScreen = true;
 
     // =========================
     // LOCATION
@@ -376,8 +411,9 @@ export class AppComponent {
     else {
 
       this.loading = false;
-
+      this.iframeLoading = false;
       this.showPermissionScreen = true;
+      console.log('Permissions not fully granted', this.permissions);
 
     }
 
@@ -526,21 +562,14 @@ export class AppComponent {
 
       }
 
-     
-      const phoneParam =
-        this.mobileNumber
-          ?
-          `&simNumbersParam=${encodeURIComponent(this.mobileNumber)}`
-          :
-          '';
+
+      const finalMobileNumber = this.mobileNumber || localStorage.getItem('mobileNumber') || '';
+      const phoneParam = finalMobileNumber
+        ? `&mobileNumber=${encodeURIComponent(finalMobileNumber)}`
+        : '';
 
       finalUrl =
-        `${this.baseUrl}?v=1
-&uniqueidofdevice=${this.deviceInfo.identifier}
-&lat=${lat}
-&lng=${lng}
-&address=${encodeURIComponent(address)}
-${phoneParam}`;
+        `${this.baseUrl}?v=1&uniqueidofdevice=${this.deviceInfo.identifier}&lat=${lat}&lng=${lng}&address=${encodeURIComponent(address)}${phoneParam}`;
 
     } catch (e) {
 
@@ -561,38 +590,72 @@ ${phoneParam}`;
 
   }
 
-  async loadPhoneNumber(): Promise<string> {
+  async handlePhoneNumberHint(rawValue: string) {
+    const normalized = rawValue
+      .toString()
+      .replace('+91', '')
+      .replace(/\s/g, '')
+      .trim();
 
+    if (!normalized) {
+      return;
+    }
+
+    this.mobileNumber = normalized;
+    localStorage.setItem('mobileNumber', normalized);
+    this.phoneHintAvailable = true;
+    this.phoneHintRequesting = false;
+
+    if (this.phoneResolver) {
+      this.phoneResolver(this.mobileNumber);
+      this.phoneResolver = undefined;
+    }
+  }
+
+  async requestPhoneNumberHint(timeoutMs: number = 5000) {
+    if (!window.PhoneHint?.getPhoneNumber) {
+      this.phoneHintAvailable = false;
+      return '';
+    }
+
+    this.phoneHintRequesting = true;
+    try {
+      const number = await this.loadPhoneNumber(timeoutMs);
+      if (number) {
+        await this.handlePhoneNumberHint(number);
+      }
+      return number;
+    } finally {
+      this.phoneHintRequesting = false;
+    }
+  }
+
+  async loadPhoneNumber(timeoutMs: number = 5000): Promise<string> {
     return new Promise((resolve) => {
-
-
       const phoneHint =
         (window as any).PhoneHint;
 
+      const timer = setTimeout(() => {
+        if (this.phoneResolver) {
+          this.phoneResolver = undefined;
+          console.log('Phone Hint timeout');
+          resolve('');
+        }
+      }, timeoutMs);
 
-      if (phoneHint &&
-        phoneHint.getPhoneNumber) {
+      this.phoneResolver = (value: string) => {
+        clearTimeout(timer);
+        resolve(value || '');
+      };
 
-
-        this.phoneResolver = resolve;
-
-
+      if (phoneHint && phoneHint.getPhoneNumber) {
         phoneHint.getPhoneNumber();
-
-
-      }
-      else {
-
-
-        console.log(
-          'Phone Hint not available'
-        );
-
-
+      } else {
+        console.log('Phone Hint not available');
+        clearTimeout(timer);
+        this.phoneResolver = undefined;
         resolve('');
-
       }
-
 
     });
 

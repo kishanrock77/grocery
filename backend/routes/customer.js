@@ -30,6 +30,9 @@ const googleClient =
 // ===============================
 const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofdevice, token, apporbrowser) => {
 
+  const normalizedUserId = userId && mongoose.isValidObjectId(userId) ? userId : null;
+  const socketRoomId = normalizedUserId?.toString() || mobile?.toString();
+
   //verify register forgot
   let otp;
   console.log(mobile);
@@ -71,7 +74,7 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
     const notification =
       await Notification.create({
 
-        userId,
+        userId: normalizedUserId ?? userId,
         userType: "Customer",
         title: "OTP for FastBite " + type,
         message: txttowhatsapp,
@@ -79,14 +82,14 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
 
       });
     const io = getIO();
-    console.log('io auth otp: userId ' + userId);
+    console.log('io auth otp: room ' + socketRoomId);
 
-    io.to(
-      userId.toString()
-    ).emit(
-      "otp",
-      notification
-    );
+    if (socketRoomId) {
+      io.to(socketRoomId).emit(
+        "otp",
+        notification
+      );
+    }
     console.log(
       "Socket notification suuccess :",
       notification
@@ -246,7 +249,8 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
     if (sendinreal) {
-      await generateAndSaveOtp(req.body.mobile, req.body.mobile, "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
+      await generateAndSaveOtp(req.body.mobile, req.body.mobile,
+         "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
     }
     //for new usr usrid ko mobile hi rakha h
