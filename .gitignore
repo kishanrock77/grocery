@@ -4,6 +4,7 @@ backend/node_modules/
 backend/serviceAccountKey.json
 webviewApp/*.pem 
 webviewApp/node_modules/
+webviewApp/android/key.properties
 git 
 *.pem 
 git 

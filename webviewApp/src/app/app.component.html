@@ -8,8 +8,7 @@ LOADER
 
     <img src="/assets/boy.gif">
 
-  </div>
-  {{eevvphn | json}}
+  </div> 
 
   <div class="top" *ngIf="(loading || iframeLoading) && showPermissionScreen==false">
 
@@ -151,17 +150,23 @@ PERMISSION SCREEN
       </div>
 
       <div class="permission-item" *ngIf="!mobileNumber">
-        <span>📱 Mobile Number</span>
+        <span>📱 Mobile No.</span>
         <button *ngIf="phoneHintAvailable && !phoneHintRequesting" (click)="requestPhoneNumberHint(5000)">
           Get mobile number hint
         </button>
-        <span *ngIf="phoneHintRequesting">Requesting mobile number...</span>
-        <span *ngIf="!phoneHintAvailable">Mobile number hint unavailable</span>
+        <span *ngIf="phoneHintRequesting">Requesting...</span>
+        <span *ngIf="!phoneHintAvailable">Mobile hint unavailable</span>
       </div>
 
       <div class="permission-item" *ngIf="mobileNumber">
-        <span>📱 Saved mobile number:</span>
+        <span>📱  Mobile No.</span>
         <strong>{{ mobileNumber }}</strong>
+        
+        <small  (click)="requestPhoneNumberHint(5000)" style="font-weight: 600;">
+          
+        
+        <b>Change</b>
+        </small>
       </div>
 
     </div>

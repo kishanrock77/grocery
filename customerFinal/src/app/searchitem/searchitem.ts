@@ -405,10 +405,10 @@ export class Searchitem implements OnInit, OnDestroy {
       this.focusTimeout = setTimeout(() => {
         this.focusTimeout = undefined;
         this.searchText = customEvent.detail;
-        this.common.alertmessage('VOICE RESULT 1:' + this.searchText, 'info', 'info');
+      //  this.common.alertmessage('VOICE RESULT 1:' + this.searchText, 'info', 'info');
       }, 0);
 
-      this.common.alertmessage('VOICE RESULT:' + this.searchText, 'info', 'info');
+     // this.common.alertmessage('VOICE RESULT:' + this.searchText, 'info', 'info');
 
       // optional auto search
       this.onSearchInput();
@@ -1214,7 +1214,7 @@ export class Searchitem implements OnInit, OnDestroy {
     }
 
     try {
-      this.common.alertmessage('Start speaking:', 'info', 'info');
+    //  this.common.alertmessage('Start speaking:', 'info', 'info');
 
       android.startVoiceSearch();
     } catch (e) {
@@ -1273,11 +1273,11 @@ export class Searchitem implements OnInit, OnDestroy {
         event.data.text;
 
 
-      this.common.alertmessage(
-        'VOICE RESULT: '+this.searchText,
-        'info',
-        'info'
-      );
+      // this.common.alertmessage(
+      //   'VOICE RESULT: '+this.searchText,
+      //   'info',
+      //   'info'
+      // );
 
 
       this.onSearchInput();

@@ -70,6 +70,7 @@ export class LoginComponent implements OnDestroy {
     console.log('SIM Numbers:', simNumbersParam);
     if (simNumbersParam) {
       this.common.simNumbersParam = simNumbersParam.split(',');
+      this.mobile=this.common.simNumbersParam[0] || '';
     }
     if (versionfromapp) {
       if (angularversion != versionfromapp) {
@@ -262,10 +263,10 @@ export class LoginComponent implements OnDestroy {
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
-    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
-      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+    // if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
+    //   return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
 
-    }
+    // }
     this.loading = true;
     this.loginSubscription?.unsubscribe();
     this.loginSubscription = this.auth.login({
@@ -337,7 +338,7 @@ export class LoginComponent implements OnDestroy {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
     if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
-      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+      return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be "+this.common.simNumbersParam[0], "Alert", "error");
 
     }
     this.loading = true;

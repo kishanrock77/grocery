@@ -374,17 +374,17 @@ export class Productsoflvel2category
 
 
 
-    if (fromview && this.common.browserorapp == 'browser') {
+    // if (fromview && this.common.browserorapp == 'browser') {
 
-      this.popup.open(
+    //   this.popup.open(
 
-        'productsoflvel2category',
+    //     'productsoflvel2category',
 
-        this.catidfromSelectero + "?l2id=" + _id
+    //     this.catidfromSelectero + "?l2id=" + _id
 
-      );
-      return;
-    }
+    //   );
+    //   return;
+    // }
 
 
     this.selectedLevel2Id =

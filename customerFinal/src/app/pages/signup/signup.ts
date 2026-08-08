@@ -40,6 +40,9 @@ export class Signup {
       // this.router.navigate(['/login']);
     }
 
+    if (this.common.simNumbersParam.length > 0) {
+      this.mobile = this.common.simNumbersParam[0] || '';
+    }
 
   }
   view: 'mobile' | 'otp' | 'details' = 'mobile';
@@ -97,7 +100,7 @@ export class Signup {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
     if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
-      return this.common.alertmessage("Entered mobile number is not in your mobile currently", "Alert", "error");
+      return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be " + this.common.simNumbersParam[0], "Alert", "error");
 
     }
 

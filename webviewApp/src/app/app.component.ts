@@ -38,6 +38,54 @@ export class AppComponent {
   isOffline = false;
   safeUrl!: SafeResourceUrl;
 
+  private normalizePhoneHintValue(value: unknown): string {
+    if (typeof value === 'string') {
+      return value.replace('+91', '').replace(/\s/g, '').trim();
+    }
+
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      const candidate =
+        record['phoneNumber'] ??
+        record['number'] ??
+        record['value'] ??
+        record['detail'] ??
+        '';
+      return this.normalizePhoneHintValue(candidate);
+    }
+
+    return '';
+  }
+
+  private async applyPhoneHintValue(value: unknown): Promise<boolean> {
+    const normalized = this.normalizePhoneHintValue(value);
+    if (!normalized) {
+      return false;
+    }
+
+    this.mobileNumber = normalized;
+    localStorage.setItem('mobileNumber', normalized);
+    this.phoneHintAvailable = true;
+    this.phoneHintRequesting = false;
+
+    if (this.phoneResolver) {
+      this.phoneResolver(this.mobileNumber);
+      this.phoneResolver = undefined;
+    }
+      await this.checkPermissions();
+
+    return true;
+  }
+
+  private async handlePhoneHintPayload(value: unknown): Promise<void> {
+    const applied = await this.applyPhoneHintValue(value);
+    if (applied) {
+      console.log('Phone hint captured', this.mobileNumber);
+    } else {
+      console.warn('Phone hint payload ignored', value);
+    }
+  }
+
   loading = true;
   iframeLoading = false;
 
@@ -72,7 +120,7 @@ export class AppComponent {
     // }
 
   }
-  deviceInfo: any; eevvphn:any;
+  deviceInfo: any; eevvphn: any;
   async ngOnInit() {
 
     window.addEventListener('message', (event: any) => {
@@ -80,39 +128,30 @@ export class AppComponent {
         return;
       }
 
-      const rawMessageValue =
-        event.data?.phoneNumber ||
-        event.data?.number ||
-        event.data?.value ||
-        event.detail ||
-        '';
+      const rawMessageValue = event.data?.phoneNumber || event.data?.number || event.data?.value || event.detail || '';
 
-      if (rawMessageValue) {
-        console.log('PHONE_NUMBER message received', rawMessageValue);
-        this.handlePhoneNumberHint(rawMessageValue);
+      if (event.data?.type === 'PHONE_NUMBER' || event.data?.type === 'phoneNumber' || rawMessageValue) {
+        console.log('PHONE_NUMBER message received', rawMessageValue || event.data);
+        this.handlePhoneHintPayload(rawMessageValue || event.data);
         return;
-      }
-
-      if (event.data?.type === 'PHONE_NUMBER') {
-        const rawValue = event.data.phoneNumber || event.data.number || event.data.value || event.detail || '';
-        console.log('PHONE_NUMBER message received (type)', rawValue);
-        this.handlePhoneNumberHint(rawValue);
       }
     });
 
-    window.onPhoneNumberHint = (value: string) => {
+    window.onPhoneNumberHint = (value: string | Record<string, unknown>) => {
       console.log('onPhoneNumberHint callback received', value);
-      this.handlePhoneNumberHint(value);
+      this.handlePhoneHintPayload(value);
     };
 
     window.addEventListener('PHONE_NUMBER', (event: any) => {
-      const rawValue = event.detail || event.data?.phoneNumber || event.data?.number || '';
+      const rawValue = event?.detail || event?.data?.phoneNumber || event?.data?.number || event?.data?.value || '';
       console.log('Custom PHONE_NUMBER event received', rawValue);
-      this.handlePhoneNumberHint(rawValue);
-      if (this.phoneResolver) {
-        this.phoneResolver(this.mobileNumber);
-        this.phoneResolver = undefined;
-      }
+      this.handlePhoneHintPayload(rawValue || event?.data);
+    });
+
+    window.addEventListener('phoneNumberHint', (event: any) => {
+      const rawValue = event?.detail || event?.data?.phoneNumber || event?.data?.number || event?.data?.value || '';
+      console.log('phoneNumberHint event received', rawValue);
+      this.handlePhoneHintPayload(rawValue || event?.data);
     });
 
     const status = await Network.getStatus();
@@ -140,6 +179,9 @@ export class AppComponent {
       this.phoneHintAvailable = true;
     } else {
       this.phoneHintAvailable = !!window.PhoneHint?.getPhoneNumber;
+      if (!this.mobileNumber && this.phoneHintAvailable) {
+        await this.requestPhoneNumberHint(5000);
+      }
     }
 
     this.loading = false;
@@ -260,10 +302,7 @@ export class AppComponent {
     );
 
 
-    window.addEventListener(
-      'VOICE_TEXT',
-      (window as any).voiceHandler
-    );
+
     App.addListener('appStateChange', ({ isActive }) => {
 
       if (isActive) {
@@ -390,7 +429,7 @@ export class AppComponent {
     // LOAD WEBSITE
     // =========================
 
-    if (allGranted) {
+    if (allGranted && ((this.mobileNumber && this.phoneHintAvailable) || this.phoneHintAvailable == false)) {
 
       this.showPermissionScreen = false;
       this.loadwebsite()
@@ -565,7 +604,7 @@ export class AppComponent {
 
       const finalMobileNumber = this.mobileNumber || localStorage.getItem('mobileNumber') || '';
       const phoneParam = finalMobileNumber
-        ? `&mobileNumber=${encodeURIComponent(finalMobileNumber)}`
+        ? `&simNumbersParam=${encodeURIComponent(finalMobileNumber)}`
         : '';
 
       finalUrl =
@@ -590,29 +629,24 @@ export class AppComponent {
 
   }
 
-  async handlePhoneNumberHint(rawValue: string) {
-    const normalized = rawValue
-      .toString()
-      .replace('+91', '')
-      .replace(/\s/g, '')
-      .trim();
+  async handlePhoneNumberHint(rawValue: unknown) {
+    this.applyPhoneHintValue(rawValue);
 
-    if (!normalized) {
-      return;
-    }
-
-    this.mobileNumber = normalized;
-    localStorage.setItem('mobileNumber', normalized);
-    this.phoneHintAvailable = true;
-    this.phoneHintRequesting = false;
-
-    if (this.phoneResolver) {
-      this.phoneResolver(this.mobileNumber);
-      this.phoneResolver = undefined;
-    }
   }
 
   async requestPhoneNumberHint(timeoutMs: number = 5000) {
+
+
+
+
+    //alert(JSON.stringify(window.PhoneHint));
+
+    //const result = window.PhoneHint?.getPhoneNumber();
+    //alert(typeof window.PhoneHint?.getPhoneNumber);
+
+    //alert('Return value:' + JSON.stringify(result));
+    //alert('Type:' + typeof result);
+
     if (!window.PhoneHint?.getPhoneNumber) {
       this.phoneHintAvailable = false;
       return '';
@@ -620,7 +654,10 @@ export class AppComponent {
 
     this.phoneHintRequesting = true;
     try {
+      //alert('Requesting phone hint...');
+
       const number = await this.loadPhoneNumber(timeoutMs);
+      //alert('Received:'+ number);
       if (number) {
         await this.handlePhoneNumberHint(number);
       }
@@ -638,12 +675,14 @@ export class AppComponent {
       const timer = setTimeout(() => {
         if (this.phoneResolver) {
           this.phoneResolver = undefined;
-          console.log('Phone Hint timeout');
+          //alert('Phone Hint timeout');
           resolve('');
         }
       }, timeoutMs);
 
       this.phoneResolver = (value: string) => {
+        //alert('Resolver got:'+ value);
+
         clearTimeout(timer);
         resolve(value || '');
       };
@@ -651,7 +690,7 @@ export class AppComponent {
       if (phoneHint && phoneHint.getPhoneNumber) {
         phoneHint.getPhoneNumber();
       } else {
-        console.log('Phone Hint not available');
+        //alert('Phone Hint not available');
         clearTimeout(timer);
         this.phoneResolver = undefined;
         resolve('');

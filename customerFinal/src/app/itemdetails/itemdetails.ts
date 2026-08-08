@@ -304,7 +304,9 @@ export class ItemDetails implements OnInit, OnDestroy {
   }
 
   scrolltooptionsorvariant() {
+    console.log('scrolltooptionsorvariant');
     const element = document.getElementById('idtorechscroll');
+    console.log('element:', element);
     if (element) {
       element.scrollIntoView({
         behavior: 'smooth',

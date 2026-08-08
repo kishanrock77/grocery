@@ -117,7 +117,7 @@
 
 
       </div>
-     
+
 
 
 
@@ -141,7 +141,7 @@
 
 
 
-      <p class="forgot" (click)="mobile='';goToForgot()" style="margin-top: -11px;">
+      <p class="forgot" (click)="goToForgot()" style="margin-top: -11px;">
 
         Forgot Password?
 
@@ -248,7 +248,7 @@
 
 
 
-      <p class="back" (click)="mobile='';password='';view='login'">
+      <p class="back" (click)=" password='';view='login'">
 
         Back to Login
 
@@ -377,6 +377,11 @@
         Set New Password
       </h2>
 
+      <p class="subtitle" style="margin-top:1px">
+
+        Reset password for +91 {{mobile}}
+
+      </p>
 
 
       <div class="input-group">

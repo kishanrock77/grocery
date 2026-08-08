@@ -114,16 +114,12 @@ export class ItemCard implements OnInit, OnDestroy, OnChanges {
     private popup: PopupService
   ) {
 
-    console.log('item card')
 
     this.showpopuphandleforcartpage();
   }
   pendingtocallremovefromwishlistfuntion = false;
   removeFromWishlistIfExists() {
 
-    console.log("i was here ", this.item._id);
-
-    console.log(this.wishlist)
 
     if (this.showPopup == true) {
       this.pendingtocallremovefromwishlistfuntion = true;
@@ -155,9 +151,7 @@ export class ItemCard implements OnInit, OnDestroy, OnChanges {
   // INIT
   // ======================================================
   openoptionPopup() {
-    console.log(this.popupType)
     this.popupType = 'options';
-    console.log(this.popupType)
 
     this.showPopup = true;
     this.showpopuphandleforcartpage();
@@ -249,7 +243,6 @@ export class ItemCard implements OnInit, OnDestroy, OnChanges {
   }
   selectedAddress: any = null;
   ngOnInit() {
-console.log('item card 2')
     // ======================================================
     // SELECTED ADDRESS
     // ======================================================

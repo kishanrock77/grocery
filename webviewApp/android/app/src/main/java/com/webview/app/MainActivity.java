@@ -423,6 +423,21 @@ webView.addJavascriptInterface(new Object(){
 
 
 
+  private void dispatchPhoneNumberHint(String phoneNumber) {
+    if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+      return;
+    }
+
+    String escapedPhoneNumber = JSONObject.quote(phoneNumber);
+    String js =
+        "window.dispatchEvent(new CustomEvent('PHONE_NUMBER', { detail: " + escapedPhoneNumber + " }));"
+            + "window.dispatchEvent(new CustomEvent('phoneNumberHint', { detail: " + escapedPhoneNumber + " }));"
+            + "if (typeof window.onPhoneNumberHint === 'function') { window.onPhoneNumberHint(" + escapedPhoneNumber + "); }"
+            + "window.postMessage({ type: 'PHONE_NUMBER', phoneNumber: " + escapedPhoneNumber + " }, '*');";
+
+    webView.evaluateJavascript(js, null);
+  }
+
   @Override
 
   protected void onActivityResult(
@@ -510,45 +525,23 @@ webView.addJavascriptInterface(new Object(){
 // =========================
 // PHONE NUMBER RESULT
 // =========================
+if (requestCode == PHONE_HINT_REQUEST_CODE && resultCode == RESULT_OK) {
 
-if(
-    requestCode == PHONE_HINT_REQUEST_CODE
-    && resultCode == RESULT_OK
-    && data != null
-){
+    try {
 
-    String phoneNumber =
-        data.getStringExtra(
-        "com.google.android.gms.auth.api.identity.EXTRA_PHONE_NUMBER"
-        );
+        SignInClient signInClient = Identity.getSignInClient(this);
 
+        String phoneNumber = signInClient.getPhoneNumberFromIntent(data);
 
-if(phoneNumber == null){
+        if (phoneNumber != null) {
+            dispatchPhoneNumberHint(phoneNumber);
+        }
 
-    phoneNumber =
-        data.getStringExtra("phone_number");
-
-}
-
-
-    if(phoneNumber != null){
-
-        String js =
-        "window.dispatchEvent("+
-        "new CustomEvent('PHONE_NUMBER',"+
-        "{detail:"+JSONObject.quote(phoneNumber)+"})"+
-        ")";
-
-
-        webView.evaluateJavascript(
-                js,
-                null
-        );
-
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 
     return;
-
 }
 
 
