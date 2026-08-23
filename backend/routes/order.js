@@ -2630,17 +2630,21 @@ router.get(
 
       if (usertype === 'deliveryboy') {
 
+        const deliveryBoyObjectId = mongoose.Types.ObjectId.isValid(userId)
+          ? new mongoose.Types.ObjectId(userId)
+          : userId;
+
         const notifications = await Notification.find({
-          userId,
+          userId: deliveryBoyObjectId,
           userType: 'DeliveryBoy',
           relatedOrderId: { $ne: null }
         }).lean();
 
         const orderIds = [
           ...new Set(
-            notifications.map(
-              x => x.relatedOrderId?.toString()
-            )
+            notifications
+              .map(x => x.relatedOrderId)
+              .filter(Boolean)
           )
         ];
 
@@ -2663,7 +2667,7 @@ router.get(
 
         inProgressQuery = {
 
-          deliveryBoyId: userId,
+          deliveryBoyId: deliveryBoyObjectId,
 
           suborderstatus: 'Pending'
 

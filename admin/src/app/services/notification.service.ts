@@ -12,134 +12,319 @@ export class NotificationService {
 
   private socket!: Socket;
 
+  // ================= NOTIFICATIONS LIST =================
+
   private notifications = new BehaviorSubject<any[]>([]);
   notifications$ = this.notifications.asObservable();
+
+  // ================= CUSTOM POPUP =================
+
+  private notificationPopup =
+    new BehaviorSubject<any | null>(null);
+
+  notificationPopup$ =
+    this.notificationPopup.asObservable();
+
+  // ================= AUDIO =================
 
   private notificationAudio: HTMLAudioElement | null = null;
 
   constructor() {
-   //alert('Service Constructor Called');
 
     this.requestPermission();
     this.initSocket();
+
   }
 
-  // ================= SOCKET =================
-  initSocket() {
+  // ======================================================
+  // SOCKET
+  // ======================================================
 
-   //alert('Socket Init Started');
+  initSocket() {
 
     this.socket = io(this.uri);
 
+    // ================= SOCKET CONNECT =================
+
     this.socket.on('connect', () => {
 
-     //alert('Socket Connected: ' + this.socket.id);
+      console.log(
+        'Socket Connected:',
+        this.socket.id
+      );
 
-      const userId = localStorage.getItem('userId');
+      const userId =
+        localStorage.getItem('userId');
 
-     //alert('UserId: ' + userId);
+      console.log(
+        'UserId:',
+        userId
+      );
 
       if (userId) {
-        this.socket.emit('registerUser', { userId });
-       //alert('User Registered');
-      }
 
-    });
-
-    // ============ RECEIVE ============
-    this.socket.on('newNotification', async (data: any) => {
-
-     //alert('1. Notification Received');
-
-      // update list
-      const current = this.notifications.value;
-      this.notifications.next([data, ...current]);
-
-      // ================= AUDIO =================
-      try {
-
-       //alert('2. Audio Start');
-
-        this.notificationAudio = new Audio('notification.wav');
-        this.notificationAudio.loop = true;
-
-        await this.notificationAudio.play()
-          .then(() =>  {})
-          .catch(err =>  {});
-
-      } catch (e: any) {
-       //alert('Audio Error: ' + e?.message);
-      }
-
-      // ================= NOTIFICATION =================
-      try {
-
-       //alert('4. Notification Check');
-
-        if (!('serviceWorker' in navigator)) {
-         //alert('Service Worker Not Supported');
-          return;
-        }
-
-        const registration = await navigator.serviceWorker.ready;
-
-       //alert('5. SW Ready');
-
-        const options: any = {
-          body: data.message,
-          icon: 'logo.png',
-        };
-
-        registration.showNotification(
-          data.title || 'FastBite',
-          options
+        this.socket.emit(
+          'registerUser',
+          { userId }
         );
 
-       //alert('6. Notification Sent');
+        console.log(
+          'User Registered:',
+          userId
+        );
 
-      } catch (err: any) {
-       //alert('Notification Error: ' + err?.message);
       }
 
-      // auto stop sound
-      setTimeout(() => {
-       //alert('7. Stop Audio');
-        this.stopHooter();
-      }, 15000);
-
     });
+
+    // ==================================================
+    // RECEIVE NOTIFICATION
+    // ==================================================
+
+    this.socket.on(
+      'newNotification',
+      async (data: any) => {
+
+        console.log(
+          'New Notification Received:',
+          data
+        );
+
+        // ==================================================
+        // 1. UPDATE NOTIFICATION LIST
+        // ==================================================
+
+        const current =
+          this.notifications.value;
+
+        this.notifications.next([
+          data,
+          ...current
+        ]);
+
+        // ==================================================
+        // 2. SHOW CUSTOM WEBSITE POPUP
+        // ==================================================
+
+        this.showNotificationPopup(data);
+
+        // ==================================================
+        // 3. PLAY NOTIFICATION AUDIO
+        // ==================================================
+
+        try {
+
+          this.notificationAudio =
+            new Audio(
+              'assets/notification.wav'
+            );
+
+          this.notificationAudio.loop = true;
+
+          await this.notificationAudio
+            .play()
+            .catch((err) => {
+
+              console.log(
+                'Audio Play Error:',
+                err
+              );
+
+            });
+
+        } catch (error) {
+
+          console.log(
+            'Audio Error:',
+            error
+          );
+
+        }
+
+        // ==================================================
+        // 4. BROWSER NOTIFICATION
+        // ==================================================
+
+        try {
+
+          if (
+            !('serviceWorker' in navigator)
+          ) {
+
+            console.log(
+              'Service Worker not supported'
+            );
+
+          } else {
+
+            const registration =
+              await navigator.serviceWorker.ready;
+
+            const options: any = {
+
+              body:
+                data.message || '',
+
+              icon:
+                'assets/logo.png',
+
+            };
+
+            await registration.showNotification(
+
+              data.title || 'FastBite',
+
+              options
+
+            );
+
+            console.log(
+              'Browser Notification Sent'
+            );
+
+          }
+
+        } catch (error) {
+
+          console.log(
+            'Browser Notification Error:',
+            error
+          );
+
+        }
+
+        // ==================================================
+        // 5. AUTO STOP AUDIO AFTER 15 SECONDS
+        // ==================================================
+
+        setTimeout(() => {
+
+          this.stopHooter();
+
+        }, 15000);
+
+      }
+    );
 
   }
 
-  // ================= PERMISSION =================
+  // ======================================================
+  // SHOW CUSTOM POPUP
+  // ======================================================
+
+  showNotificationPopup(data: any) {
+
+    const popupData = {
+
+      title:
+        data?.title || 'FastBite',
+
+      message:
+        data?.message || '',
+
+    };
+
+    console.log(
+      'Showing Custom Notification Popup:',
+      popupData
+    );
+
+    this.notificationPopup.next(
+      popupData
+    );
+
+  }
+
+  // ======================================================
+  // CLOSE CUSTOM POPUP
+  // ======================================================
+
+  closeNotificationPopup() {
+
+    this.notificationPopup.next(null);
+
+  }
+
+  // ======================================================
+  // PERMISSION
+  // ======================================================
+
   requestPermission() {
 
     if (!('Notification' in window)) {
-     //alert('Notification Not Supported');
+
+      console.log(
+        'Browser Notification Not Supported'
+      );
+
       return;
+
     }
 
-    Notification.requestPermission()
-      .then(res =>{});
+    Notification
+      .requestPermission()
+      .then((permission) => {
+
+        console.log(
+          'Notification Permission:',
+          permission
+        );
+
+      })
+      .catch((error) => {
+
+        console.log(
+          'Notification Permission Error:',
+          error
+        );
+
+      });
 
   }
 
-  // ================= STOP AUDIO =================
+  // ======================================================
+  // STOP AUDIO
+  // ======================================================
+
   stopHooter() {
 
     if (this.notificationAudio) {
+
       this.notificationAudio.pause();
+
       this.notificationAudio.currentTime = 0;
+
       this.notificationAudio = null;
 
-     //alert('Audio Stopped');
+      console.log(
+        'Notification Audio Stopped'
+      );
+
     }
 
   }
 
-  // ================= TEST =================
+  // ======================================================
+  // TEST NOTIFICATION
+  // ======================================================
+
   sendTestNotification(msg: string) {
-    this.socket.emit('sendTest', msg);
+
+    if (!this.socket) {
+
+      console.log(
+        'Socket is not initialized'
+      );
+
+      return;
+
+    }
+
+    this.socket.emit(
+      'sendTest',
+      msg
+    );
+
   }
 
 }

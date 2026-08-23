@@ -865,6 +865,32 @@ body{
 
     @media(max-width:900px) {
 
+      .nav {
+        min-height: 75px;
+        height: auto;
+        padding: 12px 20px;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+      }
+
+      .nav-links {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        order: 3;
+      }
+
+      .nav-links a {
+        font-size: 13px;
+      }
+
+      .download-btn {
+        margin-left: auto;
+      }
+
       .hero-wrap {
         flex-direction: column;
         text-align: center;
@@ -880,10 +906,6 @@ body{
 
       .steps {
         grid-template-columns: 1fr;
-      }
-
-      .nav-links {
-        display: none;
       }
 
       .hero-buttons {

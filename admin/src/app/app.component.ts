@@ -8,11 +8,12 @@ import { CommonModule } from '@angular/common';
 import { Toaster } from './toaster/toaster';
 import { FcmService } from './services/fcm';
 import { Common } from './services/common';
+import { NotificationPopupComponent } from './notification-popup/notification-popup';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, Sidebar, SidebarDelivery, CommonModule, Toaster],
+  imports: [RouterModule,NotificationPopupComponent ,Sidebar, SidebarDelivery, CommonModule, Toaster],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 

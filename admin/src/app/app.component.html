@@ -2,6 +2,7 @@
 <app-sidebar
     *ngIf="auth.isloggedIn() && auth.getSession().userType === 'store' && auth.getSession().storeId"></app-sidebar>
 <app-sidebar-delivery *ngIf="auth.isloggedIn() && auth.getSession().userType === 'deliveryboy'"></app-sidebar-delivery>
+<app-notification-popup></app-notification-popup>
 
 <router-outlet></router-outlet>
 <app-toaster></app-toaster>

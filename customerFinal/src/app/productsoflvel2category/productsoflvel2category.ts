@@ -521,17 +521,17 @@ export class Productsoflvel2category
       this.common.browserorapp = localStorage.getItem('browserorapp');
     }
 
-    if (fromview && this.common.browserorapp == 'browser') {
+    // if (fromview && this.common.browserorapp == 'browser') {
 
-      this.popup.open(
+    //   this.popup.open(
 
-        'productsoflvel2category',
+    //     'productsoflvel2category',
 
-        this.catidfromSelectero + "?l3id=" + selectedLevel3Id + "&l2id=" + this.selectedLevel2Id
+    //     this.catidfromSelectero + "?l3id=" + selectedLevel3Id + "&l2id=" + this.selectedLevel2Id
 
-      );
-      return;
-    }
+    //   );
+    //   return;
+    // }
     this.selectedLevel3Id = selectedLevel3Id;
 
     // =====================================

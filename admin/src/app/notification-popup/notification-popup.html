@@ -1,0 +1,30 @@
+<div
+  class="notification-popup"
+  *ngIf="notification"
+>
+
+  <div class="notification-icon">
+    🔔
+  </div>
+
+  <div class="notification-content">
+
+    <div class="notification-title">
+      {{ notification.title }}
+    </div>
+
+    <div class="notification-message">
+      {{ notification.message }}
+    </div>
+
+  </div>
+
+  <button
+    class="notification-close"
+    type="button"
+    (click)="closePopup()"
+  >
+    ×
+  </button>
+
+</div>
