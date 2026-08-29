@@ -92,7 +92,7 @@ export class Cartpage implements OnInit, OnDestroy {
 
   deliveryDiscount = 0;
 
-  handlingCharge = 5;
+  handlingCharge = 3;
 
   grandTotal = 0;
 

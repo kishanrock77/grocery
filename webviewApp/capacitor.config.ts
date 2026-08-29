@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.webview.app',
+  appId: 'com.fastbite.app',
   appName: 'fastBite',
   webDir: 'dist/fastBite',
   

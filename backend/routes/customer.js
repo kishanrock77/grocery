@@ -111,6 +111,8 @@ const generateAndSaveOtp = async (userId, mobile, type = "register", uniqueidofd
   console.log('uniqueidofdevice', uniqueidofdevice, 'token', token);
 
   console.log(`OTP ${otp} sent to ${mobile}`, uniqueidofdevice, token, "OTP for FastBite " + type, txttowhatsapp);
+
+  return otp;
 };
 async function sendFCM(
   token,
@@ -236,6 +238,7 @@ router.get("/", (req, res) => {
 // ===============================
 router.post("/send-register-otp", async (req, res) => {
   try {
+    var voOTPjosendhua='';
     const { mobile, uniqueidofdevice, fcm, apporbrowser, sendinreal } = req.body;
 
     const exist = await Customer.findOne({ mobile: req.body.mobile });
@@ -249,13 +252,13 @@ router.post("/send-register-otp", async (req, res) => {
 
     }
     if (sendinreal) {
-      await generateAndSaveOtp(req.body.mobile, req.body.mobile,
+     voOTPjosendhua = await generateAndSaveOtp(req.body.mobile, req.body.mobile,
          "register", req.body.uniqueidofdevice, req.body.fcm, req.body.apporbrowser);
 
     }
     //for new usr usrid ko mobile hi rakha h
 
-    res.json({ success: true, message: "OTP sent", userID: req.body.mobile });
+    res.json({ success: true, message: "OTP sent", userID: req.body.mobile, otp: voOTPjosendhua });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message, body: req.body });
@@ -418,6 +421,7 @@ router.get("/dvicelst", async (req, res) => {
 // ===============================
 router.post("/forgot-password", async (req, res) => {
   try {
+    var voOTPjosendhua='';
     const { mobile, uniqueidofdevice, fcm, apporbrowser, sendinreal } = req.body;
 
     const user = await Customer.findOne({ mobile, status: true });
@@ -426,11 +430,11 @@ router.post("/forgot-password", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
     if (sendinreal == true) {
-      await generateAndSaveOtp(user._id, mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
+     voOTPjosendhua = await generateAndSaveOtp(user._id, mobile, "forgot", uniqueidofdevice, fcm, apporbrowser);
 
     }
 
-    res.json({ success: true, message: "OTP sent", userID: user._id });
+    res.json({ success: true, message: "OTP sent", userID: user._id, otp: voOTPjosendhua });
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -472,6 +476,7 @@ router.post("/reset-password", async (req, res) => {
 router.post("/resend-otp", async (req, res) => {
   try {
     const { mobile, type, uniqueidofdevice, fcm, apporbrowser } = req.body;
+    var voOTPjosendhua='';
 
     if (!mobile || !type) {
       return res.json({
@@ -486,11 +491,12 @@ router.post("/resend-otp", async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    await generateAndSaveOtp(user._id, mobile, type, uniqueidofdevice, fcm, apporbrowser);
+    voOTPjosendhua = await generateAndSaveOtp(user._id, mobile, type, uniqueidofdevice, fcm, apporbrowser);
 
     res.json({
       success: true,
-      message: "OTP resent"
+      message: "OTP resent",
+      otp: voOTPjosendhua
     });
 
   } catch (err) {

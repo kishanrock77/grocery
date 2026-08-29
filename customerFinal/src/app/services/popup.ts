@@ -33,6 +33,9 @@ export class PopupService {
   }
 
 
+  isCloudFrontLocation(): boolean {
+    return window.location.href.startsWith('https://d18rqizqqnw39g.cloudfront.net');
+  }
 
 
   // ====================================
@@ -54,15 +57,15 @@ export class PopupService {
       }
       this.common.browserorapp = localStorage.getItem('browserorapp');
     }
-    // if (this.common.browserorapp == 'browser' && force != 'app') {
+    if (this.isCloudFrontLocation()  ) {
 
-    //   window.open(
-    //     '/' + component + '/' + data,
-    //     '_blank'
-    //   );
+      window.open(
+        '/' + component + '/' + data,
+        '_blank'
+      );
 
-    //   return;
-    // }
+      return;
+      }
 
     // =========================
     // APP POPUP MODE

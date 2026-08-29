@@ -47,7 +47,7 @@ webviewApp\android  me gradlew.bat bundleRelease
 
 yaha milegi  apk
 D:\budhana\webviewApp\android\app\build\outputs\bundle\release\
-
+D:\budhana\webviewApp\android\app\release
 
 C:\Users\DELL\AppData\Local\Android\Sdk\build-tools\35.0.0>apksigner.exe verify --verbose "D:\budhana\webviewApp\android\app\build\outputs\apk\release\app-release.apk"
 

@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:921460225363:android:75604d736e0f35bb9b1da6",
+        "android_client_info": {
+          "package_name": "com.fastbite.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrlKtafvRs3oTovNsNJIAETXjwGHgBvwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:921460225363:android:8e3c97bbba46ccc89b1da6",
         "android_client_info": {
           "package_name": "com.webview.app"

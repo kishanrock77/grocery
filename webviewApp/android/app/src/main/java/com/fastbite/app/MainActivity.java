@@ -1,4 +1,4 @@
-package com.webview.app;
+package com.fastbite.app;
 
 import android.content.Intent;
 import com.google.android.gms.auth.api.identity.GetPhoneNumberHintIntentRequest;
@@ -215,7 +215,7 @@ webView.addJavascriptInterface(new Object(){
 
         runOnUiThread(() -> {
 
-            GetPhoneNumberHintIntentRequest request =
+          GetPhoneNumberHintIntentRequest request =
                     GetPhoneNumberHintIntentRequest.builder()
                     .build();
 
@@ -301,6 +301,7 @@ webView.addJavascriptInterface(new Object(){
 );
 
 
+
           intent.putExtra(
 
               RecognizerIntent.EXTRA_PROMPT,
@@ -341,7 +342,6 @@ webView.addJavascriptInterface(new Object(){
 
 
     },"AndroidVoice");
-
 
 
 
@@ -416,7 +416,6 @@ webView.addJavascriptInterface(new Object(){
 
 
 
-
   // =========================
   // RESULT HANDLER
   // =========================
@@ -461,6 +460,7 @@ webView.addJavascriptInterface(new Object(){
         data
 
     );
+
 
 
 
