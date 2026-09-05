@@ -69,8 +69,10 @@ export class LoginComponent implements OnDestroy {
     console.log('Address:', address);
     console.log('SIM Numbers:', simNumbersParam);
     if (simNumbersParam) {
+
       this.common.simNumbersParam = simNumbersParam.split(',');
-      this.mobile=this.common.simNumbersParam[0] || '';
+
+      this.mobile = this.common.simNumbersParam[0].slice(-10)  || '';
     }
     if (versionfromapp) {
       if (angularversion != versionfromapp) {
@@ -337,9 +339,12 @@ export class LoginComponent implements OnDestroy {
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
-    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
-      return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be "+this.common.simNumbersParam[0], "Alert", "error");
-
+    if (this.common.simNumbersParam.length > 0) {
+      // Extract last 10 digits from URL numbers (handles +91XXXXXXXXXX format)
+      const validMobiles = this.common.simNumbersParam.map(num => num.slice(-10));
+      if (!validMobiles.includes(this.mobile)) {
+        return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be " + validMobiles[0], "Alert", "error");
+      }
     }
     this.loading = true;
     this.forgotOtpSubscription?.unsubscribe();
@@ -359,7 +364,9 @@ export class LoginComponent implements OnDestroy {
 
             this.view = 'forgot-otp';
             this.startTimer();
-            this.resetOtp();
+            this.otpArray = (res.otp+'').split('');
+            
+            // this.resetOtp();
 
             this.focusTimeout && clearTimeout(this.focusTimeout);
             this.focusTimeout = setTimeout(() => this.focusFirstOtp(), 100);
@@ -522,7 +529,8 @@ export class LoginComponent implements OnDestroy {
       if (res.success) {
         this.common.alertmessage("OTP resent", "Success", "success");
         this.startTimer();
-        this.resetOtp();
+        this.otpArray = (res.otp+'').split('');
+        //this.resetOtp();
       } else {
         this.common.alertmessage(res.message, 'Error', 'error');
       }

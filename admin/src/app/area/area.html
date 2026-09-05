@@ -27,7 +27,15 @@
                 <label>Area</label>
                 <input type="text" formControlName="areaName" placeholder="Enter area">
             </div>
+            <div class="field">
+                <label>Polygon Coordinates</label>
 
+                <textarea formControlName="polygoncordinates" placeholder='[
+  {"lat": 29.2985, "lng": 77.4690},
+  {"lat": 29.2960, "lng": 77.4760}
+]' rows="12">
+    </textarea>
+            </div>
             <button class="button" type="submit" [disabled]="loading">
                 {{ loading ? 'Saving...' : 'Save' }}
             </button>
@@ -35,24 +43,25 @@
             <p class="error" *ngIf="errorMsg">{{ errorMsg }}</p>
 
         </form>
-    </div> <br/>
- <button class="refresh-btn" style="float: right;" (click)="reload();">
+    </div> <br />
+    <button class="refresh-btn" style="float: right;" (click)="reload();">
 
-            <i class="bi bi-arrow-repeat"></i>
+        <i class="bi bi-arrow-repeat"></i>
 
 
-        </button>
-        <br/> <br/>
+    </button>
+    <br /> <br />
     <!-- LIST -->
     <div class="list">
-       
+
         <div class="item" *ngFor="let a of areas">
             <div>
                 <strong>{{ a.cityName }}</strong>
                 <p>{{ a.areaName }}</p>
+                <small>{{a.polygoncordinates | json}}</small>
             </div>
             <div class="actions">
-                <button  class="button"  (click)="edit(a)">Edit</button>
+                <button class="button" (click)="edit(a)">Edit</button>
                 <button class="button delete" (click)="delete(a._id)">Delete</button>
             </div>
         </div>

@@ -502,7 +502,32 @@ async function updateSubOrderStatus({
 // ======================================================
 // CREATE ORDER
 // ======================================================
+function isPointInsidePolygon(latitude, longitude, polygonCoordinates) {
+  let inside = false;
 
+  for (
+    let i = 0, j = polygonCoordinates.length - 1;
+    i < polygonCoordinates.length;
+    j = i++
+  ) {
+    const xi = polygonCoordinates[i].lng;
+    const yi = polygonCoordinates[i].lat;
+
+    const xj = polygonCoordinates[j].lng;
+    const yj = polygonCoordinates[j].lat;
+
+    const intersect =
+      yi > latitude !== yj > latitude &&
+      longitude <
+      ((xj - xi) * (latitude - yi)) / (yj - yi) + xi;
+
+    if (intersect) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+}
 router.post(
 
   '/create-order',
@@ -595,6 +620,44 @@ router.post(
       // ==========================================
       const customerCityId =
         selectedaddress.city;
+      var longitude = selectedaddress.longitude; var latitude = selectedaddress.latitude;
+
+      const selectedCitydetails = await DeliveryArea.findOne({
+        _id: customerCityId,
+        status: true
+      });
+
+      if (!selectedCitydetails) {
+        return res.status(400).json({
+          success: false,
+          message: "Delivery area not found"
+        });
+      }
+
+      const polygonCoordinates = selectedCitydetails.polygoncordinates || [];
+      if (polygonCoordinates.length >= 3) {
+
+
+        const isInside = isPointInsidePolygon(
+          latitude,
+          longitude,
+          polygonCoordinates
+        );
+
+        if (!isInside) {
+          return res.status(400).json({
+            success: false,
+            message: "Sorry, delivery is not available at your location"
+          });
+        }
+      } else {
+
+        // return res.status(400).json({
+        //   success: false,
+        //   message: "Delivery area polygon is not properly configured"
+        // });
+
+      }
       for (const storeBlock of cart) {
 
         const store =

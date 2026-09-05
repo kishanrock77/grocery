@@ -13,7 +13,7 @@ const DeliveryAreaSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
-
+   
     stateName: {
         type: String,
         default: "Uttar Pradesh"
@@ -27,6 +27,10 @@ const DeliveryAreaSchema = new mongoose.Schema({
     status: {
         type: Boolean,
         default: true
+    },
+    polygoncordinates: {
+        type: Array,
+        default: []
     }
 
 }, { timestamps: true });

@@ -52,7 +52,9 @@ export class Area {
     let cityName = this.auth.getSession().user?.city || '';
     this.form = this.fb.group({
       cityName: [cityName, Validators.required],
-      areaName: ['', Validators.required]
+      areaName: ['', Validators.required],
+          polygoncordinates: ['', Validators.required]
+
     });
     this.getAreas();
   }
@@ -82,9 +84,48 @@ export class Area {
 
     this.loading = true;
     this.errorMsg = '';
+  let polygoncordinates: any[];
+ try {
 
+    polygoncordinates = JSON.parse(
+      this.form.value.polygoncordinates
+    );
+
+    // Check array
+    if (!Array.isArray(polygoncordinates)) {
+      throw new Error('Polygon coordinates must be an array');
+    }
+
+    // Minimum 3 points
+    if (polygoncordinates.length < 3) {
+      throw new Error('Polygon must have at least 3 coordinates');
+    }
+
+    // Validate every coordinate
+    const isValid = polygoncordinates.every((point: any) =>
+      point &&
+      typeof point.lat === 'number' &&
+      typeof point.lng === 'number'
+    );
+
+    if (!isValid) {
+      throw new Error(
+        'Every coordinate must have numeric lat and lng'
+      );
+    }
+
+  } catch (error: any) {
+
+    this.loading = false;
+
+    this.errorMsg =
+      'Invalid polygon coordinates JSON. Please check the format.';
+
+    return;
+  }
     const payload = {
-      ...this.form.value,
+      ...this.form.value,    polygoncordinates: polygoncordinates,
+
       adminId: this.adminId
     };
 
@@ -125,7 +166,12 @@ export class Area {
 
     this.form.patchValue({
       cityName: item.cityName,
-      areaName: item.areaName
+      areaName: item.areaName,
+       polygoncordinates: JSON.stringify(
+      item.polygoncordinates || [],
+      null,
+      2
+    )
     });
   }
 

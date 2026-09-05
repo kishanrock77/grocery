@@ -17,22 +17,22 @@ router.get("/list", async (req, res) => {
         }
         let areas;
 
-if(adminId=='69ef67a741c55c6dbffd2a94'){
+        if (adminId == '69ef67a741c55c6dbffd2a94') {
 
-          areas = await DeliveryArea.find({
-            
-            status: true
-        })
-            .sort({ createdAt: -1 });
-}else{
+            areas = await DeliveryArea.find({
 
- 
-          areas = await DeliveryArea.find({
-            adminId: adminId,
-            status: true
-        })
-            .sort({ createdAt: -1 });
-    }
+                status: true
+            })
+                .sort({ createdAt: -1 });
+        } else {
+
+
+            areas = await DeliveryArea.find({
+                adminId: adminId,
+                status: true
+            })
+                .sort({ createdAt: -1 });
+        }
 
         res.json({
             success: true,
@@ -49,7 +49,7 @@ if(adminId=='69ef67a741c55c6dbffd2a94'){
 // CREATE
 router.post("/create", async (req, res) => {
     try {
-        const { cityName, areaName, adminId } = req.body;
+        const { cityName, areaName, adminId, polygoncordinates } = req.body;
 
         if (!cityName || !areaName) {
             return res.status(400).json({
@@ -62,7 +62,8 @@ router.post("/create", async (req, res) => {
             cityName,
             areaName,
             stateName: "Uttar Pradesh",
-            adminId
+            adminId,
+            polygoncordinates
         });
 
         await newArea.save();
@@ -88,14 +89,14 @@ router.post("/create", async (req, res) => {
             message: err.message
         });
     }
-});router.put("/update/:id", async (req, res) => {
+}); router.put("/update/:id", async (req, res) => {
     try {
 
-        const { cityName, areaName } = req.body;
+        const { cityName, areaName, polygoncordinates } = req.body;
 
         const updated = await DeliveryArea.findByIdAndUpdate(
             req.params.id,
-            { cityName, areaName },
+            { cityName, areaName, polygoncordinates },
             { new: true, runValidators: true }
         );
 

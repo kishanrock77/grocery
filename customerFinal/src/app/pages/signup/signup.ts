@@ -41,7 +41,7 @@ export class Signup {
     }
 
     if (this.common.simNumbersParam.length > 0) {
-      this.mobile = this.common.simNumbersParam[0] || '';
+      this.mobile = this.common.simNumbersParam[0].slice(-10)  || '';
     }
 
   }
@@ -99,9 +99,12 @@ export class Signup {
     if (!this.isValidMobile(this.mobile)) {
       return this.common.alertmessage("Enter valid mobile number", "Alert", "error");
     }
-    if (this.common.simNumbersParam.length > 0 && !this.common.simNumbersParam.includes(this.mobile)) {
-      return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be " + this.common.simNumbersParam[0], "Alert", "error");
-
+    if (this.common.simNumbersParam.length > 0) {
+      // Extract last 10 digits from URL numbers (handles +91XXXXXXXXXX format)
+      const validMobiles = this.common.simNumbersParam.map(num => num.slice(-10));
+      if (!validMobiles.includes(this.mobile)) {
+        return this.common.alertmessage("Entered mobile number is not in your mobile currently. It should be " + validMobiles[0], "Alert", "error");
+      }
     }
 
     this.loading = true;
@@ -116,6 +119,7 @@ export class Signup {
         if (sendinreal == true) {
           this.loading = false;
           this.view = 'otp';
+               this.otpArray = (res.otp+'').split('');
           this.startTimer();
 
 
